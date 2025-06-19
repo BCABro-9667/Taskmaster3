@@ -29,10 +29,8 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: task.title,
-      description: task.description || '',
       assignedTo: task.assignedTo || undefined,
       deadline: task.deadline,
-      status: task.status,
     },
   });
   
@@ -52,12 +50,15 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
   async function onSubmit(values: TaskFormValues) {
     setIsSubmitting(true);
     try {
-      const taskData = {
-        ...values,
+      // Only send fields that are part of the simplified form
+      // Existing description and status on the task will not be modified by this form.
+      const taskDataForApi = {
+        title: values.title,
         assignedTo: values.assignedTo === 'unassigned' ? null : (values.assignedTo || undefined),
-        description: values.description || '',
+        deadline: values.deadline,
+        // description and status are intentionally omitted here
       };
-      await updateTask(task.id, taskData);
+      await updateTask(task.id, taskDataForApi);
       toast({
         title: 'Task Updated',
         description: `"${values.title}" has been updated.`,

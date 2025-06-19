@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { createTask, getAssignableUsers } from '@/lib/tasks';
-import type { User } from '@/types';
+import type { User, TaskStatus } from '@/types';
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
@@ -30,10 +30,8 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: '',
-      description: '',
       assignedTo: undefined,
       deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), // Default to 1 week from now
-      status: 'todo',
     },
   });
   const currentTaskTitle = form.watch('title');
@@ -55,18 +53,24 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   async function onSubmit(values: TaskFormValues) {
     setIsSubmitting(true);
     try {
-      const taskData = {
-        ...values,
+      const taskDataForApi = {
+        title: values.title,
+        description: '', // Default empty string as it's removed from form
         assignedTo: values.assignedTo === 'unassigned' ? undefined : values.assignedTo,
-        description: values.description || '', // Ensure description is string or empty string
+        deadline: values.deadline,
+        status: 'todo' as TaskStatus, // Default status as it's removed from form
       };
-      await createTask(taskData);
+      await createTask(taskDataForApi);
       toast({
         title: 'Task Created',
         description: `"${values.title}" has been added to your tasks.`,
       });
       onTaskCreated();
-      form.reset(); // Reset the form fields to default values
+      form.reset({
+        title: '',
+        assignedTo: undefined,
+        deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+      }); 
     } catch (error) {
       toast({
         variant: 'destructive',

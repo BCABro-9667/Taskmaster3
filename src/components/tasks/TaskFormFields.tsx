@@ -2,17 +2,15 @@
 import type { Control } from 'react-hook-form';
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, HelpCircle, Sparkles } from 'lucide-react';
+import { CalendarIcon, Sparkles } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
@@ -22,9 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { User, TaskStatus } from '@/types';
+import type { User } from '@/types';
 import type { TaskFormValues } from './TaskFormSchema';
-import { TASK_STATUSES } from '@/lib/tasks';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { useToast } from '@/hooks/use-toast';
@@ -56,11 +53,9 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
     }
 
     try {
-      // Simplified workload, in a real app this would be dynamic
       const workload = "moderate workload, several other small tasks pending"; 
       const result = await suggestDeadline({ taskDetails: taskTitle, currentWorkload: workload });
       
-      // Validate result.suggestedDeadline format (YYYY-MM-DD)
       const datePattern = /^\d{4}-\d{2}-\d{2}$/;
       if (result.suggestedDeadline && datePattern.test(result.suggestedDeadline)) {
         control.setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
@@ -98,23 +93,6 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
             <FormLabel>Title</FormLabel>
             <FormControl>
               <Input placeholder="e.g., Finalize project report" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description (Optional)</FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="Add more details about the task..."
-                className="resize-none"
-                {...field}
-              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -200,31 +178,6 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
           )}
         />
       </div>
-      <FormField
-        control={control}
-        name="status"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Status</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {TASK_STATUSES.map((statusInfo) => (
-                  <SelectItem key={statusInfo.value} value={statusInfo.value}>
-                    {statusInfo.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </>
   );
 }
-
