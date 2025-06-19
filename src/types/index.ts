@@ -4,6 +4,7 @@ export interface User {
   email: string;
   name: string;
   designation?: string; // Added designation
+  profileImageUrl?: string; // Added for profile image
 }
 
 export type TaskStatus = 'todo' | 'inprogress' | 'done' | 'archived';
