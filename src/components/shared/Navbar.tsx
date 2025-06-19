@@ -4,12 +4,12 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { logout, getCurrentUser } from '@/lib/auth';
+import { clearCurrentUser, getCurrentUser } from '@/lib/client-auth'; // Use client-auth utilities
 import { useToast } from '@/hooks/use-toast';
 import { Building2, LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { User } from '@/types';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Removed AvatarImage
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,7 @@ export function Navbar() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [navbarBrandName, setNavbarBrandName] = useState('TaskMaster');
 
-  useEffect(() => {
+  const updateUserState = () => {
     const user = getCurrentUser();
     setCurrentUser(user);
     if (user && user.name) {
@@ -35,30 +35,27 @@ export function Navbar() {
     } else {
       setNavbarBrandName('TaskMaster');
     }
+  };
 
-    const handleStorageChange = () => {
-      const updatedUser = getCurrentUser();
-      setCurrentUser(updatedUser);
-      if (updatedUser && updatedUser.name) {
-        setNavbarBrandName(updatedUser.name);
-      } else {
-        setNavbarBrandName('TaskMaster');
-      }
-    };
+  useEffect(() => {
+    updateUserState(); // Initial check
 
-    window.addEventListener('storage', handleStorageChange);
+    // Listen for custom storage event from client-auth.ts
+    window.addEventListener('storage', updateUserState); 
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage', updateUserState);
     };
   }, []);
 
 
-  const handleLogout = async () => {
-    await logout();
-    setCurrentUser(null);
+  const handleLogout = () => { // No longer async, as clearCurrentUser is sync
+    clearCurrentUser(); // Use client-auth utility
+    // No need to explicitly set currentUser to null here,
+    // the 'storage' event listener and subsequent updateUserState will handle it.
     toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
     router.push('/login');
-    router.refresh();
+    router.refresh(); // Important to re-trigger server components and layout if needed
   };
 
   const getUserInitials = (name: string | undefined) => {
@@ -108,7 +105,6 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-9 w-9">
-                    {/* Removed AvatarImage as profileImageUrl is no longer used */}
                     <AvatarFallback>{getUserInitials(currentUser.name)}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -117,11 +113,9 @@ export function Navbar() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{currentUser.name || 'User'}</p>
-                    {/* Email removed from here as it's not part of the User type for display */}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 {/* Mobile Nav Links */}
                 <div className="sm:hidden">
                   {navLinks.map((link) => (
                     <DropdownMenuItem key={link.href} asChild className={cn(pathname === link.href && "bg-accent")}>

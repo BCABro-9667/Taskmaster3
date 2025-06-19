@@ -11,10 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrentUser, updateCurrentUser } from '@/lib/auth';
+import { updateCurrentUser } from '@/lib/auth'; // Server Action
+import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
 import { Loader2, UserCircle, Image as ImageIcon, Save } from 'lucide-react';
-import Image from 'next/image'; // Using next/image for placeholder
+// Image from next/image is not used here for external user-provided URLs due to domain config needs.
 
 const profileFormSchema = z.object({
   name: z.string().min(1, 'Name is required.').max(50, 'Name must be 50 characters or less.'),
@@ -26,7 +27,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUserForForm, setCurrentUserForForm] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -41,16 +42,16 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const user = getCurrentUser();
+    const user = getCurrentUser(); // From client-auth
     if (user) {
-      setCurrentUser(user);
+      setCurrentUserForForm(user);
       form.reset({
         name: user.name || '',
         profileImageUrl: user.profileImageUrl || '',
       });
       setPreviewImageUrl(user.profileImageUrl || null);
     } else {
-      router.replace('/login'); // Should be handled by layout, but as a fallback
+      router.replace('/login'); 
     }
     setIsLoading(false);
   }, [form, router]);
@@ -59,40 +60,43 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (watchedImageUrl && form.getFieldState('profileImageUrl').isDirty) {
-       // Basic URL validation before trying to preview
       try {
         new URL(watchedImageUrl);
         setPreviewImageUrl(watchedImageUrl);
       } catch (_) {
-        setPreviewImageUrl(null); // Invalid URL, clear preview
+        setPreviewImageUrl(null); 
       }
-    } else if (!watchedImageUrl && currentUser?.profileImageUrl) {
-      setPreviewImageUrl(currentUser.profileImageUrl); // Revert to original if cleared and was previously set
+    } else if (!watchedImageUrl && currentUserForForm?.profileImageUrl) {
+      setPreviewImageUrl(currentUserForForm.profileImageUrl);
     } else if (!watchedImageUrl) {
-      setPreviewImageUrl(null); // Cleared and no original
+      setPreviewImageUrl(null);
     }
-  }, [watchedImageUrl, currentUser, form]);
+  }, [watchedImageUrl, currentUserForForm, form]);
 
 
   const onSubmit = async (data: ProfileFormValues) => {
+    if (!currentUserForForm) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No user logged in.'});
+      return;
+    }
     setIsSaving(true);
     try {
-      const updatedUser = await updateCurrentUser({
+      // Call Server Action, passing the user ID
+      const updatedUserFromDb = await updateCurrentUser(currentUserForForm.id, {
         name: data.name,
-        profileImageUrl: data.profileImageUrl || '', // Ensure empty string if undefined
+        profileImageUrl: data.profileImageUrl || '',
       });
 
-      if (updatedUser) {
-        setCurrentUser(updatedUser); // Update local state for immediate reflection
-         // Manually trigger re-render of Navbar or other components if needed
-        window.dispatchEvent(new Event('storage')); // This can sometimes help trigger updates in other components listening to storage.
+      if (updatedUserFromDb) {
+        setLocalStorageUser(updatedUserFromDb); // Update client-side localStorage
+        setCurrentUserForForm(updatedUserFromDb); // Update local state for immediate reflection in this component
         toast({
           title: 'Profile Updated',
           description: 'Your profile information has been saved.',
         });
-        router.refresh(); // This is key to make sure Navbar re-fetches/re-evaluates currentUser
+        router.refresh(); 
       } else {
-        throw new Error('Failed to update profile.');
+        throw new Error('Failed to update profile on the server.');
       }
     } catch (error) {
       toast({
@@ -113,8 +117,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!currentUser) {
-    // Should be redirected by layout, but good for safety
+  if (!currentUserForForm) {
     return <p>Please log in to view your profile.</p>;
   }
 
@@ -160,14 +163,14 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label>Image Preview</Label>
                 <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary bg-muted flex items-center justify-center">
-                   {/* Using a standard img tag here to avoid Next/Image domain issues for arbitrary user URLs */}
                   <img 
                     src={previewImageUrl} 
                     alt="Profile Preview" 
                     className="w-full h-full object-cover"
                     onError={(e) => { 
                       (e.target as HTMLImageElement).style.display='none'; 
-                      (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      const nextSibling = (e.target as HTMLImageElement).nextElementSibling;
+                      if (nextSibling) nextSibling.classList.remove('hidden');
                     }}
                   />
                   <div className="hidden w-full h-full items-center justify-center flex-col text-muted-foreground">

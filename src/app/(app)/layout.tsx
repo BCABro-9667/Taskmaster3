@@ -2,7 +2,7 @@
 'use client';
 
 import { Navbar } from '@/components/shared/Navbar';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/client-auth'; // Updated import
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -16,7 +16,7 @@ export default function AppLayout({
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const user = getCurrentUser();
+    const user = getCurrentUser(); // From client-auth, synchronous
     if (!user) {
       router.replace('/login');
     } else {

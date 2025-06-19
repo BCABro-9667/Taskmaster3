@@ -1,15 +1,16 @@
+
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/client-auth'; // Updated import
 import { Loader2 } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const user = getCurrentUser();
+    const user = getCurrentUser(); // From client-auth, synchronous
     if (user) {
       router.replace('/dashboard');
     } else {

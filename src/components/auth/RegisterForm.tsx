@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +15,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { register } from '@/lib/auth';
+import { register } from '@/lib/auth'; // Server Action
+import { setCurrentUser } from '@/lib/client-auth'; // Client-side utility
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -44,16 +46,16 @@ export function RegisterForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const user = await register(values.name, values.email, values.password);
+      const user = await register(values.name, values.email, values.password); // Call Server Action
       if (user) {
+        setCurrentUser(user); // Update client-side localStorage
         toast({
           title: 'Registration Successful',
           description: `Welcome, ${user.name}! You can now log in.`,
         });
-        router.push('/dashboard'); // Or /login if preferred post-registration
+        router.push('/dashboard'); 
         router.refresh();
       } else {
-        // This case might not be hit if register throws an error for existing user
         toast({
           variant: 'destructive',
           title: 'Registration Failed',
