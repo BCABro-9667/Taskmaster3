@@ -5,7 +5,6 @@ import type { Task, User } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskStatusBadge } from './TaskStatusBadge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Edit3, Trash2, UserCircle, MoreVertical, Circle, CheckCircle2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
@@ -18,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -52,13 +50,6 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   const { toast } = useToast();
   const assignedUser = assignableUsers.find(u => u.id === task.assignedTo);
 
-  const getUserInitials = (name: string | undefined) => {
-    if (!name) return '??';
-    const names = name.split(' ');
-    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
-
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
     setIsEditDialogOpen(false); 
@@ -74,7 +65,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   const isCompletable = task.status === 'todo' || task.status === 'inprogress';
 
   return (
-    <Card className="w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg">
+    <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg task-item-display")}>
       <CardContent className="p-3 sm:p-4 flex items-center gap-3">
         <Button
           variant="ghost"
@@ -95,17 +86,14 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
         </Button>
 
         <div className="flex-grow font-medium text-card-foreground break-words min-w-0">
-          <p className="truncate" title={task.title}>{task.title}</p>
+          <p className="truncate task-title-print" title={task.title}>{task.title}</p>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0">
           {assignedUser ? (
             <Link href={`/assignees/${assignedUser.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedUser.name}`}>
-              <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                <AvatarImage src={`https://placehold.co/40x40.png?text=${getUserInitials(assignedUser.name)}`} alt={assignedUser.name} data-ai-hint="user avatar"/>
-                <AvatarFallback>{getUserInitials(assignedUser.name)}</AvatarFallback>
-              </Avatar>
-              <span className="ml-2 hidden md:inline text-foreground text-xs sm:text-sm">{assignedUser.name}</span>
+              <UserCircle className="h-5 w-5 sm:h-6 sm:w-6" /> {/* Using UserCircle instead of Avatar */}
+              <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedUser.name}</span>
             </Link>
           ) : (
             <div className="flex items-center text-muted-foreground" title="Unassigned">
@@ -116,12 +104,12 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
           <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
             <CalendarDays className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-            <span className={cn("hidden sm:inline text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
+            <span className={cn("hidden sm:inline text-xs sm:text-sm deadline-print", isOverdue ? 'font-medium' : '')}>
               {format(parseISO(task.deadline), 'MMM d')}
             </span>
           </div>
           
-          <div className="hidden xs:block">
+          <div className="hidden xs:block task-status-badge">
              <TaskStatusBadge status={task.status} />
           </div>
 

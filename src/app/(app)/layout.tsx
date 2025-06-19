@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Navbar } from '@/components/shared/Navbar';
@@ -37,7 +38,7 @@ export default function AppLayout({
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
-      <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border">
+      <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border footer-component">
         © {new Date().getFullYear()} TaskMaster. All rights reserved.
       </footer>
     </div>

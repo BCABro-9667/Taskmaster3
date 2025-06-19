@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -83,5 +84,92 @@
     @apply bg-background text-foreground font-body;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@media print {
+  .navbar-component,
+  .footer-component,
+  .no-print {
+    display: none !important;
+  }
+
+  body { /* Reset body for printing */
+    background-color: white !important;
+    color: black !important;
+    font-family: sans-serif; /* Use a common print font */
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  .printable-content {
+    width: 100%;
+    margin: 0;
+    padding: 10mm; /* Adjust as needed */
+  }
+
+  /* Ensure all children within printable area use transparent background and black text */
+  .printable-content *, .printable-content *:before, .printable-content *:after {
+    background-color: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: #ccc !important; /* Lighten borders for print */
+  }
+  
+  .printable-content .card {
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid; /* Try to keep card content together */
+    margin-bottom: 0.5rem; /* Space between cards */
+  }
+
+  /* Specific to TaskItem's card for print adjustments */
+  .printable-content .task-item-display .lucide-circle,
+  .printable-content .task-item-display .lucide-check-circle-2,
+  .printable-content .task-item-display .lucide-edit-3, 
+  .printable-content .task-item-display .lucide-trash-2,
+  .printable-content .task-item-display .lucide-more-vertical,
+  .printable-content .task-item-display button[aria-label*="Mark task"],
+  .printable-content .task-item-display .avatar { /* Hiding avatar as profile images removed */
+    display: none !important;
+  }
+
+  .printable-content .task-item-display .task-title-print {
+    font-weight: bold;
+  }
+  
+  .printable-content .task-item-display .assignee-name-print,
+  .printable-content .task-item-display .deadline-print {
+     margin-left: 0.5em; /* Adjust spacing as needed now avatar is gone */
+  }
+  .printable-content .task-item-display .task-status-badge {
+    border: 1px solid #ccc !important;
+    padding: 2px 4px;
+    font-size: 0.8em;
+    display: inline-block !important; 
+    visibility: visible !important; /* Ensure badge is visible */
+  }
+   .printable-content .task-item-display .lucide-user-circle { /* Hide generic user icon too */
+    display: none !important;
+  }
+
+
+  .printable-content h1, .printable-content h2, .printable-content h3 {
+    page-break-after: avoid; /* Avoid breaking pages right after a heading */
+  }
+
+  /* Improve link appearance for print */
+  .printable-content a, .printable-content a:visited {
+    text-decoration: underline;
+  }
+  .printable-content a[href]:after { /* Show URLs for external links, useful for print */
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+  }
+  /* Do not show URLs for internal/anchor links */
+  .printable-content a[href^="/"]:after, 
+  .printable-content a[href^="#"]:after {
+      content: ""; 
   }
 }

@@ -7,13 +7,13 @@ import type { Task, User } from '@/types';
 import { getTasks, getAssignableUserById, getAssignableUsers, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks';
 import { TaskList } from '@/components/tasks/TaskList';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft, Printer } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TaskItem } from '@/components/tasks/TaskItem';
+import { cn } from '@/lib/utils';
 
 export default function AssigneeDetailPage() {
   const params = useParams();
@@ -24,13 +24,6 @@ export default function AssigneeDetailPage() {
   const [assignableUsersForTasks, setAssignableUsersForTasks] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-
-  const getUserInitials = (name: string | undefined) => {
-    if (!name) return '??';
-    const names = name.split(' ');
-    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
   
   const fetchData = useCallback(async () => {
     if (!assigneeId) return;
@@ -38,16 +31,15 @@ export default function AssigneeDetailPage() {
     try {
       const [fetchedAssignee, fetchedTasks, fetchedAssignableUsers] = await Promise.all([
         getAssignableUserById(assigneeId),
-        getTasks(), // Fetch all tasks
-        getAssignableUsers() // For edit form in TaskItem
+        getTasks(), 
+        getAssignableUsers()
       ]);
 
       if (!fetchedAssignee) {
-        notFound(); // Or handle "not found" state appropriately
+        notFound();
         return;
       }
       setAssignee(fetchedAssignee);
-      // Filter tasks for the current assignee
       setTasks(fetchedTasks.filter(task => task.assignedTo === assigneeId));
       setAssignableUsersForTasks(fetchedAssignableUsers);
 
@@ -67,7 +59,7 @@ export default function AssigneeDetailPage() {
   }, [fetchData]);
 
   const handleTaskUpdatedOrDeleted = () => {
-    fetchData(); // Re-fetch all data to ensure consistency
+    fetchData(); 
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -88,7 +80,7 @@ export default function AssigneeDetailPage() {
     try {
       await updateTask(taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      fetchData(); // Refresh tasks
+      fetchData(); 
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -108,7 +100,6 @@ export default function AssigneeDetailPage() {
   }
 
   if (!assignee) {
-    // This case should ideally be handled by notFound() earlier, but as a fallback:
     return <div className="text-center py-10">Assignee not found.</div>;
   }
 
@@ -116,39 +107,40 @@ export default function AssigneeDetailPage() {
   const completedTasks = tasks.filter(task => task.status === 'done');
 
   return (
-    <div className="space-y-8">
-      <Button variant="outline" asChild className="mb-4">
-        <Link href="/dashboard">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Link>
-      </Button>
+    <div className="space-y-8 printable-content">
+      <div className="flex items-center gap-2 no-print">
+        <Button variant="outline" asChild className="mb-4">
+          <Link href="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+        <Button variant="outline" onClick={() => window.print()} className="mb-4">
+          <Printer className="mr-2 h-4 w-4" />
+          Print
+        </Button>
+      </div>
 
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={`https://placehold.co/100x100.png?text=${getUserInitials(assignee.name)}`} alt={assignee.name} data-ai-hint="profile avatar" />
-            <AvatarFallback>{getUserInitials(assignee.name)}</AvatarFallback>
-          </Avatar>
           <div>
             <CardTitle className="text-3xl font-headline text-primary flex items-center">
-              <UserIcon className="mr-3 h-8 w-8" />
+              <UserIcon className="mr-3 h-8 w-8 no-print" /> 
               {assignee.name}
             </CardTitle>
             {assignee.designation && (
               <CardDescription className="text-lg flex items-center mt-1">
-                <Briefcase className="mr-2 h-5 w-5 text-muted-foreground" />
+                <Briefcase className="mr-2 h-5 w-5 text-muted-foreground no-print" />
                 {assignee.designation}
               </CardDescription>
             )}
-             <p className="text-sm text-muted-foreground mt-1">{assignee.email}</p>
           </div>
         </CardHeader>
       </Card>
 
       <section>
         <div className="flex items-center mb-4">
-          <ListTodo className="mr-3 h-6 w-6 text-primary" />
+          <ListTodo className="mr-3 h-6 w-6 text-primary no-print" />
           <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({pendingTasks.length})</h2>
         </div>
         <TaskList
@@ -162,7 +154,7 @@ export default function AssigneeDetailPage() {
         />
       </section>
 
-      <section>
+      <section className="no-print">
         <div className="flex items-center mb-4">
           <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
           <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
