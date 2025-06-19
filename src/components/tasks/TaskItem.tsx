@@ -41,7 +41,7 @@ import { cn } from '@/lib/utils';
 
 interface TaskItemProps {
   task: Task;
-  assignableUsers: Assignee[]; // Changed User[] to Assignee[]
+  assignableUsers: Assignee[];
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
   onMarkTaskAsComplete: (taskId: string) => void;
@@ -50,16 +50,17 @@ interface TaskItemProps {
 export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
-  // const { toast } = useToast(); // Removed, not used
 
-  // Determine the assigned user/assignee object from the list based on ID
-  const assignedEntity = assignableUsers.find(u => {
-    if (typeof task.assignedTo === 'string') {
-      return u.id === task.assignedTo;
+  let assignedAssignee: Assignee | undefined = undefined;
+  if (task.assignedTo) {
+    if (typeof task.assignedTo === 'object' && 'id' in task.assignedTo) {
+      // task.assignedTo is already a populated Assignee object
+      assignedAssignee = task.assignedTo as Assignee;
+    } else if (typeof task.assignedTo === 'string') {
+      // task.assignedTo is an ID string. Look it up in the provided list.
+      assignedAssignee = assignableUsers.find(user => user.id === task.assignedTo);
     }
-    return task.assignedTo && u.id === task.assignedTo.id;
-  });
-  const assignedAssignee = assignedEntity as Assignee | undefined;
+  }
 
 
   const handleTaskUpdatedInEditForm = () => {
@@ -114,7 +115,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
-            {assignedAssignee ? ( // Check assignedAssignee
+            {assignedAssignee ? (
               <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
                 <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedAssignee.name}</span>
               </Link>
