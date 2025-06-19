@@ -1,0 +1,37 @@
+
+'use client';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { CreateAssigneeForm } from "./CreateAssigneeForm";
+import type { User } from '@/types';
+
+interface CreateAssigneeDialogProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onAssigneeCreated: (newUser: User) => void;
+}
+
+export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated }: CreateAssigneeDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Assignee</DialogTitle>
+          <DialogDescription>
+            Add a new person to assign tasks to.
+          </DialogDescription>
+        </DialogHeader>
+        <CreateAssigneeForm 
+          onAssigneeCreated={onAssigneeCreated} 
+          closeDialog={() => onOpenChange(false)} 
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}

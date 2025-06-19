@@ -1,7 +1,9 @@
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  designation?: string; // Added designation
 }
 
 export type TaskStatus = 'todo' | 'inprogress' | 'done' | 'archived';

@@ -8,6 +8,7 @@ import { TaskStatusBadge } from './TaskStatusBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Edit3, Trash2, UserCircle, MoreVertical, Circle, CheckCircle2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,7 +60,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   };
 
   const handleTaskUpdatedInEditForm = () => {
-    onUpdateTask(); // This calls the dashboard's fetch
+    onUpdateTask();
     setIsEditDialogOpen(false); 
   }
   
@@ -75,12 +76,11 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   return (
     <Card className="w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg">
       <CardContent className="p-3 sm:p-4 flex items-center gap-3">
-        {/* Clickable Circle Icon */}
         <Button
           variant="ghost"
           size="icon"
           className={cn(
-            "h-7 w-7 rounded-full p-0",
+            "h-7 w-7 rounded-full p-0 shrink-0",
             isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
           )}
           onClick={handleCircleClick}
@@ -94,22 +94,19 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
           )}
         </Button>
 
-        {/* Task Title */}
         <div className="flex-grow font-medium text-card-foreground break-words min-w-0">
           <p className="truncate" title={task.title}>{task.title}</p>
         </div>
 
-        {/* Right Aligned Content */}
         <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0">
-          {/* Assignee */}
           {assignedUser ? (
-            <div className="flex items-center" title={`Assigned to ${assignedUser.name}`}>
+            <Link href={`/assignees/${assignedUser.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedUser.name}`}>
               <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                 <AvatarImage src={`https://placehold.co/40x40.png?text=${getUserInitials(assignedUser.name)}`} alt={assignedUser.name} data-ai-hint="user avatar"/>
                 <AvatarFallback>{getUserInitials(assignedUser.name)}</AvatarFallback>
               </Avatar>
               <span className="ml-2 hidden md:inline text-foreground text-xs sm:text-sm">{assignedUser.name}</span>
-            </div>
+            </Link>
           ) : (
             <div className="flex items-center text-muted-foreground" title="Unassigned">
               <UserCircle className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -117,7 +114,6 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
             </div>
           )}
 
-          {/* Deadline */}
           <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
             <CalendarDays className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
             <span className={cn("hidden sm:inline text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
@@ -125,13 +121,10 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
             </span>
           </div>
           
-          {/* Status Badge */}
-          <div className="hidden xs:block"> {/* Hide on very small screens if space is tight */}
+          <div className="hidden xs:block">
              <TaskStatusBadge status={task.status} />
           </div>
 
-
-          {/* Actions Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -141,7 +134,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
             <DropdownMenuContent align="end">
               <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={task.status === 'archived'}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={task.status === 'archived' || task.status === 'done'}>
                     <Edit3 className="mr-2 h-4 w-4" />
                     <span>Edit</span>
                   </DropdownMenuItem>

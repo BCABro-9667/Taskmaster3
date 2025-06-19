@@ -1,0 +1,201 @@
+
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, notFound } from 'next/navigation';
+import type { Task, User } from '@/types';
+import { getTasks, getAssignableUserById, getAssignableUsers, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks';
+import { TaskList } from '@/components/tasks/TaskList';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { TaskItem } from '@/components/tasks/TaskItem';
+
+export default function AssigneeDetailPage() {
+  const params = useParams();
+  const assigneeId = params.assigneeId as string;
+
+  const [assignee, setAssignee] = useState<User | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [assignableUsersForTasks, setAssignableUsersForTasks] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const getUserInitials = (name: string | undefined) => {
+    if (!name) return '??';
+    const names = name.split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  };
+  
+  const fetchData = useCallback(async () => {
+    if (!assigneeId) return;
+    setIsLoading(true);
+    try {
+      const [fetchedAssignee, fetchedTasks, fetchedAssignableUsers] = await Promise.all([
+        getAssignableUserById(assigneeId),
+        getTasks(), // Fetch all tasks
+        getAssignableUsers() // For edit form in TaskItem
+      ]);
+
+      if (!fetchedAssignee) {
+        notFound(); // Or handle "not found" state appropriately
+        return;
+      }
+      setAssignee(fetchedAssignee);
+      // Filter tasks for the current assignee
+      setTasks(fetchedTasks.filter(task => task.assignedTo === assigneeId));
+      setAssignableUsersForTasks(fetchedAssignableUsers);
+
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching data',
+        description: 'Could not load assignee details or tasks.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [assigneeId, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleTaskUpdatedOrDeleted = () => {
+    fetchData(); // Re-fetch all data to ensure consistency
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTaskApi(taskId);
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Deleting Task',
+        description: 'Could not delete the task. Please try again.',
+      });
+    }
+  };
+  
+  const handleMarkTaskAsComplete = async (taskId: string) => {
+    try {
+      await updateTask(taskId, { status: 'done' });
+      toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
+      fetchData(); // Refresh tasks
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Updating Task',
+        description: 'Could not mark the task as complete. Please try again.',
+      });
+    }
+  };
+
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!assignee) {
+    // This case should ideally be handled by notFound() earlier, but as a fallback:
+    return <div className="text-center py-10">Assignee not found.</div>;
+  }
+
+  const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
+  const completedTasks = tasks.filter(task => task.status === 'done');
+
+  return (
+    <div className="space-y-8">
+      <Button variant="outline" asChild className="mb-4">
+        <Link href="/dashboard">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Link>
+      </Button>
+
+      <Card className="shadow-lg">
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={`https://placehold.co/100x100.png?text=${getUserInitials(assignee.name)}`} alt={assignee.name} data-ai-hint="profile avatar" />
+            <AvatarFallback>{getUserInitials(assignee.name)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <CardTitle className="text-3xl font-headline text-primary flex items-center">
+              <UserIcon className="mr-3 h-8 w-8" />
+              {assignee.name}
+            </CardTitle>
+            {assignee.designation && (
+              <CardDescription className="text-lg flex items-center mt-1">
+                <Briefcase className="mr-2 h-5 w-5 text-muted-foreground" />
+                {assignee.designation}
+              </CardDescription>
+            )}
+             <p className="text-sm text-muted-foreground mt-1">{assignee.email}</p>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <section>
+        <div className="flex items-center mb-4">
+          <ListTodo className="mr-3 h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({pendingTasks.length})</h2>
+        </div>
+        <TaskList
+          tasks={pendingTasks}
+          assignableUsers={assignableUsersForTasks}
+          onDeleteTask={handleDeleteTask}
+          onUpdateTask={handleTaskUpdatedOrDeleted}
+          onMarkTaskAsComplete={handleMarkTaskAsComplete}
+          emptyStateMessage={`${assignee.name} has no pending tasks.`}
+          emptyStateTitle="All Caught Up!"
+        />
+      </section>
+
+      <section>
+        <div className="flex items-center mb-4">
+          <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
+          <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
+        </div>
+        {completedTasks.length > 0 ? (
+          <Accordion type="multiple" className="w-full space-y-2">
+            {completedTasks.map(task => (
+              <AccordionItem key={task.id} value={task.id} className="bg-card border border-border rounded-lg shadow-sm data-[state=open]:shadow-md">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 rounded-t-lg data-[state=open]:rounded-b-none data-[state=open]:border-b">
+                  <div className="flex justify-between items-center w-full">
+                    <span className="text-left font-medium text-card-foreground truncate">{task.title}</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-0 border-t-0">
+                  <TaskItem 
+                    task={task} 
+                    assignableUsers={assignableUsersForTasks} 
+                    onDeleteTask={handleDeleteTask}
+                    onUpdateTask={handleTaskUpdatedOrDeleted}
+                    onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center py-12 px-4 border-2 border-dashed border-border rounded-lg bg-card">
+            <CheckCircle2 className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-1 font-headline">No Completed Tasks</h3>
+            <p className="text-muted-foreground">{assignee.name} has not completed any tasks yet.</p>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}

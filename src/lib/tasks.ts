@@ -1,3 +1,4 @@
+
 import type { Task, User, TaskStatus } from '@/types';
 import { format } from 'date-fns';
 
@@ -45,7 +46,7 @@ let MOCK_TASKS: Task[] = [
 ];
 
 // Simulate API delay for all functions
-const simulateApiDelay = () => new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400));
+const simulateApiDelay = (duration = 300 + Math.random() * 400) => new Promise(resolve => setTimeout(resolve, duration));
 
 
 export async function getTasks(): Promise<Task[]> {
@@ -79,14 +80,14 @@ export async function updateTask(id: string, updates: Partial<Omit<Task, 'id' | 
     return null;
   }
   // Handle assignedTo being set to null (unassigned)
-  const updatedTask = { 
+  const updatedTaskData = { 
     ...MOCK_TASKS[taskIndex], 
     ...updates,
     assignedTo: updates.assignedTo === null ? undefined : (updates.assignedTo || MOCK_TASKS[taskIndex].assignedTo),
     updatedAt: new Date().toISOString() 
   };
-  MOCK_TASKS[taskIndex] = updatedTask;
-  return JSON.parse(JSON.stringify(updatedTask));
+  MOCK_TASKS[taskIndex] = updatedTaskData;
+  return JSON.parse(JSON.stringify(updatedTaskData));
 }
 
 export async function deleteTask(id: string): Promise<boolean> {
@@ -97,17 +98,37 @@ export async function deleteTask(id: string): Promise<boolean> {
 }
 
 // Mock users for assignment dropdown
-const MOCK_ASSIGN_USERS: User[] = [
-  { id: 'user1', email: 'test@example.com', name: 'Test User' },
-  { id: 'user2', email: 'jane.doe@example.com', name: 'Jane Doe' },
-  { id: 'user3', email: 'john.smith@example.com', name: 'John Smith' },
-  { id: 'user4', email: 'alice.wonder@example.com', name: 'Alice Wonder' },
+let MOCK_ASSIGN_USERS: User[] = [
+  { id: 'user1', email: 'test@example.com', name: 'Test User', designation: 'Software Engineer' },
+  { id: 'user2', email: 'jane.doe@example.com', name: 'Jane Doe', designation: 'Product Manager' },
+  { id: 'user3', email: 'john.smith@example.com', name: 'John Smith', designation: 'UX Designer' },
+  { id: 'user4', email: 'alice.wonder@example.com', name: 'Alice Wonder', designation: 'QA Tester' },
 ];
 
 export async function getAssignableUsers(): Promise<User[]> {
   await simulateApiDelay();
   return JSON.parse(JSON.stringify(MOCK_ASSIGN_USERS));
 }
+
+export async function getAssignableUserById(userId: string): Promise<User | null> {
+  await simulateApiDelay();
+  const user = MOCK_ASSIGN_USERS.find(u => u.id === userId);
+  return user ? JSON.parse(JSON.stringify(user)) : null;
+}
+
+export async function createAssignableUser(name: string, designation: string): Promise<User> {
+  await simulateApiDelay();
+  const newUser: User = {
+    id: `user${Date.now()}${Math.floor(Math.random() * 1000)}`,
+    name,
+    // For mock purposes, email can be derived or fixed.
+    email: `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+    designation,
+  };
+  MOCK_ASSIGN_USERS.push(newUser);
+  return JSON.parse(JSON.stringify(newUser));
+}
+
 
 export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
   { value: 'todo', label: 'To Do' },

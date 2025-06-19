@@ -1,6 +1,6 @@
 
 'use client';
-import type { Control } from 'react-hook-form';
+import type { Control, UseFormSetValue } from 'react-hook-form';
 import {
   FormControl,
   FormField,
@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Sparkles } from 'lucide-react';
+import { CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
@@ -19,6 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
@@ -28,15 +29,27 @@ import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
+const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
+
 interface TaskFormFieldsProps {
   control: Control<TaskFormValues>;
+  setValue: UseFormSetValue<TaskFormValues>;
   assignableUsers: User[];
+  onOpenCreateAssigneeDialog: () => void;
   isSubmittingAi?: boolean;
   setIsSubmittingAi?: (isSubmitting: boolean) => void;
   currentTaskTitle?: string;
 }
 
-export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIsSubmittingAi, currentTaskTitle }: TaskFormFieldsProps) {
+export function TaskFormFields({ 
+  control, 
+  setValue,
+  assignableUsers, 
+  onOpenCreateAssigneeDialog,
+  isSubmittingAi, 
+  setIsSubmittingAi, 
+  currentTaskTitle 
+}: TaskFormFieldsProps) {
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -59,7 +72,7 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
       
       const datePattern = /^\d{4}-\d{2}-\d{2}$/;
       if (result.suggestedDeadline && datePattern.test(result.suggestedDeadline)) {
-        control.setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
+        setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
         toast({
           title: 'Deadline Suggested',
           description: (
@@ -106,7 +119,18 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign To (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={(value) => {
+                  if (value === CREATE_NEW_ASSIGNEE_VALUE) {
+                    onOpenCreateAssigneeDialog();
+                    // Reset select to previous value or unassigned if needed
+                    // For now, let it be. The parent form will handle dialog and then set value.
+                  } else {
+                    field.onChange(value);
+                  }
+                }} 
+                value={field.value || ''}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a user" />
@@ -119,6 +143,13 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
                       {user.name}
                     </SelectItem>
                   ))}
+                  <SelectSeparator />
+                  <SelectItem value={CREATE_NEW_ASSIGNEE_VALUE} className="text-primary">
+                    <div className="flex items-center">
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create New Assignee...
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -152,7 +183,7 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
                       mode="single"
                       selected={field.value ? parseISO(field.value) : undefined}
                       onSelect={(date) => {
-                        field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
+                        setValue('deadline', date ? format(date, 'yyyy-MM-dd') : '', { shouldValidate: true });
                         setIsCalendarOpen(false);
                       }}
                       disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} // Disable past dates
@@ -166,8 +197,9 @@ export function TaskFormFields({ control, assignableUsers, isSubmittingAi, setIs
                     variant="outline"
                     size="icon"
                     onClick={handleSuggestDeadline}
-                    disabled={isSubmittingAi}
+                    disabled={isSubmittingAi || !control._getWatch('title')}
                     aria-label="Suggest Deadline with AI"
+                    title={!control._getWatch('title') ? "Enter task title to suggest deadline" : "Suggest Deadline with AI"}
                     className="shrink-0"
                   >
                     {isSubmittingAi ? <Sparkles className="h-4 w-4 animate-ping" /> : <Sparkles className="h-4 w-4 text-accent" />}

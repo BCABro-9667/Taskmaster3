@@ -15,8 +15,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { createTask, getAssignableUsers } from '@/lib/tasks';
 import type { User, TaskStatus } from '@/types';
-import { useEffect, useState } from 'react';
-import { Loader2, CalendarIcon, Sparkles } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Loader2, CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,10 +27,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
+import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
+
+const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
   onTaskCreated: () => void;
@@ -42,27 +46,36 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<User[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: '',
-      assignedTo: undefined,
+      assignedTo: 'unassigned', // Default to unassigned
       deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     },
   });
 
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const users = await getAssignableUsers();
-        setAssignableUsers(users);
-      } catch (error) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load users for assignment.' });
-      }
+  const fetchUsers = useCallback(async () => {
+    try {
+      const users = await getAssignableUsers();
+      setAssignableUsers(users);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not load users for assignment.' });
     }
-    fetchUsers();
   }, [toast]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleAssigneeCreated = (newUser: User) => {
+    fetchUsers().then(() => {
+      form.setValue('assignedTo', newUser.id, { shouldValidate: true });
+    });
+    setIsCreateAssigneeDialogOpen(false);
+  };
 
   const handleSuggestDeadline = async () => {
     setIsSubmittingAi(true);
@@ -113,10 +126,10 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
     try {
       const taskDataForApi = {
         title: values.title,
-        description: '',
+        description: '', // Default empty description
         assignedTo: values.assignedTo === 'unassigned' ? undefined : values.assignedTo,
         deadline: values.deadline,
-        status: 'todo' as TaskStatus,
+        status: 'todo' as TaskStatus, // Default status
       };
       await createTask(taskDataForApi);
       toast({
@@ -126,7 +139,7 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
       onTaskCreated();
       form.reset({
         title: '',
-        assignedTo: undefined,
+        assignedTo: 'unassigned',
         deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
       });
     } catch (error) {
@@ -141,106 +154,129 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row sm:items-end sm:gap-3 w-full">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem className="flex-grow w-full sm:w-auto mb-2 sm:mb-0">
-              <FormLabel className="sr-only">Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Task title, e.g., Finalize project report" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="assignedTo"
-          render={({ field }) => (
-            <FormItem className="w-full sm:w-auto sm:min-w-[180px] mb-2 sm:mb-0">
-              <FormLabel className="sr-only">Assign To</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ''}>
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row sm:items-end sm:gap-3 w-full">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem className="flex-grow w-full sm:w-auto mb-2 sm:mb-0">
+                <FormLabel className="sr-only">Title</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Assign to..." />
-                  </SelectTrigger>
+                  <Input placeholder="Task title, e.g., Finalize project report" {...field} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {assignableUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="deadline"
-          render={({ field }) => (
-            <FormItem className="w-full sm:w-auto mb-2 sm:mb-0">
-              <FormLabel className="sr-only">Deadline</FormLabel>
-              <div className="flex items-center gap-2">
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          'w-full sm:w-auto justify-start text-left font-normal',
-                          !field.value && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(parseISO(field.value), 'PPP') : <span>Pick date</span>}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? parseISO(field.value) : undefined}
-                      onSelect={(date) => {
-                        field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
-                        setIsCalendarOpen(false);
-                      }}
-                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={handleSuggestDeadline}
-                  disabled={isSubmittingAi || !form.getValues('title')}
-                  title={!form.getValues('title') ? "Enter task title to suggest deadline" : "Suggest Deadline with AI"}
-                  aria-label="Suggest Deadline with AI"
-                  className="shrink-0"
+          <FormField
+            control={form.control}
+            name="assignedTo"
+            render={({ field }) => (
+              <FormItem className="w-full sm:w-auto sm:min-w-[180px] mb-2 sm:mb-0">
+                <FormLabel className="sr-only">Assign To</FormLabel>
+                <Select 
+                  onValueChange={(value) => {
+                    if (value === CREATE_NEW_ASSIGNEE_VALUE) {
+                      setIsCreateAssigneeDialogOpen(true);
+                    } else {
+                      field.onChange(value);
+                    }
+                  }} 
+                  value={field.value || 'unassigned'}
                 >
-                  {isSubmittingAi ? <Sparkles className="h-4 w-4 animate-ping" /> : <Sparkles className="h-4 w-4 text-accent" />}
-                </Button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assign to..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {assignableUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                    <SelectSeparator />
+                    <SelectItem value={CREATE_NEW_ASSIGNEE_VALUE} className="text-primary">
+                      <div className="flex items-center">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Create New Assignee...
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmitting || isSubmittingAi}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Task
-        </Button>
-      </form>
-    </Form>
+          <FormField
+            control={form.control}
+            name="deadline"
+            render={({ field }) => (
+              <FormItem className="w-full sm:w-auto mb-2 sm:mb-0">
+                <FormLabel className="sr-only">Deadline</FormLabel>
+                <div className="flex items-center gap-2">
+                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full sm:w-auto justify-start text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(parseISO(field.value), 'PPP') : <span>Pick date</span>}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value ? parseISO(field.value) : undefined}
+                        onSelect={(date) => {
+                          field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
+                          setIsCalendarOpen(false);
+                        }}
+                        disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleSuggestDeadline}
+                    disabled={isSubmittingAi || !form.getValues('title')}
+                    title={!form.getValues('title') ? "Enter task title to suggest deadline" : "Suggest Deadline with AI"}
+                    aria-label="Suggest Deadline with AI"
+                    className="shrink-0"
+                  >
+                    {isSubmittingAi ? <Sparkles className="h-4 w-4 animate-ping" /> : <Sparkles className="h-4 w-4 text-accent" />}
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmitting || isSubmittingAi}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create Task
+          </Button>
+        </form>
+      </Form>
+      <CreateAssigneeDialog 
+        isOpen={isCreateAssigneeDialogOpen}
+        onOpenChange={setIsCreateAssigneeDialogOpen}
+        onAssigneeCreated={handleAssigneeCreated}
+      />
+    </>
   );
 }
