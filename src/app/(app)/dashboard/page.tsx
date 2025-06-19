@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -8,13 +9,6 @@ import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, RefreshCw, Search, Filter } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -25,13 +19,13 @@ import {
 } from "@/components/ui/select";
 import { TASK_STATUSES } from '@/lib/tasks';
 import type { TaskStatus } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assignableUsers, setAssignableUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const { toast } = useToast();
@@ -62,7 +56,6 @@ export default function DashboardPage() {
 
   const handleTaskCreated = () => {
     fetchTasksAndUsers(); // Refetch tasks after new one is created
-    setIsCreateTaskDialogOpen(false);
   };
 
   const handleTaskUpdated = () => {
@@ -99,22 +92,21 @@ export default function DashboardPage() {
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Dialog open={isCreateTaskDialogOpen} onOpenChange={setIsCreateTaskDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Create New Task</DialogTitle>
-              </DialogHeader>
-              <CreateTaskForm onTaskCreated={handleTaskCreated} closeDialog={() => setIsCreateTaskDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl font-headline flex items-center">
+            <PlusCircle className="mr-2 h-5 w-5 text-accent" />
+            Add New Task
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CreateTaskForm onTaskCreated={handleTaskCreated} />
+        </CardContent>
+      </Card>
+
 
       <div className="flex flex-col md:flex-row gap-4 p-4 bg-card rounded-lg shadow">
         <div className="relative flex-grow">

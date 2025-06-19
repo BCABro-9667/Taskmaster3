@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,10 +18,9 @@ import { format } from 'date-fns';
 
 interface CreateTaskFormProps {
   onTaskCreated: () => void;
-  closeDialog?: () => void;
 }
 
-export function CreateTaskForm({ onTaskCreated, closeDialog }: CreateTaskFormProps) {
+export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
@@ -66,8 +66,7 @@ export function CreateTaskForm({ onTaskCreated, closeDialog }: CreateTaskFormPro
         description: `"${values.title}" has been added to your tasks.`,
       });
       onTaskCreated();
-      if (closeDialog) closeDialog();
-      form.reset();
+      form.reset(); // Reset the form fields to default values
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -90,11 +89,6 @@ export function CreateTaskForm({ onTaskCreated, closeDialog }: CreateTaskFormPro
           currentTaskTitle={currentTaskTitle}
         />
         <div className="flex justify-end gap-2">
-          {closeDialog && (
-             <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting || isSubmittingAi}>
-                Cancel
-             </Button>
-          )}
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || isSubmittingAi}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Task
