@@ -4,44 +4,44 @@ import { format } from 'date-fns';
 
 // Mock tasks store - in a real app, this would be a database.
 let MOCK_TASKS: Task[] = [
-  { 
-    id: 'task1', 
-    title: 'Setup project Trello board', 
-    description: 'Initialize Next.js app and install dependencies. Create initial project structure. Setup linting and formatting tools.', 
-    assignedTo: 'user1', 
-    deadline: format(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), 
-    status: 'inprogress', 
-    createdAt: new Date().toISOString(), 
-    updatedAt: new Date().toISOString() 
+  {
+    id: 'task1',
+    title: 'Setup project Trello board',
+    description: 'Initialize Next.js app and install dependencies. Create initial project structure. Setup linting and formatting tools.',
+    assignedTo: 'user1',
+    deadline: format(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    status: 'inprogress',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
-  { 
-    id: 'task2', 
-    title: 'Design UI Mockups for Dashboard', 
-    description: 'Create detailed mockups for the main dashboard page, including task list and task creation form. Consider responsive design for mobile, tablet, and desktop.', 
-    assignedTo: 'user2', 
-    deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), 
-    status: 'todo', 
-    createdAt: new Date().toISOString(), 
-    updatedAt: new Date().toISOString() 
+  {
+    id: 'task2',
+    title: 'Design UI Mockups for Dashboard',
+    description: 'Create detailed mockups for the main dashboard page, including task list and task creation form. Consider responsive design for mobile, tablet, and desktop.',
+    assignedTo: 'user2',
+    deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    status: 'todo',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
-  { 
-    id: 'task3', 
-    title: 'Implement User Authentication', 
-    description: 'Develop login and registration forms. Implement client-side validation and connect to mock authentication service. Handle success and error states.', 
-    deadline: format(new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), 
-    status: 'todo', 
-    createdAt: new Date().toISOString(), 
-    updatedAt: new Date().toISOString() 
+  {
+    id: 'task3',
+    title: 'Implement User Authentication',
+    description: 'Develop login and registration forms. Implement client-side validation and connect to mock authentication service. Handle success and error states.',
+    deadline: format(new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    status: 'todo',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
-   { 
-    id: 'task4', 
-    title: 'Develop Task Creation Feature', 
-    description: 'Build the form for creating new tasks. Include fields for title, description, assignee, and deadline. Integrate AI deadline suggestion.', 
-    assignedTo: 'user1', 
-    deadline: format(new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), 
-    status: 'todo', 
-    createdAt: new Date().toISOString(), 
-    updatedAt: new Date().toISOString() 
+   {
+    id: 'task4',
+    title: 'Develop Task Creation Feature',
+    description: 'Build the form for creating new tasks. Include fields for title, description, assignee, and deadline. Integrate AI deadline suggestion.',
+    assignedTo: 'user1',
+    deadline: format(new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    status: 'todo',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
 ];
 
@@ -65,6 +65,8 @@ export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'upda
   await simulateApiDelay();
   const newTask: Task = {
     ...taskData,
+    description: taskData.description || '',
+    status: taskData.status || 'todo',
     id: `task${Date.now()}${Math.floor(Math.random() * 1000)}`, // More unique ID
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -80,11 +82,11 @@ export async function updateTask(id: string, updates: Partial<Omit<Task, 'id' | 
     return null;
   }
   // Handle assignedTo being set to null (unassigned)
-  const updatedTaskData = { 
-    ...MOCK_TASKS[taskIndex], 
+  const updatedTaskData = {
+    ...MOCK_TASKS[taskIndex],
     ...updates,
-    assignedTo: updates.assignedTo === null ? undefined : (updates.assignedTo || MOCK_TASKS[taskIndex].assignedTo),
-    updatedAt: new Date().toISOString() 
+    assignedTo: updates.assignedTo === null ? undefined : (updates.assignedTo !== undefined ? updates.assignedTo : MOCK_TASKS[taskIndex].assignedTo),
+    updatedAt: new Date().toISOString()
   };
   MOCK_TASKS[taskIndex] = updatedTaskData;
   return JSON.parse(JSON.stringify(updatedTaskData));
@@ -99,15 +101,15 @@ export async function deleteTask(id: string): Promise<boolean> {
 
 // Mock users for assignment dropdown
 let MOCK_ASSIGN_USERS: User[] = [
-  { id: 'user1', email: 'test@example.com', name: 'Test User', designation: 'Software Engineer' },
-  { id: 'user2', email: 'jane.doe@example.com', name: 'Jane Doe', designation: 'Product Manager' },
+  { id: 'user1', email: 'test@example.com', name: 'Test User', designation: 'Software Engineer', profileImageUrl: 'https://placehold.co/100x100.png?text=TU' },
+  { id: 'user2', email: 'jane.doe@example.com', name: 'Jane Doe', designation: 'Product Manager', profileImageUrl: 'https://placehold.co/100x100.png?text=JD' },
   { id: 'user3', email: 'john.smith@example.com', name: 'John Smith', designation: 'UX Designer' },
   { id: 'user4', email: 'alice.wonder@example.com', name: 'Alice Wonder', designation: 'QA Tester' },
 ];
 
 export async function getAssignableUsers(): Promise<User[]> {
   await simulateApiDelay();
-  return JSON.parse(JSON.stringify(MOCK_ASSIGN_USERS));
+  return JSON.parse(JSON.stringify(MOCK_ASSIGN_USERS.sort((a,b) => (a.name || '').localeCompare(b.name || ''))));
 }
 
 export async function getAssignableUserById(userId: string): Promise<User | null> {
@@ -121,12 +123,41 @@ export async function createAssignableUser(name: string, designation: string): P
   const newUser: User = {
     id: `user${Date.now()}${Math.floor(Math.random() * 1000)}`,
     name,
-    // For mock purposes, email can be derived or fixed.
     email: `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
     designation,
+    profileImageUrl: `https://placehold.co/100x100.png?text=${name.substring(0,2).toUpperCase()}`
   };
   MOCK_ASSIGN_USERS.push(newUser);
   return JSON.parse(JSON.stringify(newUser));
+}
+
+export async function updateAssignableUser(userId: string, updates: { name?: string; designation?: string }): Promise<User | null> {
+  await simulateApiDelay();
+  const userIndex = MOCK_ASSIGN_USERS.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return null;
+  }
+  MOCK_ASSIGN_USERS[userIndex] = { ...MOCK_ASSIGN_USERS[userIndex], ...updates };
+  if (updates.name && !MOCK_ASSIGN_USERS[userIndex].profileImageUrl?.startsWith('https://placehold.co')) {
+    MOCK_ASSIGN_USERS[userIndex].profileImageUrl = `https://placehold.co/100x100.png?text=${updates.name.substring(0,2).toUpperCase()}`;
+  }
+  return JSON.parse(JSON.stringify(MOCK_ASSIGN_USERS[userIndex]));
+}
+
+export async function deleteAssignableUser(userId: string): Promise<boolean> {
+  await simulateApiDelay();
+  const initialLength = MOCK_ASSIGN_USERS.length;
+  MOCK_ASSIGN_USERS = MOCK_ASSIGN_USERS.filter(u => u.id !== userId);
+
+  // Unassign tasks from the deleted user
+  MOCK_TASKS = MOCK_TASKS.map(task => {
+    if (task.assignedTo === userId) {
+      return { ...task, assignedTo: undefined };
+    }
+    return task;
+  });
+
+  return MOCK_ASSIGN_USERS.length < initialLength;
 }
 
 
@@ -136,3 +167,4 @@ export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
   { value: 'done', label: 'Done' },
   { value: 'archived', label: 'Archived' },
 ];
+
