@@ -17,6 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added missing import
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -33,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditTaskForm } from './EditTaskForm';
-import { EditNoteDialog } from './EditNoteDialog'; // New import
+import { EditNoteDialog } from './EditNoteDialog';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -48,7 +49,7 @@ interface TaskItemProps {
 
 export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false); // New state for note dialog
+  const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
   const { toast } = useToast();
   const assignedUser = assignableUsers.find(u => u.id === task.assignedTo);
 
@@ -58,7 +59,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   }
 
   const handleNoteUpdated = () => {
-    onUpdateTask(); // Re-fetch or update tasks to show new note
+    onUpdateTask(); 
     setIsEditNoteDialogOpen(false);
   }
 
