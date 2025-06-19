@@ -1,11 +1,12 @@
+
 'use client';
 
 import type { Task, User } from '@/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskStatusBadge } from './TaskStatusBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, Edit3, Trash2, UserCircle, CheckSquare, MoreVertical } from 'lucide-react';
+import { CalendarDays, Edit3, Trash2, UserCircle, MoreVertical } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
   AlertDialog,
@@ -58,24 +59,24 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask }: 
     setIsEditDialogOpen(false); 
   }
   
-  const isOverdue = task.status !== 'done' && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
+  const isOverdue = task.status !== 'done' && task.status !== 'archived' && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
 
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out rounded-lg overflow-hidden">
+    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg overflow-hidden w-full">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-headline leading-tight">{task.title}</CardTitle>
+          <CardTitle className="text-lg font-headline leading-tight break-words">{task.title}</CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}> {/* Prevent auto close */}
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <Edit3 className="mr-2 h-4 w-4" />
                     <span>Edit</span>
                   </DropdownMenuItem>
@@ -117,11 +118,6 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask }: 
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {task.description && (
-          <CardDescription className="text-sm text-muted-foreground pt-1 break-words whitespace-pre-wrap">
-            {task.description}
-          </CardDescription>
-        )}
       </CardHeader>
       <CardContent className="pb-4 space-y-3">
         <div className="flex items-center text-sm text-muted-foreground">
@@ -144,6 +140,11 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask }: 
             <UserCircle className="mr-2 h-4 w-4" />
             <span>Unassigned</span>
           </div>
+        )}
+         {task.description && (
+          <p className="text-sm text-muted-foreground pt-1 break-words whitespace-pre-wrap">
+            {task.description}
+          </p>
         )}
       </CardContent>
       <CardFooter className="bg-muted/50 p-4 flex justify-between items-center">
