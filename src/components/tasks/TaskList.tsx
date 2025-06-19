@@ -10,6 +10,7 @@ interface TaskListProps {
   assignableUsers: User[];
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
+  onMarkTaskAsComplete: (taskId: string) => void;
   emptyStateMessage?: string;
   emptyStateTitle?: string;
 }
@@ -19,6 +20,7 @@ export function TaskList({
   assignableUsers, 
   onDeleteTask, 
   onUpdateTask,
+  onMarkTaskAsComplete,
   emptyStateMessage = "Looks like your task list is empty. Click \"Add New Task\" to get started.",
   emptyStateTitle = "No Tasks Yet!" 
 }: TaskListProps) {
@@ -33,7 +35,7 @@ export function TaskList({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="grid grid-cols-1 gap-3 sm:gap-4"> {/* Single column layout */}
       {tasks.map((task) => (
         <TaskItem 
           key={task.id} 
@@ -41,6 +43,7 @@ export function TaskList({
           assignableUsers={assignableUsers} 
           onDeleteTask={onDeleteTask}
           onUpdateTask={onUpdateTask}
+          onMarkTaskAsComplete={onMarkTaskAsComplete}
         />
       ))}
     </div>

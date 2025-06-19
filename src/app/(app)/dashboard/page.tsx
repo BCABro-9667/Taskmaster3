@@ -3,34 +3,21 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { Task, User } from '@/types';
-import { getTasks, deleteTask as deleteTaskApi, getAssignableUsers } from '@/lib/tasks';
+import { getTasks, deleteTask as deleteTaskApi, getAssignableUsers, updateTask } from '@/lib/tasks';
 import { TaskList } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, RefreshCw, Search, Filter, ListTodo, CheckCircle2, ClipboardList } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TASK_STATUSES } from '@/lib/tasks';
-import type { TaskStatus } from '@/types';
+import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TaskItem } from '@/components/tasks/TaskItem';
-import { TaskStatusBadge } from '@/components/tasks/TaskStatusBadge';
 
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assignableUsers, setAssignableUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const { toast } = useToast();
 
   const fetchTasksAndUsers = useCallback(async () => {
@@ -78,18 +65,25 @@ export default function DashboardPage() {
       });
     }
   };
+  
+  const handleMarkTaskAsComplete = async (taskId: string) => {
+    try {
+      await updateTask(taskId, { status: 'done' });
+      toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
+      fetchTasksAndUsers();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Updating Task',
+        description: 'Could not mark the task as complete. Please try again.',
+      });
+    }
+  };
 
-  const allFilteredTasks = tasks
-    .filter(task => 
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(task => statusFilter === 'all' || task.status === statusFilter);
 
-  const pendingTasks = allFilteredTasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
-  const completedTasks = allFilteredTasks.filter(task => task.status === 'done');
-  const archivedTasks = allFilteredTasks.filter(task => task.status === 'archived');
-
+  const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
+  const completedTasks = tasks.filter(task => task.status === 'done');
+  // Archived tasks are not explicitly displayed unless a filter for them is re-added.
 
   return (
     <div className="space-y-8">
@@ -115,32 +109,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col md:flex-row gap-4 p-4 bg-card rounded-lg shadow">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
-            type="search" 
-            placeholder="Search tasks..." 
-            className="pl-10 w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)} 
-          />
-        </div>
-        <div className="flex items-center gap-2 md:w-auto w-full">
-          <Filter className="h-5 w-5 text-muted-foreground" />
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as TaskStatus | 'all')}>
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {TASK_STATUSES.map(statusInfo => (
-                <SelectItem key={statusInfo.value} value={statusInfo.value}>{statusInfo.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center py-10">
@@ -159,12 +127,13 @@ export default function DashboardPage() {
               assignableUsers={assignableUsers} 
               onDeleteTask={handleDeleteTask}
               onUpdateTask={handleTaskUpdated}
+              onMarkTaskAsComplete={handleMarkTaskAsComplete}
               emptyStateMessage="No pending tasks. Way to go!"
             />
           </section>
 
           {/* Completed Tasks Section */}
-          {(statusFilter === 'all' || statusFilter === 'done') && completedTasks.length > 0 && (
+          {completedTasks.length > 0 && (
             <section>
               <div className="flex items-center mb-4">
                 <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
@@ -175,16 +144,17 @@ export default function DashboardPage() {
                   <AccordionItem key={task.id} value={task.id} className="bg-card border border-border rounded-lg shadow-sm data-[state=open]:shadow-md">
                     <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 rounded-t-lg data-[state=open]:rounded-b-none data-[state=open]:border-b">
                       <div className="flex justify-between items-center w-full">
-                        <span className="text-left font-medium text-card-foreground">{task.title}</span>
-                        <TaskStatusBadge status={task.status} />
+                        <span className="text-left font-medium text-card-foreground truncate">{task.title}</span>
+                        {/* Status badge can be here or rely on the one inside TaskItem */}
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="p-0">
+                    <AccordionContent className="p-0 border-t-0"> {/* Remove padding and top border for seamless TaskItem integration */}
                       <TaskItem 
                         task={task} 
                         assignableUsers={assignableUsers} 
                         onDeleteTask={handleDeleteTask}
                         onUpdateTask={handleTaskUpdated}
+                        onMarkTaskAsComplete={handleMarkTaskAsComplete}
                       />
                     </AccordionContent>
                   </AccordionItem>
@@ -193,7 +163,7 @@ export default function DashboardPage() {
             </section>
           )}
           
-          {(statusFilter === 'all' || statusFilter === 'done') && completedTasks.length === 0 && !isLoading && (
+          {completedTasks.length === 0 && !isLoading && (
             <section>
                <div className="flex items-center mb-4">
                 <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
@@ -206,28 +176,8 @@ export default function DashboardPage() {
               </div>
             </section>
           )}
-
-
-          {/* Archived Tasks Section (Optional, shown if filter is 'all' or 'archived') */}
-           {(statusFilter === 'all' || statusFilter === 'archived') && archivedTasks.length > 0 && (
-            <section>
-              <div className="flex items-center mb-4">
-                <Filter className="mr-3 h-6 w-6 text-muted-foreground" />
-                <h2 className="text-2xl font-semibold font-headline">Archived Tasks ({archivedTasks.length})</h2>
-              </div>
-              <TaskList 
-                tasks={archivedTasks} 
-                assignableUsers={assignableUsers} 
-                onDeleteTask={handleDeleteTask}
-                onUpdateTask={handleTaskUpdated}
-                emptyStateMessage="No archived tasks."
-              />
-            </section>
-          )}
-
         </div>
       )}
     </div>
   );
 }
-
