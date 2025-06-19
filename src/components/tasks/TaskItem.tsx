@@ -17,6 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added missing import
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -92,12 +93,12 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
         <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0">
           {assignedUser ? (
             <Link href={`/assignees/${assignedUser.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedUser.name}`}>
-              <UserCircle className="h-5 w-5 sm:h-6 sm:w-6" /> {/* Using UserCircle instead of Avatar */}
+              <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 no-print" />
               <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedUser.name}</span>
             </Link>
           ) : (
             <div className="flex items-center text-muted-foreground" title="Unassigned">
-              <UserCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+              <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 no-print" />
                <span className="ml-1 hidden md:inline text-xs sm:text-sm">Unassigned</span>
             </div>
           )}
@@ -115,7 +116,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 no-print">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
