@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { logout, getCurrentUser } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, LogOut, UserCircle as ProfileIcon } from 'lucide-react'; // Renamed UserCircle to ProfileIcon for clarity
+import { Building2, LogOut, UserCircle as ProfileIcon, TrendingUp } from 'lucide-react'; // Added TrendingUp
 import { useEffect, useState } from 'react';
 import type { User } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,29 +33,35 @@ export function Navbar() {
     } else {
       setNavbarBrandName('TaskMaster');
     }
-  }, []); // Runs once on mount
 
-  // Effect to update navbar when currentUser changes (e.g., after profile update)
-  useEffect(() => {
-    if (currentUser && currentUser.name) {
-      setNavbarBrandName(currentUser.name);
-    } else if (!currentUser) { // handles logout
-      setNavbarBrandName('TaskMaster');
-    }
-    // This effect depends on `currentUser` which is updated by profile changes or logout/login
-  }, [currentUser]);
+    // Listener for storage changes to update user potentially
+    const handleStorageChange = () => {
+      const updatedUser = getCurrentUser();
+      setCurrentUser(updatedUser);
+      if (updatedUser && updatedUser.name) {
+        setNavbarBrandName(updatedUser.name);
+      } else {
+        setNavbarBrandName('TaskMaster');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []); 
 
 
   const handleLogout = async () => {
     await logout();
-    setCurrentUser(null); // Clear current user state locally
+    setCurrentUser(null); 
     toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
     router.push('/login');
-    router.refresh(); // Force refresh to reflect logged-out state globally
+    router.refresh(); 
   };
 
   const getUserInitials = (name: string | undefined) => {
-    if (!name) return 'TM'; // Default for TaskMaster or if name is blank
+    if (!name) return 'TM'; 
     const names = name.split(' ');
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
     return (names[0][0] + names[names.length - 1][0]).toUpperCase();
@@ -99,6 +105,12 @@ export function Navbar() {
                   <Link href="/profile" className="cursor-pointer">
                     <ProfileIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/task-progress" className="cursor-pointer">
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    <span>Task Progress</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
