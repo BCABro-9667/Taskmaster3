@@ -181,11 +181,3 @@ export async function deleteAssignableUser(userId: string): Promise<boolean> {
   }
   return false;
 }
-
-
-export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
-  { value: 'todo', label: 'To Do' },
-  { value: 'inprogress', label: 'In Progress' },
-  { value: 'done', label: 'Done' },
-  { value: 'archived', label: 'Archived' },
-];
