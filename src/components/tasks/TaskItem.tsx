@@ -17,7 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added missing import
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -53,9 +53,9 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
-    setIsEditDialogOpen(false); 
+    setIsEditDialogOpen(false);
   }
-  
+
   const handleCircleClick = async () => {
     if (task.status === 'todo' || task.status === 'inprogress') {
       onMarkTaskAsComplete(task.id);
@@ -67,12 +67,12 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   return (
     <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg task-item-display")}>
-      <CardContent className="p-3 sm:p-4 flex items-center gap-3">
+      <CardContent className="p-3 sm:p-4 flex items-start gap-3"> {/* Changed items-center to items-start for description */}
         <Button
           variant="ghost"
           size="icon"
           className={cn(
-            "h-7 w-7 rounded-full p-0 shrink-0",
+            "h-7 w-7 rounded-full p-0 shrink-0 mt-1", // Added mt-1 for alignment with text
             isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
           )}
           onClick={handleCircleClick}
@@ -86,11 +86,16 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
           )}
         </Button>
 
-        <div className="flex-grow font-medium text-card-foreground break-words min-w-0">
-          <p className="truncate task-title-print" title={task.title}>{task.title}</p>
+        <div className="flex-grow min-w-0">
+          <p className="font-medium text-card-foreground break-words truncate task-title-print" title={task.title}>{task.title}</p>
+          {task.description && (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words whitespace-pre-wrap">
+              {task.description}
+            </p>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5"> {/* Adjusted mt for alignment */}
           {assignedUser ? (
             <Link href={`/assignees/${assignedUser.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedUser.name}`}>
               <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 no-print" />
@@ -109,7 +114,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               {format(parseISO(task.deadline), 'MMM d')}
             </span>
           </div>
-          
+
           <div className="hidden xs:block task-status-badge">
              <TaskStatusBadge status={task.status} />
           </div>

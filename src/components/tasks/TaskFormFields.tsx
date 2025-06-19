@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
@@ -41,14 +42,14 @@ interface TaskFormFieldsProps {
   currentTaskTitle?: string;
 }
 
-export function TaskFormFields({ 
-  control, 
+export function TaskFormFields({
+  control,
   setValue,
-  assignableUsers, 
+  assignableUsers,
   onOpenCreateAssigneeDialog,
-  isSubmittingAi, 
-  setIsSubmittingAi, 
-  currentTaskTitle 
+  isSubmittingAi,
+  setIsSubmittingAi,
+  currentTaskTitle
 }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -67,9 +68,9 @@ export function TaskFormFields({
     }
 
     try {
-      const workload = "moderate workload, several other small tasks pending"; 
+      const workload = "moderate workload, several other small tasks pending";
       const result = await suggestDeadline({ taskDetails: taskTitle, currentWorkload: workload });
-      
+
       const datePattern = /^\d{4}-\d{2}-\d{2}$/;
       if (result.suggestedDeadline && datePattern.test(result.suggestedDeadline)) {
         setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
@@ -112,6 +113,24 @@ export function TaskFormFields({
           </FormItem>
         )}
       />
+      <FormField
+        control={control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description (Optional Note)</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Add a more detailed description or note for this task..."
+                className="resize-none"
+                {...field}
+                value={field.value || ''} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={control}
@@ -119,17 +138,15 @@ export function TaskFormFields({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign To (Optional)</FormLabel>
-              <Select 
+              <Select
                 onValueChange={(value) => {
                   if (value === CREATE_NEW_ASSIGNEE_VALUE) {
                     onOpenCreateAssigneeDialog();
-                    // Reset select to previous value or unassigned if needed
-                    // For now, let it be. The parent form will handle dialog and then set value.
                   } else {
                     field.onChange(value);
                   }
-                }} 
-                value={field.value || ''}
+                }}
+                value={field.value || 'unassigned'}
               >
                 <FormControl>
                   <SelectTrigger>

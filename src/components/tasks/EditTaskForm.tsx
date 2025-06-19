@@ -25,17 +25,18 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<User[]>([]);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
-  const [isSubmittingAi, setIsSubmittingAi] = useState(false); // For AI deadline suggestion
+  const [isSubmittingAi, setIsSubmittingAi] = useState(false);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: task.title,
+      description: task.description || '',
       assignedTo: task.assignedTo || 'unassigned',
       deadline: task.deadline,
     },
   });
-  
+
   const fetchUsers = useCallback(async () => {
     try {
       const users = await getAssignableUsers();
@@ -61,7 +62,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
     try {
       const taskDataForApi = {
         title: values.title,
-        // Ensure assignedTo is undefined if 'unassigned', null if explicitly set to null by API logic, or the ID.
+        description: values.description || '',
         assignedTo: values.assignedTo === 'unassigned' ? null : values.assignedTo,
         deadline: values.deadline,
       };
@@ -87,7 +88,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <TaskFormFields 
+          <TaskFormFields
             control={form.control}
             setValue={form.setValue}
             assignableUsers={assignableUsers}
