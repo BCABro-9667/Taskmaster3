@@ -1,10 +1,10 @@
 
 export interface User {
   id: string;
-  email: string;
+  email: string; // Restored for mock auth
   name: string;
-  designation?: string; // Added designation
-  profileImageUrl?: string; // Added for profile image
+  designation?: string;
+  profileImageUrl?: string; // Restored for mock auth & profile page
 }
 
 export type TaskStatus = 'todo' | 'inprogress' | 'done' | 'archived';

@@ -1,104 +1,229 @@
 
 import type { Task, User, TaskStatus } from '@/types';
-// import { format } from 'date-fns'; // Keep if needed for date manipulations later
+import { format, addDays, subDays } from 'date-fns';
 
-// NOTE: MOCK_TASKS and MOCK_ASSIGN_USERS arrays have been removed.
-// All task and assignable user data should be fetched from/stored in MongoDB.
+// Simulate API delay
+const simulateApiDelay = (duration = 50 + Math.random() * 100) => new Promise(resolve => setTimeout(resolve, duration));
 
-// Simulate API delay for all functions
-const simulateApiDelay = (duration = 100 + Math.random() * 200) => new Promise(resolve => setTimeout(resolve, duration));
+
+let MOCK_ASSIGN_USERS: User[] = [
+  { id: 'assignUser1', name: 'Alice Wonderland', email: 'alice@example.com', designation: 'Lead Developer', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: 'assignUser2', name: 'Bob The Builder', email: 'bob@example.com', designation: 'UI/UX Designer', profileImageUrl: 'https://placehold.co/100x100.png' },
+  { id: 'assignUser3', name: 'Charlie Brown', email: 'charlie@example.com', designation: 'Project Manager' },
+];
+
+let MOCK_TASKS: Task[] = [
+  {
+    id: 'task1',
+    title: 'Design homepage UI',
+    description: 'Create mockups for the new homepage design, incorporating the new branding guidelines.',
+    assignedTo: 'assignUser2',
+    deadline: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
+    status: 'inprogress',
+    createdAt: format(subDays(new Date(), 2), 'yyyy-MM-dd HH:mm:ss'),
+    updatedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+  },
+  {
+    id: 'task2',
+    title: 'Develop authentication module',
+    description: 'Implement JWT-based authentication for the backend API.',
+    assignedTo: 'assignUser1',
+    deadline: format(addDays(new Date(), 14), 'yyyy-MM-dd'),
+    status: 'todo',
+    createdAt: format(subDays(new Date(), 5), 'yyyy-MM-dd HH:mm:ss'),
+    updatedAt: format(subDays(new Date(), 1), 'yyyy-MM-dd HH:mm:ss'),
+  },
+  {
+    id: 'task3',
+    title: 'Setup project CI/CD pipeline',
+    description: 'Configure GitHub Actions for continuous integration and deployment to the staging server.',
+    assignedTo: 'assignUser1',
+    deadline: format(addDays(new Date(), 3), 'yyyy-MM-dd'),
+    status: 'todo',
+    createdAt: format(subDays(new Date(), 1), 'yyyy-MM-dd HH:mm:ss'),
+    updatedAt: format(subDays(new Date(), 1), 'yyyy-MM-dd HH:mm:ss'),
+  },
+  {
+    id: 'task4',
+    title: 'Write user stories for Q3 features',
+    description: 'Collaborate with product team to define and document user stories for the next quarter.',
+    assignedTo: 'assignUser3',
+    deadline: format(addDays(new Date(), 10), 'yyyy-MM-dd'),
+    status: 'done',
+    createdAt: format(subDays(new Date(), 10), 'yyyy-MM-dd HH:mm:ss'),
+    updatedAt: format(subDays(new Date(), 3), 'yyyy-MM-dd HH:mm:ss'),
+  },
+  {
+    id: 'task5',
+    title: 'Client Meeting Documentation',
+    description: 'Summarize key discussion points and action items from the weekly client sync.',
+    deadline: format(new Date(), 'yyyy-MM-dd'), // Due today
+    status: 'todo',
+    createdAt: format(subDays(new Date(), 0), 'yyyy-MM-dd HH:mm:ss'),
+    updatedAt: format(subDays(new Date(), 0), 'yyyy-MM-dd HH:mm:ss'),
+  }
+];
+
+// Helper to load/save from localStorage for persistence during session
+const TASKS_STORAGE_KEY = 'mockTasks';
+const USERS_STORAGE_KEY = 'mockAssignableUsers';
+
+function loadTasksFromStorage(): Task[] {
+  if (typeof window !== 'undefined') {
+    const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
+    if (storedTasks) {
+      try {
+        return JSON.parse(storedTasks);
+      } catch (e) {
+        console.error("Failed to parse tasks from localStorage", e);
+        localStorage.removeItem(TASKS_STORAGE_KEY); // Clear corrupted data
+      }
+    }
+  }
+  return MOCK_TASKS; // Fallback to initial mock
+}
+
+function saveTasksToStorage(tasks: Task[]) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  }
+}
+
+function loadUsersFromStorage(): User[] {
+  if (typeof window !== 'undefined') {
+    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+    if (storedUsers) {
+      try {
+        return JSON.parse(storedUsers);
+      } catch (e) {
+        console.error("Failed to parse users from localStorage", e);
+        localStorage.removeItem(USERS_STORAGE_KEY); // Clear corrupted data
+      }
+    }
+  }
+  return MOCK_ASSIGN_USERS; // Fallback to initial mock
+}
+
+function saveUsersToStorage(users: User[]) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }
+}
+
+// Initialize from storage
+MOCK_TASKS = loadTasksFromStorage();
+MOCK_ASSIGN_USERS = loadUsersFromStorage();
+
 
 export async function getTasks(): Promise<Task[]> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB query to fetch all tasks.
-  // Example: const tasks = await TaskModel.find().sort({ createdAt: -1 }).lean();
-  // return tasks.map(task => ({ ...task, id: task._id.toString() }));
-  console.warn('MongoDB implementation needed for getTasks. Returning empty array.');
-  return [];
+  return [...MOCK_TASKS].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getTaskById(id: string): Promise<Task | undefined> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB query to fetch a task by its ID.
-  // Example: const task = await TaskModel.findById(id).lean();
-  // return task ? { ...task, id: task._id.toString() } : undefined;
-  console.warn('MongoDB implementation needed for getTaskById. Returning undefined.');
-  return undefined;
+  return MOCK_TASKS.find(task => task.id === id);
 }
 
 export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB operation to create a new task.
-  // Example: const newTask = new TaskModel({ ...taskData, createdAt: new Date(), updatedAt: new Date() });
-  // await newTask.save();
-  // return { ...newTask.toObject(), id: newTask._id.toString() };
-  console.warn('MongoDB implementation needed for createTask. Throwing error.');
-  throw new Error('MongoDB implementation needed for createTask.');
+  const newTask: Task = {
+    ...taskData,
+    id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+    updatedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+  };
+  MOCK_TASKS.push(newTask);
+  saveTasksToStorage(MOCK_TASKS);
+  return newTask;
 }
 
 export async function updateTask(id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo'>> & { assignedTo?: string | null }): Promise<Task | null> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB operation to update a task.
-  // Handle assignedTo: if (updates.assignedTo === null) updates.assignedTo = undefined;
-  // Example: const updatedTask = await TaskModel.findByIdAndUpdate(id, { ...updates, updatedAt: new Date() }, { new: true }).lean();
-  // return updatedTask ? { ...updatedTask, id: updatedTask._id.toString() } : null;
-  console.warn('MongoDB implementation needed for updateTask. Returning null.');
+  const taskIndex = MOCK_TASKS.findIndex(task => task.id === id);
+  if (taskIndex !== -1) {
+    const currentTask = MOCK_TASKS[taskIndex];
+    // Handle assignedTo specifically: null means unassign, undefined means no change
+    const assignedToUpdate = updates.assignedTo === null ? undefined : updates.assignedTo;
+    
+    MOCK_TASKS[taskIndex] = {
+      ...currentTask,
+      ...updates,
+      assignedTo: assignedToUpdate !== undefined ? assignedToUpdate : currentTask.assignedTo, // Preserve if undefined
+      updatedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+    };
+    saveTasksToStorage(MOCK_TASKS);
+    return MOCK_TASKS[taskIndex];
+  }
   return null;
 }
 
 export async function deleteTask(id: string): Promise<boolean> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB operation to delete a task.
-  // Example: const result = await TaskModel.findByIdAndDelete(id);
-  // return !!result;
-  console.warn('MongoDB implementation needed for deleteTask. Returning false.');
+  const initialLength = MOCK_TASKS.length;
+  MOCK_TASKS = MOCK_TASKS.filter(task => task.id !== id);
+  if (MOCK_TASKS.length < initialLength) {
+    saveTasksToStorage(MOCK_TASKS);
+    return true;
+  }
   return false;
 }
 
 export async function getAssignableUsers(): Promise<User[]> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB query to fetch all assignable users (e.g., from a Users collection).
-  // Example: const users = await UserModel.find({}, 'id name designation').sort({ name: 1 }).lean();
-  // return users.map(user => ({ ...user, id: user._id.toString() }));
-  console.warn('MongoDB implementation needed for getAssignableUsers. Returning empty array.');
-  return [];
+  return [...MOCK_ASSIGN_USERS].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
 }
 
 export async function getAssignableUserById(userId: string): Promise<User | null> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB query to fetch an assignable user by ID.
-  // Example: const user = await UserModel.findById(userId, 'id name designation').lean();
-  // return user ? { ...user, id: user._id.toString() } : null;
-  console.warn('MongoDB implementation needed for getAssignableUserById. Returning null.');
-  return null;
+  const user = MOCK_ASSIGN_USERS.find(u => u.id === userId);
+  return user || null;
 }
 
 export async function createAssignableUser(name: string, designation: string): Promise<User> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB operation to create a new assignable user.
-  // Example: const newUser = new UserModel({ name, designation, email: autoGeneratedEmailIfNeeded });
-  // await newUser.save();
-  // return { ...newUser.toObject(), id: newUser._id.toString() };
-  console.warn('MongoDB implementation needed for createAssignableUser. Throwing error.');
-  throw new Error('MongoDB implementation needed for createAssignableUser.');
+  const newUser: User = {
+    id: `assignUser_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name,
+    designation,
+    email: `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Dummy email
+    profileImageUrl: '',
+  };
+  MOCK_ASSIGN_USERS.push(newUser);
+  saveUsersToStorage(MOCK_ASSIGN_USERS);
+  return newUser;
 }
 
 export async function updateAssignableUser(userId: string, updates: { name?: string; designation?: string }): Promise<User | null> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB operation to update an assignable user.
-  // Example: const updatedUser = await UserModel.findByIdAndUpdate(userId, updates, { new: true }).lean();
-  // return updatedUser ? { ...updatedUser, id: updatedUser._id.toString() } : null;
-  console.warn('MongoDB implementation needed for updateAssignableUser. Returning null.');
+  const userIndex = MOCK_ASSIGN_USERS.findIndex(u => u.id === userId);
+  if (userIndex !== -1) {
+    MOCK_ASSIGN_USERS[userIndex] = { ...MOCK_ASSIGN_USERS[userIndex], ...updates };
+    saveUsersToStorage(MOCK_ASSIGN_USERS);
+    return MOCK_ASSIGN_USERS[userIndex];
+  }
   return null;
 }
 
 export async function deleteAssignableUser(userId: string): Promise<boolean> {
   await simulateApiDelay();
-  // TODO: Implement MongoDB operation to delete an assignable user.
-  // 1. Delete the user: const result = await UserModel.findByIdAndDelete(userId);
-  // 2. Unassign tasks from the deleted user: await TaskModel.updateMany({ assignedTo: userId }, { $unset: { assignedTo: "" } });
-  // return !!result;
-  console.warn('MongoDB implementation needed for deleteAssignableUser. Returning false.');
+  const initialUserLength = MOCK_ASSIGN_USERS.length;
+  MOCK_ASSIGN_USERS = MOCK_ASSIGN_USERS.filter(u => u.id !== userId);
+  
+  let userDeleted = MOCK_ASSIGN_USERS.length < initialUserLength;
+
+  if (userDeleted) {
+    saveUsersToStorage(MOCK_ASSIGN_USERS);
+    // Unassign tasks from the deleted user
+    MOCK_TASKS = MOCK_TASKS.map(task => {
+      if (task.assignedTo === userId) {
+        return { ...task, assignedTo: undefined, updatedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss') };
+      }
+      return task;
+    });
+    saveTasksToStorage(MOCK_TASKS);
+    return true;
+  }
   return false;
 }
 
