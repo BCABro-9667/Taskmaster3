@@ -31,7 +31,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: task.title,
-      description: task.description || '',
+      // description removed from here
       assignedTo: task.assignedTo || 'unassigned',
       deadline: task.deadline,
     },
@@ -62,9 +62,10 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
     try {
       const taskDataForApi = {
         title: values.title,
-        description: values.description || '',
+        // description is not part of this form's values
         assignedTo: values.assignedTo === 'unassigned' ? null : values.assignedTo,
         deadline: values.deadline,
+        // status and description are preserved from original task if not explicitly changed by other means
       };
       await updateTask(task.id, taskDataForApi);
       toast({

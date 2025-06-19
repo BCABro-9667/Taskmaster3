@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+// Textarea removed as description is handled separately
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
@@ -113,24 +113,7 @@ export function TaskFormFields({
           </FormItem>
         )}
       />
-      <FormField
-        control={control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description (Optional Note)</FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="Add a more detailed description or note for this task..."
-                className="resize-none"
-                {...field}
-                value={field.value || ''} 
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* Description Textarea removed from here */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={control}
