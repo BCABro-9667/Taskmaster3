@@ -9,12 +9,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CreateAssigneeForm } from "./CreateAssigneeForm";
-import type { User } from '@/types';
+import type { Assignee } from '@/types'; // Changed User to Assignee
 
 interface CreateAssigneeDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAssigneeCreated: (newUser: User) => void;
+  onAssigneeCreated: (newAssignee: Assignee) => void; // Changed User to Assignee
 }
 
 export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated }: CreateAssigneeDialogProps) {

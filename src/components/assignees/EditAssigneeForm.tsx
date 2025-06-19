@@ -15,21 +15,21 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { updateAssignableUser } from '@/lib/tasks';
-import type { User } from '@/types';
+import { updateAssignee } from '@/lib/tasks'; // Updated to updateAssignee
+import type { Assignee } from '@/types'; // Updated to Assignee type
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const editAssigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
-  designation: z.string().min(2, { message: 'Designation must be at least 2 characters.' }).max(50, 'Designation must be 50 characters or less.'),
+  designation: z.string().min(2, { message: 'Designation must be at least 2 characters.' }).max(50, 'Designation must be 50 characters or less.').optional(),
 });
 
 type EditAssigneeFormValues = z.infer<typeof editAssigneeFormSchema>;
 
 interface EditAssigneeFormProps {
-  assignee: User;
-  onAssigneeUpdated: (updatedUser: User) => void;
+  assignee: Assignee; // Updated to Assignee type
+  onAssigneeUpdated: (updatedAssignee: Assignee) => void; // Updated to Assignee type
   closeDialog: () => void;
 }
 
@@ -48,13 +48,13 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: E
   async function onSubmit(values: EditAssigneeFormValues) {
     setIsSubmitting(true);
     try {
-      const updatedUser = await updateAssignableUser(assignee.id, values);
-      if (updatedUser) {
+      const updatedData = await updateAssignee(assignee.id, values); // Updated API call
+      if (updatedData) {
         toast({
           title: 'Assignee Updated',
-          description: `${updatedUser.name}'s details have been updated.`,
+          description: `${updatedData.name}'s details have been updated.`,
         });
-        onAssigneeUpdated(updatedUser);
+        onAssigneeUpdated(updatedData);
         closeDialog();
       } else {
         throw new Error('Failed to update assignee.');
@@ -80,7 +80,7 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: E
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., John Doe" {...field} />
+                <Input placeholder="e.g., Alex Green" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,9 +91,9 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: E
           name="designation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Designation</FormLabel>
+              <FormLabel>Designation (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Software Engineer" {...field} />
+                <Input placeholder="e.g., Designer" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

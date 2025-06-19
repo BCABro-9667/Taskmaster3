@@ -15,11 +15,11 @@ import { updateCurrentUser } from '@/lib/auth'; // Server Action
 import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
 import { Loader2, UserCircle, Image as ImageIcon, Save } from 'lucide-react';
-// Image from next/image is not used here for external user-provided URLs due to domain config needs.
 
 const profileFormSchema = z.object({
   name: z.string().min(1, 'Name is required.').max(50, 'Name must be 50 characters or less.'),
   profileImageUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
+  // Designation field removed
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -42,7 +42,7 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const user = getCurrentUser(); // From client-auth
+    const user = getCurrentUser(); 
     if (user) {
       setCurrentUserForForm(user);
       form.reset({
@@ -61,7 +61,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (watchedImageUrl && form.getFieldState('profileImageUrl').isDirty) {
       try {
-        new URL(watchedImageUrl);
+        new URL(watchedImageUrl); // Basic validation
         setPreviewImageUrl(watchedImageUrl);
       } catch (_) {
         setPreviewImageUrl(null); 
@@ -81,15 +81,15 @@ export default function ProfilePage() {
     }
     setIsSaving(true);
     try {
-      // Call Server Action, passing the user ID
       const updatedUserFromDb = await updateCurrentUser(currentUserForForm.id, {
         name: data.name,
         profileImageUrl: data.profileImageUrl || '',
+        // Designation update removed
       });
 
       if (updatedUserFromDb) {
-        setLocalStorageUser(updatedUserFromDb); // Update client-side localStorage
-        setCurrentUserForForm(updatedUserFromDb); // Update local state for immediate reflection in this component
+        setLocalStorageUser(updatedUserFromDb); 
+        setCurrentUserForForm(updatedUserFromDb); 
         toast({
           title: 'Profile Updated',
           description: 'Your profile information has been saved.',
@@ -189,7 +189,6 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground">No image URL provided or URL is invalid.</p>
               </div>
             )}
-
 
             <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
               {isSaving ? (

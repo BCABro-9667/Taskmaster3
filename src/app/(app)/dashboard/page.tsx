@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Task, User } from '@/types';
-import { getTasks, deleteTask as deleteTaskApi, getAssignableUsers, updateTask } from '@/lib/tasks';
+import type { Task, Assignee } from '@/types'; // Changed User to Assignee
+import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
 import { TaskList } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
@@ -16,24 +16,24 @@ import { TaskItem } from '@/components/tasks/TaskItem';
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [assignableUsers, setAssignableUsers] = useState<User[]>([]);
+  const [assignees, setAssignees] = useState<Assignee[]>([]); // Changed User[] to Assignee[]
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchTasksAndUsers = useCallback(async () => {
+  const fetchTasksAndAssignees = useCallback(async () => { // Renamed function
     setIsLoading(true);
     try {
-      const [fetchedTasks, fetchedUsers] = await Promise.all([
+      const [fetchedTasks, fetchedAssignees] = await Promise.all([ // Renamed variable
         getTasks(),
-        getAssignableUsers()
+        getAssignees() // Changed to getAssignees
       ]);
       setTasks(fetchedTasks);
-      setAssignableUsers(fetchedUsers);
+      setAssignees(fetchedAssignees); // Renamed variable
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error fetching data',
-        description: 'Could not load tasks or users. Please try refreshing.',
+        description: 'Could not load tasks or assignees. Please try refreshing.',
       });
     } finally {
       setIsLoading(false);
@@ -41,15 +41,15 @@ export default function DashboardPage() {
   }, [toast]);
 
   useEffect(() => {
-    fetchTasksAndUsers();
-  }, [fetchTasksAndUsers]);
+    fetchTasksAndAssignees(); // Renamed function call
+  }, [fetchTasksAndAssignees]);
 
   const handleTaskCreated = () => {
-    fetchTasksAndUsers(); 
+    fetchTasksAndAssignees(); 
   };
 
   const handleTaskUpdated = () => {
-    fetchTasksAndUsers(); 
+    fetchTasksAndAssignees(); 
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -70,7 +70,7 @@ export default function DashboardPage() {
     try {
       await updateTask(taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      fetchTasksAndUsers();
+      fetchTasksAndAssignees();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -83,14 +83,13 @@ export default function DashboardPage() {
 
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
   const completedTasks = tasks.filter(task => task.status === 'done');
-  // Archived tasks are not explicitly displayed unless a filter for them is re-added.
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchTasksAndUsers} disabled={isLoading} aria-label="Refresh tasks">
+          <Button variant="outline" onClick={fetchTasksAndAssignees} disabled={isLoading} aria-label="Refresh tasks">
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -116,7 +115,6 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Pending Tasks Section */}
           <section>
             <div className="flex items-center mb-4">
               <ListTodo className="mr-3 h-6 w-6 text-primary" />
@@ -124,7 +122,7 @@ export default function DashboardPage() {
             </div>
             <TaskList 
               tasks={pendingTasks} 
-              assignableUsers={assignableUsers} 
+              assignableUsers={assignees} // Changed assignableUsers to assignees
               onDeleteTask={handleDeleteTask}
               onUpdateTask={handleTaskUpdated}
               onMarkTaskAsComplete={handleMarkTaskAsComplete}
@@ -132,7 +130,6 @@ export default function DashboardPage() {
             />
           </section>
 
-          {/* Completed Tasks Section */}
           {completedTasks.length > 0 && (
             <section>
               <div className="flex items-center mb-4">
@@ -145,13 +142,12 @@ export default function DashboardPage() {
                     <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 rounded-t-lg data-[state=open]:rounded-b-none data-[state=open]:border-b">
                       <div className="flex justify-between items-center w-full">
                         <span className="text-left font-medium text-card-foreground truncate">{task.title}</span>
-                        {/* Status badge can be here or rely on the one inside TaskItem */}
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="p-0 border-t-0"> {/* Remove padding and top border for seamless TaskItem integration */}
+                    <AccordionContent className="p-0 border-t-0"> 
                       <TaskItem 
                         task={task} 
-                        assignableUsers={assignableUsers} 
+                        assignableUsers={assignees} // Changed assignableUsers to assignees
                         onDeleteTask={handleDeleteTask}
                         onUpdateTask={handleTaskUpdated}
                         onMarkTaskAsComplete={handleMarkTaskAsComplete}

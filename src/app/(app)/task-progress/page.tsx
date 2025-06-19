@@ -2,10 +2,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Task, User } from '@/types';
-import { getTasks, getAssignableUsers } from '@/lib/tasks';
+import type { Task, Assignee } from '@/types'; // Changed User to Assignee
+import { getTasks, getAssignees } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BarChart3 as PageIcon, ListChecks } from 'lucide-react'; // Changed BarChart3 to PageIcon
+import { Loader2, BarChart3 as PageIcon, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   BarChart as RechartsBarChart,
@@ -29,7 +29,6 @@ interface AssigneeProgressData {
   total: number;
 }
 
-// Ensure these colors align with your globals.css theme for charts
 const chartConfig = {
   todo: {
     label: "To Do",
@@ -54,14 +53,14 @@ export default function TaskProgressPage() {
   const fetchDataAndProcess = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [tasks, users] = await Promise.all([getTasks(), getAssignableUsers()]);
+      const [tasks, assignees] = await Promise.all([getTasks(), getAssignees()]); // Changed users to assignees
 
       const dataByAssignee: Record<string, AssigneeProgressData> = {};
 
-      users.forEach(user => {
-        dataByAssignee[user.id] = {
-          assigneeId: user.id,
-          assigneeName: user.name || 'Unnamed User',
+      assignees.forEach(assignee => { // Changed user to assignee
+        dataByAssignee[assignee.id] = {
+          assigneeId: assignee.id,
+          assigneeName: assignee.name || 'Unnamed Assignee', // Changed user.name to assignee.name
           todo: 0,
           inprogress: 0,
           done: 0,
@@ -70,21 +69,26 @@ export default function TaskProgressPage() {
       });
 
       tasks.forEach(task => {
-        const assigneeId = task.assignedTo;
+        let assigneeIdForTask: string | undefined;
+        if (typeof task.assignedTo === 'string') {
+            assigneeIdForTask = task.assignedTo;
+        } else if (task.assignedTo && typeof task.assignedTo === 'object') {
+            assigneeIdForTask = task.assignedTo.id;
+        }
 
-        if (!assigneeId || !dataByAssignee[assigneeId]) {
-           // Skip tasks that are unassigned or assigned to users not in the primary MOCK_ASSIGN_USERS list
+
+        if (!assigneeIdForTask || !dataByAssignee[assigneeIdForTask]) {
           return;
         }
         
         if (task.status === 'todo') {
-          dataByAssignee[assigneeId].todo++;
+          dataByAssignee[assigneeIdForTask].todo++;
         } else if (task.status === 'inprogress') {
-          dataByAssignee[assigneeId].inprogress++;
+          dataByAssignee[assigneeIdForTask].inprogress++;
         } else if (task.status === 'done') {
-          dataByAssignee[assigneeId].done++;
+          dataByAssignee[assigneeIdForTask].done++;
         }
-        dataByAssignee[assigneeId].total++;
+        dataByAssignee[assigneeIdForTask].total++;
       });
       
       setProgressData(Object.values(dataByAssignee).filter(data => data.total > 0));
@@ -127,12 +131,12 @@ export default function TaskProgressPage() {
               Overview of tasks by status for each assignee.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-2"> {/* Reduced top padding */}
+          <CardContent className="pt-2"> 
             <ChartContainer config={chartConfig} className="min-h-[350px] w-full aspect-video">
               <RechartsBarChart 
                 data={progressData} 
-                margin={{ top: 5, right: 10, left: -20, bottom: 60 /* Increased bottom for angled labels */ }}
-                barCategoryGap="20%" // Add some gap between bars of different assignees
+                margin={{ top: 5, right: 10, left: -20, bottom: 60 }}
+                barCategoryGap="20%" 
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
@@ -143,7 +147,7 @@ export default function TaskProgressPage() {
                   angle={-45}
                   textAnchor="end"
                   interval={0} 
-                  height={70} // Ensure enough height for angled labels
+                  height={70} 
                   fontSize={12}
                 />
                 <YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={12} />

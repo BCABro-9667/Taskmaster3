@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import type { User } from '@/types';
-import { getAssignableUsers, deleteAssignableUser } from '@/lib/tasks';
+import type { Assignee } from '@/types'; // Changed User to Assignee
+import { getAssignees, deleteAssignee } from '@/lib/tasks'; // Changed function names
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Users as UsersIcon, PlusCircle, Search, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,19 +38,19 @@ import {
 import Link from 'next/link';
 
 export default function AssigneesPage() {
-  const [assignees, setAssignees] = useState<User[]>([]);
+  const [assignees, setAssignees] = useState<Assignee[]>([]); // Changed to Assignee[]
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingAssignee, setEditingAssignee] = useState<User | null>(null);
-  const [deletingAssignee, setDeletingAssignee] = useState<User | null>(null);
+  const [editingAssignee, setEditingAssignee] = useState<Assignee | null>(null); // Changed to Assignee
+  const [deletingAssignee, setDeletingAssignee] = useState<Assignee | null>(null); // Changed to Assignee
 
   const { toast } = useToast();
 
-  const fetchAssignees = useCallback(async () => {
+  const fetchAssigneesData = useCallback(async () => { // Renamed function
     setIsLoading(true);
     try {
-      const fetchedAssignees = await getAssignableUsers();
+      const fetchedAssignees = await getAssignees(); // Changed to getAssignees
       setAssignees(fetchedAssignees);
     } catch (error) {
       toast({
@@ -64,24 +64,24 @@ export default function AssigneesPage() {
   }, [toast]);
 
   useEffect(() => {
-    fetchAssignees();
-  }, [fetchAssignees]);
+    fetchAssigneesData(); // Renamed function call
+  }, [fetchAssigneesData]);
 
-  const handleAssigneeCreated = (newUser: User) => {
-    setAssignees(prev => [...prev, newUser].sort((a,b) => (a.name || '').localeCompare(b.name || '')));
+  const handleAssigneeCreated = (newAssignee: Assignee) => { // Changed type to Assignee
+    setAssignees(prev => [...prev, newAssignee].sort((a,b) => (a.name || '').localeCompare(b.name || '')));
     setIsCreateDialogOpen(false);
   };
 
-  const handleAssigneeUpdated = (updatedUser: User) => {
-    setAssignees(prev => prev.map(user => user.id === updatedUser.id ? updatedUser : user).sort((a,b) => (a.name || '').localeCompare(b.name || '')));
+  const handleAssigneeUpdated = (updatedAssignee: Assignee) => { // Changed type to Assignee
+    setAssignees(prev => prev.map(item => item.id === updatedAssignee.id ? updatedAssignee : item).sort((a,b) => (a.name || '').localeCompare(b.name || '')));
     setEditingAssignee(null);
   };
 
   const confirmDeleteAssignee = async () => {
     if (!deletingAssignee) return;
     try {
-      await deleteAssignableUser(deletingAssignee.id);
-      setAssignees(prev => prev.filter(user => user.id !== deletingAssignee.id));
+      await deleteAssignee(deletingAssignee.id); // Changed to deleteAssignee
+      setAssignees(prev => prev.filter(item => item.id !== deletingAssignee.id));
       toast({ title: 'Assignee Deleted', description: `${deletingAssignee.name} has been removed.` });
     } catch (error) {
       toast({
@@ -147,7 +147,7 @@ export default function AssigneesPage() {
               {filteredAssignees.map(assignee => (
                 <TableRow key={assignee.id}>
                   <TableCell className="font-medium">{assignee.name}</TableCell>
-                  <TableCell>{assignee.designation}</TableCell>
+                  <TableCell>{assignee.designation || 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

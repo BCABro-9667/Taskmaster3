@@ -15,20 +15,20 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { createAssignableUser } from '@/lib/tasks';
-import type { User } from '@/types';
+import { createAssignee } from '@/lib/tasks'; // Updated to createAssignee
+import type { Assignee } from '@/types'; // Updated to Assignee type
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const assigneeFormSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  designation: z.string().min(2, { message: 'Designation must be at least 2 characters.' }),
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
+  designation: z.string().min(2, { message: 'Designation must be at least 2 characters.' }).max(50, 'Designation must be 50 characters or less.').optional(),
 });
 
 type AssigneeFormValues = z.infer<typeof assigneeFormSchema>;
 
 interface CreateAssigneeFormProps {
-  onAssigneeCreated: (newUser: User) => void;
+  onAssigneeCreated: (newAssignee: Assignee) => void; // Updated to Assignee type
   closeDialog: () => void;
 }
 
@@ -47,12 +47,12 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog }: CreateAss
   async function onSubmit(values: AssigneeFormValues) {
     setIsSubmitting(true);
     try {
-      const newUser = await createAssignableUser(values.name, values.designation);
+      const newAssignee = await createAssignee(values.name, values.designation); // Updated API call
       toast({
         title: 'Assignee Created',
-        description: `${newUser.name} has been added.`,
+        description: `${newAssignee.name} has been added.`,
       });
-      onAssigneeCreated(newUser);
+      onAssigneeCreated(newAssignee);
       closeDialog();
     } catch (error) {
       toast({
@@ -75,7 +75,7 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog }: CreateAss
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., John Doe" {...field} />
+                <Input placeholder="e.g., Alex Green" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -86,9 +86,9 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog }: CreateAss
           name="designation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Designation</FormLabel>
+              <FormLabel>Designation (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Software Engineer" {...field} />
+                <Input placeholder="e.g., Designer" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

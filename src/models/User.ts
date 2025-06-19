@@ -6,13 +6,13 @@ export interface IUserDocument extends Omit<UserType, 'id'>, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-// UserSchema will be used for both authenticated users and assignable users
+// UserSchema will be used for authenticated users
 const UserSchemaFields = {
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-  password: { type: String }, // Not required for assignable users if they don't log in
+  password: { type: String, required: true }, // Password is required for login users
   name: { type: String, required: true, trim: true },
-  designation: { type: String, trim: true },
-  profileImageUrl: { type: String, trim: true },
+  // designation field removed from User model
+  profileImageUrl: { type: String, trim: true, default: '' },
 };
 
 const UserSchema = new Schema<IUserDocument>(UserSchemaFields, {
@@ -20,7 +20,7 @@ const UserSchema = new Schema<IUserDocument>(UserSchemaFields, {
   toJSON: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id;
+      ret.id = ret._id.toString(); // Ensure id is a string
       delete ret._id;
       delete ret.__v;
       delete ret.password; // Ensure password hash is not sent
@@ -29,7 +29,7 @@ const UserSchema = new Schema<IUserDocument>(UserSchemaFields, {
   toObject: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id;
+      ret.id = ret._id.toString(); // Ensure id is a string
       delete ret._id;
       delete ret.__v;
       delete ret.password;
@@ -39,7 +39,7 @@ const UserSchema = new Schema<IUserDocument>(UserSchemaFields, {
 
 // Method to compare password for login
 UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  if (!this.password) return false; // Should not happen for an authenticated user
+  if (!this.password) return false; 
   const bcrypt = await import('bcryptjs');
   return bcrypt.compare(candidatePassword, this.password);
 };

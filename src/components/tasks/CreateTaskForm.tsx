@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { createTask, getAssignableUsers } from '@/lib/tasks';
-import type { User, TaskStatus } from '@/types';
+import { createTask, getAssignees } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
+import type { Assignee, TaskStatus } from '@/types'; // Changed User to Assignee
 import { useEffect, useState, useCallback } from 'react';
 import { Loader2, CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
@@ -44,7 +44,7 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
-  const [assignableUsers, setAssignableUsers] = useState<User[]>([]);
+  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]); // Changed User[] to Assignee[], renamed
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
 
@@ -52,27 +52,27 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: '',
-      assignedTo: 'unassigned', // Default to unassigned
+      assignedTo: 'unassigned', 
       deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     },
   });
 
-  const fetchUsers = useCallback(async () => {
+  const fetchAssigneesData = useCallback(async () => { // Renamed function
     try {
-      const users = await getAssignableUsers();
-      setAssignableUsers(users);
+      const fetchedAssignees = await getAssignees(); // Changed to getAssignees
+      setAssigneesForDropdown(fetchedAssignees); // Renamed state variable
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not load users for assignment.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not load assignees for assignment.' });
     }
   }, [toast]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchAssigneesData(); // Renamed function call
+  }, [fetchAssigneesData]);
 
-  const handleAssigneeCreated = (newUser: User) => {
-    fetchUsers().then(() => {
-      form.setValue('assignedTo', newUser.id, { shouldValidate: true });
+  const handleAssigneeCreated = (newAssignee: Assignee) => { // Changed type to Assignee
+    fetchAssigneesData().then(() => {
+      form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
     setIsCreateAssigneeDialogOpen(false);
   };
@@ -126,10 +126,10 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
     try {
       const taskDataForApi = {
         title: values.title,
-        description: '', // Default empty description
+        description: '', 
         assignedTo: values.assignedTo === 'unassigned' ? undefined : values.assignedTo,
         deadline: values.deadline,
-        status: 'todo' as TaskStatus, // Default status
+        status: 'todo' as TaskStatus, 
       };
       await createTask(taskDataForApi);
       toast({
@@ -194,9 +194,9 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {assignableUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
+                    {assigneesForDropdown.map((assignee) => ( // Changed to assigneesForDropdown
+                      <SelectItem key={assignee.id} value={assignee.id}>
+                        {assignee.name}
                       </SelectItem>
                     ))}
                     <SelectSeparator />

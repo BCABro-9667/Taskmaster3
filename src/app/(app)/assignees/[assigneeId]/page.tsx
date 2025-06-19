@@ -3,8 +3,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import type { Task, User } from '@/types';
-import { getTasks, getAssignableUserById, getAssignableUsers, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks';
+import type { Task, Assignee } from '@/types'; // Changed User to Assignee
+import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; // Changed function names
 import { TaskList } from '@/components/tasks/TaskList';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft, Printer } from 'lucide-react';
@@ -19,9 +19,9 @@ export default function AssigneeDetailPage() {
   const params = useParams();
   const assigneeId = params.assigneeId as string;
 
-  const [assignee, setAssignee] = useState<User | null>(null);
+  const [assignee, setAssignee] = useState<Assignee | null>(null); // Changed User to Assignee
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [assignableUsersForTasks, setAssignableUsersForTasks] = useState<User[]>([]);
+  const [allAssigneesForTaskDropdowns, setAllAssigneesForTaskDropdowns] = useState<Assignee[]>([]); // Changed User[] to Assignee[]
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
@@ -29,10 +29,10 @@ export default function AssigneeDetailPage() {
     if (!assigneeId) return;
     setIsLoading(true);
     try {
-      const [fetchedAssignee, fetchedTasks, fetchedAssignableUsers] = await Promise.all([
-        getAssignableUserById(assigneeId),
+      const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
+        getAssigneeById(assigneeId), // Changed to getAssigneeById
         getTasks(), 
-        getAssignableUsers()
+        getAssignees() // Changed to getAssignees
       ]);
 
       if (!fetchedAssignee) {
@@ -40,8 +40,17 @@ export default function AssigneeDetailPage() {
         return;
       }
       setAssignee(fetchedAssignee);
-      setTasks(fetchedTasks.filter(task => task.assignedTo === assigneeId));
-      setAssignableUsersForTasks(fetchedAssignableUsers);
+      setTasks(fetchedTasks.filter(task => {
+          // Handle task.assignedTo being either an ID string or a populated Assignee object
+          if (typeof task.assignedTo === 'string') {
+            return task.assignedTo === assigneeId;
+          } else if (task.assignedTo && typeof task.assignedTo === 'object') {
+            return task.assignedTo.id === assigneeId;
+          }
+          return false;
+        }
+      ));
+      setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
 
     } catch (error) {
       toast({
@@ -145,7 +154,7 @@ export default function AssigneeDetailPage() {
         </div>
         <TaskList
           tasks={pendingTasks}
-          assignableUsers={assignableUsersForTasks}
+          assignableUsers={allAssigneesForTaskDropdowns} // Pass assignees here
           onDeleteTask={handleDeleteTask}
           onUpdateTask={handleTaskUpdatedOrDeleted}
           onMarkTaskAsComplete={handleMarkTaskAsComplete}
@@ -171,7 +180,7 @@ export default function AssigneeDetailPage() {
                 <AccordionContent className="p-0 border-t-0">
                   <TaskItem 
                     task={task} 
-                    assignableUsers={assignableUsersForTasks} 
+                    assignableUsers={allAssigneesForTaskDropdowns} // Pass assignees here
                     onDeleteTask={handleDeleteTask}
                     onUpdateTask={handleTaskUpdatedOrDeleted}
                     onMarkTaskAsComplete={handleMarkTaskAsComplete}

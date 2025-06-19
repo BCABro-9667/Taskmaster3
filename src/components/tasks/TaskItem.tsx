@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Task, User } from '@/types';
+import type { Task, Assignee } from '@/types'; // Changed User to Assignee
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskStatusBadge } from './TaskStatusBadge';
@@ -17,7 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added missing import
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -36,12 +36,12 @@ import {
 import { EditTaskForm } from './EditTaskForm';
 import { EditNoteDialog } from './EditNoteDialog';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+// useToast removed as it's not used in this component directly
 import { cn } from '@/lib/utils';
 
 interface TaskItemProps {
   task: Task;
-  assignableUsers: User[];
+  assignableUsers: Assignee[]; // Changed User[] to Assignee[]
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
   onMarkTaskAsComplete: (taskId: string) => void;
@@ -50,8 +50,17 @@ interface TaskItemProps {
 export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const assignedUser = assignableUsers.find(u => u.id === task.assignedTo);
+  // const { toast } = useToast(); // Removed, not used
+
+  // Determine the assigned user/assignee object from the list based on ID
+  const assignedEntity = assignableUsers.find(u => {
+    if (typeof task.assignedTo === 'string') {
+      return u.id === task.assignedTo;
+    }
+    return task.assignedTo && u.id === task.assignedTo.id;
+  });
+  const assignedAssignee = assignedEntity as Assignee | undefined;
+
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
@@ -105,9 +114,9 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
-            {assignedUser ? (
-              <Link href={`/assignees/${assignedUser.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedUser.name}`}>
-                <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedUser.name}</span>
+            {assignedAssignee ? ( // Check assignedAssignee
+              <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
+                <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedAssignee.name}</span>
               </Link>
             ) : (
               <div className="flex items-center text-muted-foreground" title="Unassigned">

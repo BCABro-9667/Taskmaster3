@@ -9,13 +9,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { EditAssigneeForm } from "./EditAssigneeForm";
-import type { User } from '@/types';
+import type { Assignee } from '@/types'; // Changed User to Assignee
 
 interface EditAssigneeDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  assignee: User;
-  onAssigneeUpdated: (updatedUser: User) => void;
+  assignee: Assignee; // Changed User to Assignee
+  onAssigneeUpdated: (updatedAssignee: Assignee) => void; // Changed User to Assignee
 }
 
 export function EditAssigneeDialog({ isOpen, onOpenChange, assignee, onAssigneeUpdated }: EditAssigneeDialogProps) {

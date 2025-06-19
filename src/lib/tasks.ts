@@ -1,47 +1,32 @@
 
 'use server';
-import type { Task, User, TaskStatus } from '@/types';
-import { format, addDays, subDays } from 'date-fns';
+import type { Task, Assignee, TaskStatus } from '@/types'; // Assignee imported
 import dbConnect from './db';
 import TaskModel, { type ITaskDocument } from '@/models/Task';
-import UserModel, { type IUserDocument } from '@/models/User';
+import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee'; // AssigneeModel imported
 import mongoose from 'mongoose';
 
-
+// Helper to convert Mongoose Task document to plain Task object
 function toPlainTask(taskDoc: ITaskDocument | null): Task | null {
   if (!taskDoc) return null;
-  const taskObject = taskDoc.toObject();
-  return {
-    ...taskObject,
-    id: taskObject.id.toString(),
-    assignedTo: taskObject.assignedTo ? taskObject.assignedTo.toString() : undefined,
-    // Ensure dates are in ISO string format if not already
-    createdAt: taskObject.createdAt instanceof Date ? taskObject.createdAt.toISOString() : taskObject.createdAt,
-    updatedAt: taskObject.updatedAt instanceof Date ? taskObject.updatedAt.toISOString() : taskObject.updatedAt,
-
-  };
+  const taskObject = taskDoc.toObject(); // This uses the TaskModel's toObject transform
+  return taskObject as Task;
 }
 
-function toPlainUser(userDoc: IUserDocument | null): User | null {
-  if (!userDoc) return null;
-  const userObject = userDoc.toObject();
-  return {
-    id: userObject.id.toString(),
-    email: userObject.email,
-    name: userObject.name,
-    designation: userObject.designation,
-    profileImageUrl: userObject.profileImageUrl,
-  };
+// Helper to convert Mongoose Assignee document to plain Assignee object
+function toPlainAssignee(assigneeDoc: IAssigneeDocument | null): Assignee | null {
+  if (!assigneeDoc) return null;
+  return assigneeDoc.toObject() as Assignee; // This uses the AssigneeModel's toObject transform
 }
+
 
 export async function getTasks(): Promise<Task[]> {
   await dbConnect();
   const taskDocs = await TaskModel.find({}).sort({ createdAt: -1 }).populate('assignedTo');
   return taskDocs.map(doc => {
-    const task = doc.toObject() as Task; // toObject applies transforms
-    if (doc.assignedTo && doc.assignedTo instanceof mongoose.Model) {
-        task.assignedTo = (doc.assignedTo as IUserDocument).toObject() as any; // Use User model's toObject for assignee
-    }
+    const task = doc.toObject() as Task; // TaskModel toObject handles basic structure
+    // If assignedTo is populated, it would be an Assignee object (handled by AssigneeModel toObject)
+    // If not populated, it's an ObjectId string, which is fine for the Task type
     return task;
   });
 }
@@ -51,15 +36,10 @@ export async function getTaskById(id: string): Promise<Task | undefined> {
   if (!mongoose.Types.ObjectId.isValid(id)) return undefined;
   const taskDoc = await TaskModel.findById(id).populate('assignedTo');
   if (!taskDoc) return undefined;
-
-  const task = taskDoc.toObject() as Task;
-  if (taskDoc.assignedTo && taskDoc.assignedTo instanceof mongoose.Model) {
-      task.assignedTo = (taskDoc.assignedTo as IUserDocument).toObject() as any;
-  }
-  return task;
+  return toPlainTask(taskDoc);
 }
 
-export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo'> & { assignedTo?: string }): Promise<Task> {
   await dbConnect();
   const newTaskData: Partial<ITaskDocument> = {
     title: taskData.title,
@@ -70,18 +50,13 @@ export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'upda
   if (taskData.assignedTo && mongoose.Types.ObjectId.isValid(taskData.assignedTo)) {
     newTaskData.assignedTo = new mongoose.Types.ObjectId(taskData.assignedTo);
   } else {
-    newTaskData.assignedTo = undefined; // Explicitly set to undefined if invalid or not provided
+    newTaskData.assignedTo = undefined; 
   }
 
   const newTaskDoc = new TaskModel(newTaskData);
   await newTaskDoc.save();
   const populatedTaskDoc = await TaskModel.findById(newTaskDoc._id).populate('assignedTo');
-  
-  const task = populatedTaskDoc!.toObject() as Task;
-  if (populatedTaskDoc!.assignedTo && populatedTaskDoc!.assignedTo instanceof mongoose.Model) {
-      task.assignedTo = (populatedTaskDoc!.assignedTo as IUserDocument).toObject() as any;
-  }
-  return task;
+  return toPlainTask(populatedTaskDoc)!;
 }
 
 export async function updateTask(id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo'>> & { assignedTo?: string | null }): Promise<Task | null> {
@@ -90,24 +65,15 @@ export async function updateTask(id: string, updates: Partial<Omit<Task, 'id' | 
 
   const updateData: any = { ...updates };
   if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
-    updateData.assignedTo = undefined; // Unassign
+    updateData.assignedTo = undefined; 
   } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
     updateData.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
   } else {
-    delete updateData.assignedTo; // Don't update if invalid and not explicitly unassigning
+    delete updateData.assignedTo; 
   }
   
-  // Ensure `updatedAt` is handled by Mongoose timestamps or set manually if needed.
-  // Mongoose timestamps will handle this automatically.
-
   const updatedTaskDoc = await TaskModel.findByIdAndUpdate(id, updateData, { new: true }).populate('assignedTo');
-  if (!updatedTaskDoc) return null;
-  
-  const task = updatedTaskDoc.toObject() as Task;
-  if (updatedTaskDoc.assignedTo && updatedTaskDoc.assignedTo instanceof mongoose.Model) {
-      task.assignedTo = (updatedTaskDoc.assignedTo as IUserDocument).toObject() as any;
-  }
-  return task;
+  return toPlainTask(updatedTaskDoc);
 }
 
 export async function deleteTask(id: string): Promise<boolean> {
@@ -118,64 +84,47 @@ export async function deleteTask(id: string): Promise<boolean> {
 }
 
 
-// Functions for Assignable Users (which are also Users in our simplified model)
-export async function getAssignableUsers(): Promise<User[]> {
+// Functions for Assignees
+export async function getAssignees(): Promise<Assignee[]> {
   await dbConnect();
-  // For now, all users are considered assignable. You might add a role/flag later.
-  const userDocs = await UserModel.find({}).sort({ name: 1 });
-  return userDocs.map(doc => doc.toObject() as User);
+  const assigneeDocs = await AssigneeModel.find({}).sort({ name: 1 });
+  return assigneeDocs.map(doc => toPlainAssignee(doc)!);
 }
 
-export async function getAssignableUserById(userId: string): Promise<User | null> {
+export async function getAssigneeById(assigneeId: string): Promise<Assignee | null> {
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
-  const userDoc = await UserModel.findById(userId);
-  return userDoc ? userDoc.toObject() as User : null;
+  if (!mongoose.Types.ObjectId.isValid(assigneeId)) return null;
+  const assigneeDoc = await AssigneeModel.findById(assigneeId);
+  return toPlainAssignee(assigneeDoc);
 }
 
-export async function createAssignableUser(name: string, designation: string, email?: string): Promise<User> {
+export async function createAssignee(name: string, designation?: string): Promise<Assignee> {
   await dbConnect();
-  // For assignable users created this way, we might not require a password
-  // if they are not intended to log in, or set a default one.
-  // For simplicity, we'll use the same User model.
-  // A more robust system might differentiate user types or roles.
-  
-  const userEmail = email || `${name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '')}@taskmaster.example.com`;
-
-  const existingUser = await UserModel.findOne({ email: userEmail });
-  if (existingUser) {
-    throw new Error(`User with email ${userEmail} already exists. Please use a unique email if providing one, or the generated one might conflict.`);
-  }
-
-  const newUserDoc = new UserModel({
+  const newAssigneeDoc = new AssigneeModel({
     name,
-    email: userEmail,
-    designation,
-    // password: 'defaultPasswordForAssignableUser', // Or handle this differently
-    profileImageUrl: '',
+    designation: designation || '',
   });
-  await newUserDoc.save(); // Note: if password field is present and not set, pre-save hook for hashing won't run or might error if password is required by schema logic not shown here.
-                        // Current UserSchema does not require password.
-  return newUserDoc.toObject() as User;
+  await newAssigneeDoc.save();
+  return toPlainAssignee(newAssigneeDoc)!;
 }
 
-export async function updateAssignableUser(userId: string, updates: { name?: string; designation?: string }): Promise<User | null> {
+export async function updateAssignee(assigneeId: string, updates: { name?: string; designation?: string }): Promise<Assignee | null> {
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
-  const userDoc = await UserModel.findByIdAndUpdate(userId, updates, { new: true });
-  return userDoc ? userDoc.toObject() as User : null;
+  if (!mongoose.Types.ObjectId.isValid(assigneeId)) return null;
+  const assigneeDoc = await AssigneeModel.findByIdAndUpdate(assigneeId, updates, { new: true });
+  return toPlainAssignee(assigneeDoc);
 }
 
-export async function deleteAssignableUser(userId: string): Promise<boolean> {
+export async function deleteAssignee(assigneeId: string): Promise<boolean> {
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(userId)) return false;
+  if (!mongoose.Types.ObjectId.isValid(assigneeId)) return false;
 
-  const result = await UserModel.findByIdAndDelete(userId);
+  const result = await AssigneeModel.findByIdAndDelete(assigneeId);
   if (result) {
-    // Unassign tasks from the deleted user
+    // Unassign tasks from the deleted assignee
     await TaskModel.updateMany(
-      { assignedTo: new mongoose.Types.ObjectId(userId) },
-      { $unset: { assignedTo: "" } } // Or $set: { assignedTo: null } if preferred
+      { assignedTo: new mongoose.Types.ObjectId(assigneeId) },
+      { $unset: { assignedTo: "" } } 
     );
     return true;
   }

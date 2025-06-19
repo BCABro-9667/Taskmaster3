@@ -9,7 +9,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-// Textarea removed as description is handled separately
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
@@ -23,7 +22,7 @@ import {
   SelectSeparator
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { User } from '@/types';
+import type { Assignee } from '@/types'; // Changed User to Assignee
 import type { TaskFormValues } from './TaskFormSchema';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
@@ -35,7 +34,7 @@ const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 interface TaskFormFieldsProps {
   control: Control<TaskFormValues>;
   setValue: UseFormSetValue<TaskFormValues>;
-  assignableUsers: User[];
+  assignableUsers: Assignee[]; // Changed User[] to Assignee[]
   onOpenCreateAssigneeDialog: () => void;
   isSubmittingAi?: boolean;
   setIsSubmittingAi?: (isSubmitting: boolean) => void;
@@ -45,7 +44,7 @@ interface TaskFormFieldsProps {
 export function TaskFormFields({
   control,
   setValue,
-  assignableUsers,
+  assignableUsers, // Prop name remains, type changed
   onOpenCreateAssigneeDialog,
   isSubmittingAi,
   setIsSubmittingAi,
@@ -113,7 +112,6 @@ export function TaskFormFields({
           </FormItem>
         )}
       />
-      {/* Description Textarea removed from here */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={control}
@@ -133,14 +131,14 @@ export function TaskFormFields({
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a user" />
+                    <SelectValue placeholder="Select an assignee" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {assignableUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
+                  {assignableUsers.map((assignee) => ( // Iterate over assignees
+                    <SelectItem key={assignee.id} value={assignee.id}>
+                      {assignee.name}
                     </SelectItem>
                   ))}
                   <SelectSeparator />
@@ -186,7 +184,7 @@ export function TaskFormFields({
                         setValue('deadline', date ? format(date, 'yyyy-MM-dd') : '', { shouldValidate: true });
                         setIsCalendarOpen(false);
                       }}
-                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} // Disable past dates
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} 
                       initialFocus
                     />
                   </PopoverContent>
