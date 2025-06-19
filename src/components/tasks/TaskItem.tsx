@@ -107,7 +107,6 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
           <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
             {assignedUser ? (
               <Link href={`/assignees/${assignedUser.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedUser.name}`}>
-                <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 no-print" />
                 <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedUser.name}</span>
               </Link>
             ) : (
