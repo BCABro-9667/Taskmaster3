@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Task, Assignee } from '@/types'; // Changed User to Assignee
-import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
+import type { Task, Assignee, User } from '@/types';
+import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks';
 import { TaskList } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
@@ -12,23 +12,34 @@ import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, ClipboardList }
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TaskItem } from '@/components/tasks/TaskItem';
+import { getCurrentUser } from '@/lib/client-auth';
 
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [assignees, setAssignees] = useState<Assignee[]>([]); // Changed User[] to Assignee[]
+  const [assignees, setAssignees] = useState<Assignee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  const fetchTasksAndAssignees = useCallback(async () => { // Renamed function
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+  }, []);
+
+  const fetchTasksAndAssignees = useCallback(async () => {
+    if (!currentUser?.id) {
+      setIsLoading(false); // Ensure loading stops if no user
+      return;
+    }
     setIsLoading(true);
     try {
-      const [fetchedTasks, fetchedAssignees] = await Promise.all([ // Renamed variable
-        getTasks(),
-        getAssignees() // Changed to getAssignees
+      const [fetchedTasks, fetchedAssignees] = await Promise.all([
+        getTasks(currentUser.id),
+        getAssignees(currentUser.id)
       ]);
-      setTasks(fetchedTasks);
-      setAssignees(fetchedAssignees); // Renamed variable
+      setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setAssignees(fetchedAssignees);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -38,23 +49,47 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [currentUser, toast]);
 
   useEffect(() => {
-    fetchTasksAndAssignees(); // Renamed function call
-  }, [fetchTasksAndAssignees]);
+    if (currentUser) {
+      fetchTasksAndAssignees();
+    } else {
+       setIsLoading(false); // If no current user, stop loading
+    }
+  }, [currentUser, fetchTasksAndAssignees]);
 
-  const handleTaskCreated = () => {
-    fetchTasksAndAssignees(); 
+  const handleTaskCreated = (newTask: Task) => {
+    // Optimistically add the new task. It should be fully populated from the server.
+    setTasks(prevTasks => [newTask, ...prevTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    // Re-fetch assignees in case a new one was created via the task form
+    if (currentUser?.id) {
+      getAssignees(currentUser.id).then(fetchedAssignees => {
+        setAssignees(fetchedAssignees);
+      }).catch(error => {
+        toast({
+          variant: 'destructive',
+          title: 'Error refreshing assignees',
+          description: 'Could not update the list of assignees.',
+        });
+      });
+      // Optionally, re-fetch all tasks for strict consistency, though optimistic update is faster for UI
+      // getTasks(currentUser.id).then(fetchedTasks => {
+      //   setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      // });
+    }
   };
 
   const handleTaskUpdated = () => {
-    fetchTasksAndAssignees(); 
+    if (currentUser) {
+      fetchTasksAndAssignees();
+    }
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    if (!currentUser?.id) return;
     try {
-      await deleteTaskApi(taskId);
+      await deleteTaskApi(currentUser.id, taskId);
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
     } catch (error) {
@@ -67,8 +102,9 @@ export default function DashboardPage() {
   };
   
   const handleMarkTaskAsComplete = async (taskId: string) => {
+    if (!currentUser?.id) return;
     try {
-      await updateTask(taskId, { status: 'done' });
+      await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
       fetchTasksAndAssignees();
     } catch (error) {
@@ -83,6 +119,23 @@ export default function DashboardPage() {
 
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
   const completedTasks = tasks.filter(task => task.status === 'done');
+
+  if (isLoading && !currentUser) { // Initial load before user is determined
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (!currentUser) { // After attempting to get user, if none, show login prompt or similar
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <p className="text-lg text-muted-foreground">Please log in to view your dashboard.</p>
+         <Button onClick={() => window.location.href = '/'} className="mt-4">Go to Homepage</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -122,7 +175,8 @@ export default function DashboardPage() {
             </div>
             <TaskList 
               tasks={pendingTasks} 
-              assignableUsers={assignees} // Changed assignableUsers to assignees
+              assignableUsers={assignees}
+              currentUserId={currentUser.id}
               onDeleteTask={handleDeleteTask}
               onUpdateTask={handleTaskUpdated}
               onMarkTaskAsComplete={handleMarkTaskAsComplete}
@@ -147,7 +201,8 @@ export default function DashboardPage() {
                     <AccordionContent className="p-0 border-t-0"> 
                       <TaskItem 
                         task={task} 
-                        assignableUsers={assignees} // Changed assignableUsers to assignees
+                        assignableUsers={assignees}
+                        currentUserId={currentUser.id}
                         onDeleteTask={handleDeleteTask}
                         onUpdateTask={handleTaskUpdated}
                         onMarkTaskAsComplete={handleMarkTaskAsComplete}
@@ -177,3 +232,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

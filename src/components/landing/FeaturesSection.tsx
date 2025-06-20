@@ -2,13 +2,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListChecks, Users, CalendarClock, BrainCircuit, BarChart3 } from 'lucide-react';
 import Image from 'next/image';
+import img1 from './11.png'
+import img2 from './2.png'
+import img3 from './3.png'
+import img4 from './4.png'
 
 const features = [
   {
     icon: <ListChecks className="h-8 w-8 text-primary" />,
     title: 'Comprehensive Task Management',
     description: 'Create, assign, and track tasks with deadlines, statuses, and notes. Keep everything organized in one place.',
-    image: 'https://placehold.co/500x300.png',
+    image: img1,
     imageAlt: 'Task list interface',
     imageHint: 'task list'
   },
@@ -16,7 +20,7 @@ const features = [
     icon: <Users className="h-8 w-8 text-primary" />,
     title: 'Assignee Management',
     description: 'Easily manage assignees, view their workload, and delegate tasks effectively to team members.',
-    image: 'https://placehold.co/500x300.png',
+    image: img2,
     imageAlt: 'Assignee profile page',
     imageHint: 'team collaboration'
   },
@@ -24,7 +28,7 @@ const features = [
     icon: <BrainCircuit className="h-8 w-8 text-primary" />,
     title: 'AI-Powered Deadline Suggestions',
     description: 'Leverage artificial intelligence to get smart deadline suggestions based on task details and workload.',
-    image: 'https://placehold.co/500x300.png',
+    image: img3,
     imageAlt: 'AI suggestion for deadline',
     imageHint: 'artificial intelligence'
   },
@@ -32,7 +36,7 @@ const features = [
     icon: <BarChart3 className="h-8 w-8 text-primary" />,
     title: 'Progress Tracking',
     description: 'Visualize task progress for assignees with intuitive charts and reports to stay on top of your projects.',
-    image: 'https://placehold.co/500x300.png',
+    image: img4,
     imageAlt: 'Progress chart visualization',
     imageHint: 'dashboard chart'
   },
@@ -73,7 +77,7 @@ export function FeaturesSection() {
                 alt={feature.imageAlt}
                 width={500}
                 height={300}
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full shadow-lg"
+                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full "
                 data-ai-hint={feature.imageHint}
               />
             </div>

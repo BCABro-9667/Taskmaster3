@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { createTask, getAssignees } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
-import type { Assignee, TaskStatus } from '@/types'; // Changed User to Assignee
+import { createTask, getAssignees } from '@/lib/tasks';
+import type { Assignee, Task, TaskStatus } from '@/types';
 import { useEffect, useState, useCallback } from 'react';
 import { Loader2, CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
@@ -33,20 +33,29 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
+import { getCurrentUser } from '@/lib/client-auth';
 
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
-  onTaskCreated: () => void;
+  onTaskCreated: (newTask: Task) => void; // Expects the newly created Task object
 }
 
 export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
-  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]); // Changed User[] to Assignee[], renamed
+  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      setCurrentUserId(user.id);
+    }
+  }, []);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -57,20 +66,23 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
     },
   });
 
-  const fetchAssigneesData = useCallback(async () => { // Renamed function
+  const fetchAssigneesData = useCallback(async () => {
+    if (!currentUserId) return;
     try {
-      const fetchedAssignees = await getAssignees(); // Changed to getAssignees
-      setAssigneesForDropdown(fetchedAssignees); // Renamed state variable
+      const fetchedAssignees = await getAssignees(currentUserId);
+      setAssigneesForDropdown(fetchedAssignees);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not load assignees for assignment.' });
     }
-  }, [toast]);
+  }, [toast, currentUserId]);
 
   useEffect(() => {
-    fetchAssigneesData(); // Renamed function call
-  }, [fetchAssigneesData]);
+    if (currentUserId) {
+      fetchAssigneesData();
+    }
+  }, [fetchAssigneesData, currentUserId]);
 
-  const handleAssigneeCreated = (newAssignee: Assignee) => { // Changed type to Assignee
+  const handleAssigneeCreated = (newAssignee: Assignee) => {
     fetchAssigneesData().then(() => {
       form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
@@ -122,6 +134,10 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   };
 
   async function onSubmit(values: TaskFormValues) {
+    if (!currentUserId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot create task.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const taskDataForApi = {
@@ -131,12 +147,12 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
         deadline: values.deadline,
         status: 'todo' as TaskStatus, 
       };
-      await createTask(taskDataForApi);
+      const newTask = await createTask(currentUserId, taskDataForApi); // Get the returned task
       toast({
         title: 'Task Created',
-        description: `"${values.title}" has been added to your tasks.`,
+        description: `"${newTask.title}" has been added to your tasks.`,
       });
-      onTaskCreated();
+      onTaskCreated(newTask); // Pass the new task
       form.reset({
         title: '',
         assignedTo: 'unassigned',
@@ -186,6 +202,7 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
                     }
                   }} 
                   value={field.value || 'unassigned'}
+                  disabled={!currentUserId}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -194,7 +211,7 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {assigneesForDropdown.map((assignee) => ( // Changed to assigneesForDropdown
+                    {assigneesForDropdown.map((assignee) => (
                       <SelectItem key={assignee.id} value={assignee.id}>
                         {assignee.name}
                       </SelectItem>
@@ -266,7 +283,7 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
             )}
           />
 
-          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmitting || isSubmittingAi}>
+          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmitting || isSubmittingAi || !currentUserId}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Task
           </Button>
@@ -280,3 +297,4 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
     </>
   );
 }
+

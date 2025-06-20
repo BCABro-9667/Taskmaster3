@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import main from './1.png';
 import { CheckCircle } from 'lucide-react';
 
 export function HeroSection() {
@@ -42,11 +43,11 @@ export function HeroSection() {
             </div>
           </div>
           <Image
-            src="https://placehold.co/650x450.png"
+            src={main}
             alt="TaskMaster App Screenshot"
             width={650}
             height={450}
-            className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last shadow-2xl"
+            className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last "
             data-ai-hint="productivity app interface"
           />
         </div>
