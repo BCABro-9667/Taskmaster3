@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from './ThemeToggle'; // Import the ThemeToggle component
 
 export function Navbar() {
   const router = useRouter();
@@ -51,11 +52,9 @@ export function Navbar() {
 
   const handleLogout = () => { // No longer async, as clearCurrentUser is sync
     clearCurrentUser(); // Use client-auth utility
-    // No need to explicitly set currentUser to null here,
-    // the 'storage' event listener and subsequent updateUserState will handle it.
     toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
     router.push('/login');
-    router.refresh(); // Important to re-trigger server components and layout if needed
+    router.refresh(); 
   };
 
   const getUserInitials = (name: string | undefined) => {
@@ -99,6 +98,8 @@ export function Navbar() {
                 ))}
               </div>
             )}
+
+            <ThemeToggle /> {/* Added ThemeToggle component here */}
 
             {currentUser ? (
              <DropdownMenu>
