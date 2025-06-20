@@ -4,7 +4,7 @@
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'; // Added useState
 import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/client-auth';
 import { Loader2 } from 'lucide-react';
