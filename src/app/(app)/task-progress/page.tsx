@@ -18,8 +18,8 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
-import { getCurrentUser } from '@/lib/client-auth';
-import { Button } from '@/components/ui/button'; // Added button import
+import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
+import { Button } from '@/components/ui/button';
 
 
 interface AssigneeProgressData {
@@ -49,23 +49,14 @@ const chartConfig = {
 
 export default function TaskProgressPage() {
   const [progressData, setProgressData] = useState<AssigneeProgressData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Covers initial auth check and data load
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const user = getCurrentUser();
-    setCurrentUser(user);
-  }, []);
-
-  const fetchDataAndProcess = useCallback(async () => {
-    if (!currentUser?.id) {
-      setIsLoading(false);
-      return;
-    }
+  const fetchDataAndProcess = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
-      const [tasks, assignees] = await Promise.all([getTasks(currentUser.id), getAssignees(currentUser.id)]); 
+      const [tasks, assignees] = await Promise.all([getTasks(userId), getAssignees(userId)]); 
 
       const dataByAssignee: Record<string, AssigneeProgressData> = {};
 
@@ -89,7 +80,7 @@ export default function TaskProgressPage() {
         }
 
         if (!assigneeIdForTask || !dataByAssignee[assigneeIdForTask]) {
-          return;
+          return; // Skip if task is unassigned or assignee doesn't exist in user's list
         }
         
         if (task.status === 'todo') {
@@ -110,20 +101,25 @@ export default function TaskProgressPage() {
         title: 'Error fetching progress data',
         description: 'Could not load data for charts. Please try refreshing.',
       });
+      setProgressData([]);
     } finally {
       setIsLoading(false);
     }
-  }, [toast, currentUser]);
+  }, [toast]);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchDataAndProcess();
+    const user = clientAuthGetCurrentUser();
+    if (user && user.id) {
+      setCurrentUser(user);
+      fetchDataAndProcess(user.id);
     } else {
-      setIsLoading(false);
+      setCurrentUser(null);
+      setProgressData([]);
+      setIsLoading(false); // Auth check done, no user/data
     }
-  }, [fetchDataAndProcess, currentUser]);
+  }, [fetchDataAndProcess]);
 
-  if (isLoading && !currentUser) {
+  if (!currentUser && isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -131,7 +127,7 @@ export default function TaskProgressPage() {
     );
   }
 
-  if (!currentUser) {
+  if (!currentUser && !isLoading) {
      return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <p className="text-lg text-muted-foreground">Please log in to view task progress.</p>
@@ -140,7 +136,7 @@ export default function TaskProgressPage() {
     );
   }
   
-  if (isLoading) { // Show loader if current user exists but data is still loading
+  if (currentUser && isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -36,11 +36,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/client-auth';
+import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 
 export default function AssigneesPage() {
   const [assignees, setAssignees] = useState<Assignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Covers initial auth check and data load
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAssignee, setEditingAssignee] = useState<Assignee | null>(null);
@@ -49,19 +49,10 @@ export default function AssigneesPage() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    const user = getCurrentUser();
-    setCurrentUser(user);
-  }, []);
-
-  const fetchAssigneesData = useCallback(async () => {
-    if (!currentUser?.id) {
-      setIsLoading(false);
-      return;
-    }
+  const fetchData = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
-      const fetchedAssignees = await getAssignees(currentUser.id);
+      const fetchedAssignees = await getAssignees(userId);
       setAssignees(fetchedAssignees);
     } catch (error) {
       toast({
@@ -69,18 +60,24 @@ export default function AssigneesPage() {
         title: 'Error fetching assignees',
         description: 'Could not load assignees. Please try refreshing.',
       });
+      setAssignees([]);
     } finally {
       setIsLoading(false);
     }
-  }, [toast, currentUser]);
+  }, [toast]);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchAssigneesData();
+    const user = clientAuthGetCurrentUser();
+    if (user && user.id) {
+      setCurrentUser(user);
+      fetchData(user.id);
     } else {
-      setIsLoading(false);
+      setCurrentUser(null);
+      setAssignees([]);
+      setIsLoading(false); // Auth check done, no user/data
     }
-  }, [currentUser, fetchAssigneesData]);
+  }, [fetchData]);
+
 
   const handleAssigneeCreated = (newAssignee: Assignee) => {
     setAssignees(prev => [...prev, newAssignee].sort((a,b) => (a.name || '').localeCompare(b.name || '')));
@@ -90,6 +87,8 @@ export default function AssigneesPage() {
   const handleAssigneeUpdated = (updatedAssignee: Assignee) => {
     setAssignees(prev => prev.map(item => item.id === updatedAssignee.id ? updatedAssignee : item).sort((a,b) => (a.name || '').localeCompare(b.name || '')));
     setEditingAssignee(null);
+    // Optionally re-fetch if complex updates might affect sorting or other derived state
+    // if (currentUser && currentUser.id) fetchData(currentUser.id);
   };
 
   const confirmDeleteAssignee = async () => {
@@ -110,13 +109,13 @@ export default function AssigneesPage() {
   };
 
   const filteredAssignees = useMemo(() => {
-    return assignees.filter(assignee =>
-      assignee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      assignee.designation?.toLowerCase().includes(searchTerm.toLowerCase())
+    return assignees.filter(assigneeItem => // Renamed to avoid conflict with state
+      assigneeItem.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      assigneeItem.designation?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [assignees, searchTerm]);
 
-  if (isLoading && !currentUser) {
+  if (!currentUser && isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -124,11 +123,19 @@ export default function AssigneesPage() {
     );
   }
 
-  if (!currentUser) {
+  if (!currentUser && !isLoading) {
      return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <p className="text-lg text-muted-foreground">Please log in to manage assignees.</p>
          <Button onClick={() => window.location.href = '/'} className="mt-4">Go to Homepage</Button>
+      </div>
+    );
+  }
+  
+  if (currentUser && isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
@@ -157,11 +164,7 @@ export default function AssigneesPage() {
           className="pl-10 w-full"
         />
       </div>
-      {isLoading ? (
-         <div className="flex justify-center items-center min-h-[calc(50vh)]"> {/* Adjusted height */}
-           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-         </div>
-      ) : filteredAssignees.length > 0 ? (
+      {filteredAssignees.length > 0 ? (
         <div className="border rounded-lg shadow-sm">
           <Table>
             <TableHeader>
@@ -172,10 +175,10 @@ export default function AssigneesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAssignees.map(assignee => (
-                <TableRow key={assignee.id}>
-                  <TableCell className="font-medium">{assignee.name}</TableCell>
-                  <TableCell>{assignee.designation || 'N/A'}</TableCell>
+              {filteredAssignees.map(assigneeItem => ( // Renamed to avoid conflict
+                <TableRow key={assigneeItem.id}>
+                  <TableCell className="font-medium">{assigneeItem.name}</TableCell>
+                  <TableCell>{assigneeItem.designation || 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -186,17 +189,17 @@ export default function AssigneesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/assignees/${assignee.id}`} className="cursor-pointer">
+                          <Link href={`/assignees/${assigneeItem.id}`} className="cursor-pointer">
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setEditingAssignee(assignee)} className="cursor-pointer">
+                        <DropdownMenuItem onClick={() => setEditingAssignee(assigneeItem)} className="cursor-pointer">
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setDeletingAssignee(assignee)} className="cursor-pointer text-destructive focus:text-destructive">
+                        <DropdownMenuItem onClick={() => setDeletingAssignee(assigneeItem)} className="cursor-pointer text-destructive focus:text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
