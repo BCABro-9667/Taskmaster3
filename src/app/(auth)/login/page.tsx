@@ -1,8 +1,35 @@
+
+'use client';
+
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2 } from 'lucide-react'; // Using Building2 as a generic 'company' icon for TaskMaster
+import { Building2 } from 'lucide-react'; 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from '@/lib/client-auth';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      router.replace('/dashboard');
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-xl">
