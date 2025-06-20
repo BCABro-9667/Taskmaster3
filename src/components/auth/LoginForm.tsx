@@ -19,7 +19,7 @@ import { login } from '@/lib/auth'; // Server Action
 import { setCurrentUser } from '@/lib/client-auth'; // Client-side utility
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Link from 'next/link';
+// Link import removed as it's no longer used here
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -27,7 +27,11 @@ const formSchema = z.object({
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-export function LoginForm() {
+interface LoginFormProps {
+  onSuccess?: () => void;
+}
+
+export function LoginForm({ onSuccess }: LoginFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -51,8 +55,12 @@ export function LoginForm() {
           title: 'Login Successful',
           description: `Welcome back, ${user.name}!`,
         });
-        router.push('/dashboard');
-        router.refresh(); 
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/dashboard');
+          router.refresh(); 
+        }
       } else {
         toast({
           variant: 'destructive',
@@ -73,7 +81,7 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
         <FormField
           control={form.control}
           name="email"
@@ -116,12 +124,7 @@ export function LoginForm() {
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login
         </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            Sign up
-          </Link>
-        </p>
+        {/* "Don't have an account?" link removed */}
       </form>
     </Form>
   );

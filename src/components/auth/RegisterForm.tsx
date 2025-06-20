@@ -19,7 +19,7 @@ import { register } from '@/lib/auth'; // Server Action
 import { setCurrentUser } from '@/lib/client-auth'; // Client-side utility
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Link from 'next/link';
+// Link import removed as it's no longer used here
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -28,7 +28,11 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  onSuccess?: () => void;
+}
+
+export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -51,15 +55,20 @@ export function RegisterForm() {
         setCurrentUser(user); // Update client-side localStorage
         toast({
           title: 'Registration Successful',
-          description: `Welcome, ${user.name}! You can now log in.`,
+          description: `Welcome, ${user.name}!`,
         });
-        router.push('/dashboard'); 
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/dashboard'); 
+          router.refresh();
+        }
       } else {
+        // This case might not be reached if register throws an error for existing user.
         toast({
           variant: 'destructive',
           title: 'Registration Failed',
-          description: 'Could not create your account. Please try again.',
+          description: 'Could not create your account. An unknown error occurred.',
         });
       }
     } catch (error) {
@@ -75,7 +84,7 @@ export function RegisterForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
         <FormField
           control={form.control}
           name="name"
@@ -131,12 +140,7 @@ export function RegisterForm() {
            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create Account
         </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Log in
-          </Link>
-        </p>
+        {/* "Already have an account?" link removed */}
       </form>
     </Form>
   );

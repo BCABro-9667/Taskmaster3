@@ -50,10 +50,10 @@ export function Navbar() {
   }, []);
 
 
-  const handleLogout = () => { // No longer async, as clearCurrentUser is sync
-    clearCurrentUser(); // Use client-auth utility
+  const handleLogout = () => { 
+    clearCurrentUser(); 
     toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
-    router.push('/login');
+    router.push('/'); // Redirect to home page
     router.refresh(); 
   };
 
@@ -142,9 +142,8 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-             <Button asChild variant="outline">
-                <Link href="/login">Login</Link>
-            </Button>
+            // No login/signup buttons here for the authenticated navbar
+            null
           )}
           </div>
         </div>
