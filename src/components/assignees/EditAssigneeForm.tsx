@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { updateAssignee } from '@/lib/tasks'; // Updated to updateAssignee
-import type { Assignee } from '@/types'; // Updated to Assignee type
+import { updateAssignee } from '@/lib/tasks'; 
+import type { Assignee } from '@/types'; 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -28,12 +28,13 @@ const editAssigneeFormSchema = z.object({
 type EditAssigneeFormValues = z.infer<typeof editAssigneeFormSchema>;
 
 interface EditAssigneeFormProps {
-  assignee: Assignee; // Updated to Assignee type
-  onAssigneeUpdated: (updatedAssignee: Assignee) => void; // Updated to Assignee type
+  assignee: Assignee; 
+  onAssigneeUpdated: (updatedAssignee: Assignee) => void; 
   closeDialog: () => void;
+  currentUserId: string; // Added currentUserId
 }
 
-export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: EditAssigneeFormProps) {
+export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog, currentUserId }: EditAssigneeFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,9 +47,13 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: E
   });
 
   async function onSubmit(values: EditAssigneeFormValues) {
+    if (!currentUserId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot update assignee.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const updatedData = await updateAssignee(assignee.id, values); // Updated API call
+      const updatedData = await updateAssignee(currentUserId, assignee.id, values); 
       if (updatedData) {
         toast({
           title: 'Assignee Updated',
@@ -57,7 +62,7 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: E
         onAssigneeUpdated(updatedData);
         closeDialog();
       } else {
-        throw new Error('Failed to update assignee.');
+        throw new Error('Failed to update assignee or assignee not found.');
       }
     } catch (error) {
       toast({
@@ -103,7 +108,7 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog }: E
           <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !currentUserId}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
           </Button>

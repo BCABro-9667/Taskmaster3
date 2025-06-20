@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   const fetchTasksAndAssignees = useCallback(async () => {
     if (!currentUser?.id) {
-      setIsLoading(false); // Ensure loading stops if no user
+      setIsLoading(false); 
       return;
     }
     setIsLoading(true);
@@ -55,28 +55,22 @@ export default function DashboardPage() {
     if (currentUser) {
       fetchTasksAndAssignees();
     } else {
-       setIsLoading(false); // If no current user, stop loading
+       setIsLoading(false); 
     }
   }, [currentUser, fetchTasksAndAssignees]);
 
   const handleTaskCreated = (newTask: Task) => {
-    // Optimistically add the new task. It should be fully populated from the server.
     setTasks(prevTasks => [newTask, ...prevTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-    // Re-fetch assignees in case a new one was created via the task form
     if (currentUser?.id) {
       getAssignees(currentUser.id).then(fetchedAssignees => {
         setAssignees(fetchedAssignees);
-      }).catch(error => {
+      }).catch(_error => {
         toast({
           variant: 'destructive',
           title: 'Error refreshing assignees',
           description: 'Could not update the list of assignees.',
         });
       });
-      // Optionally, re-fetch all tasks for strict consistency, though optimistic update is faster for UI
-      // getTasks(currentUser.id).then(fetchedTasks => {
-      //   setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      // });
     }
   };
 
@@ -120,7 +114,7 @@ export default function DashboardPage() {
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
   const completedTasks = tasks.filter(task => task.status === 'done');
 
-  if (isLoading && !currentUser) { // Initial load before user is determined
+  if (isLoading && !currentUser) { 
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -128,7 +122,7 @@ export default function DashboardPage() {
     );
   }
   
-  if (!currentUser) { // After attempting to get user, if none, show login prompt or similar
+  if (!currentUser) { 
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <p className="text-lg text-muted-foreground">Please log in to view your dashboard.</p>
@@ -157,7 +151,7 @@ export default function DashboardPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CreateTaskForm onTaskCreated={handleTaskCreated} />
+          <CreateTaskForm onTaskCreated={handleTaskCreated} currentUserId={currentUser.id} />
         </CardContent>
       </Card>
 
@@ -232,4 +226,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

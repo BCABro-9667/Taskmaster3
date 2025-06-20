@@ -33,29 +33,23 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
-import { getCurrentUser } from '@/lib/client-auth';
+// getCurrentUser removed, currentUserId is now a prop
 
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
-  onTaskCreated: (newTask: Task) => void; // Expects the newly created Task object
+  onTaskCreated: (newTask: Task) => void; 
+  currentUserId: string | null; // Added currentUserId prop
 }
 
-export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
+export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
   const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (user) {
-      setCurrentUserId(user.id);
-    }
-  }, []);
+  // currentUserId state removed, using prop instead
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -147,12 +141,12 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
         deadline: values.deadline,
         status: 'todo' as TaskStatus, 
       };
-      const newTask = await createTask(currentUserId, taskDataForApi); // Get the returned task
+      const newTask = await createTask(currentUserId, taskDataForApi); 
       toast({
         title: 'Task Created',
         description: `"${newTask.title}" has been added to your tasks.`,
       });
-      onTaskCreated(newTask); // Pass the new task
+      onTaskCreated(newTask); 
       form.reset({
         title: '',
         assignedTo: 'unassigned',
@@ -289,12 +283,14 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
           </Button>
         </form>
       </Form>
-      <CreateAssigneeDialog 
-        isOpen={isCreateAssigneeDialogOpen}
-        onOpenChange={setIsCreateAssigneeDialogOpen}
-        onAssigneeCreated={handleAssigneeCreated}
-      />
+      {currentUserId && ( // Only render if currentUserId is available
+        <CreateAssigneeDialog 
+          isOpen={isCreateAssigneeDialogOpen}
+          onOpenChange={setIsCreateAssigneeDialogOpen}
+          onAssigneeCreated={handleAssigneeCreated}
+          currentUserId={currentUserId}
+        />
+      )}
     </>
   );
 }
-

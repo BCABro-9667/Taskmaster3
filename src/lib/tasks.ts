@@ -1,56 +1,58 @@
 
 'use server';
-import type { Task, Assignee, TaskStatus } from '@/types'; // Assignee imported
+import type { Task, Assignee, TaskStatus } from '@/types';
 import dbConnect from './db';
 import TaskModel, { type ITaskDocument } from '@/models/Task';
-import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee'; // AssigneeModel imported
+import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 
-// Helper to convert Mongoose Task document to plain Task object
 function toPlainTask(taskDoc: ITaskDocument | null): Task | null {
   if (!taskDoc) return null;
-  const taskObject = taskDoc.toObject(); // This uses the TaskModel's toObject transform
+  const taskObject = taskDoc.toObject();
   return taskObject as Task;
 }
 
-// Helper to convert Mongoose Assignee document to plain Assignee object
 function toPlainAssignee(assigneeDoc: IAssigneeDocument | null): Assignee | null {
   if (!assigneeDoc) return null;
-  return assigneeDoc.toObject() as Assignee; // This uses the AssigneeModel's toObject transform
+  return assigneeDoc.toObject() as Assignee;
 }
 
-
-export async function getTasks(): Promise<Task[]> {
+export async function getTasks(userId: string): Promise<Task[]> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    console.error('Invalid or missing userId for getTasks');
+    return [];
+  }
   await dbConnect();
-  const taskDocs = await TaskModel.find({}).sort({ createdAt: -1 }).populate('assignedTo');
-  return taskDocs.map(doc => {
-    const task = doc.toObject() as Task; // TaskModel toObject handles basic structure
-    // If assignedTo is populated, it would be an Assignee object (handled by AssigneeModel toObject)
-    // If not populated, it's an ObjectId string, which is fine for the Task type
-    return task;
-  });
+  const taskDocs = await TaskModel.find({ createdBy: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: -1 }).populate('assignedTo');
+  return taskDocs.map(doc => doc.toObject() as Task);
 }
 
-export async function getTaskById(id: string): Promise<Task | undefined> {
+export async function getTaskById(userId: string, id: string): Promise<Task | undefined> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
+    return undefined;
+  }
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(id)) return undefined;
-  const taskDoc = await TaskModel.findById(id).populate('assignedTo');
+  const taskDoc = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }).populate('assignedTo');
   if (!taskDoc) return undefined;
   return toPlainTask(taskDoc);
 }
 
-export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo'> & { assignedTo?: string }): Promise<Task> {
+export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'> & { assignedTo?: string }): Promise<Task> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error('User ID is invalid or missing for task creation.');
+  }
   await dbConnect();
   const newTaskData: Partial<ITaskDocument> = {
     title: taskData.title,
     description: taskData.description || '',
     deadline: taskData.deadline,
     status: taskData.status || 'todo',
+    createdBy: new mongoose.Types.ObjectId(userId),
   };
   if (taskData.assignedTo && mongoose.Types.ObjectId.isValid(taskData.assignedTo)) {
     newTaskData.assignedTo = new mongoose.Types.ObjectId(taskData.assignedTo);
   } else {
-    newTaskData.assignedTo = undefined; 
+    newTaskData.assignedTo = undefined;
   }
 
   const newTaskDoc = new TaskModel(newTaskData);
@@ -59,71 +61,86 @@ export async function createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'upda
   return toPlainTask(populatedTaskDoc)!;
 }
 
-export async function updateTask(id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo'>> & { assignedTo?: string | null }): Promise<Task | null> {
+export async function updateTask(userId: string, id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'>> & { assignedTo?: string | null }): Promise<Task | null> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
+    return null;
+  }
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
 
   const updateData: any = { ...updates };
   if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
-    updateData.assignedTo = undefined; 
+    updateData.assignedTo = undefined;
   } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
     updateData.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
   } else {
-    delete updateData.assignedTo; 
+    delete updateData.assignedTo;
   }
   
-  const updatedTaskDoc = await TaskModel.findByIdAndUpdate(id, updateData, { new: true }).populate('assignedTo');
+  const updatedTaskDoc = await TaskModel.findOneAndUpdate({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }, updateData, { new: true }).populate('assignedTo');
   return toPlainTask(updatedTaskDoc);
 }
 
-export async function deleteTask(id: string): Promise<boolean> {
+export async function deleteTask(userId: string, id: string): Promise<boolean> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
+    return false;
+  }
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(id)) return false;
-  const result = await TaskModel.findByIdAndDelete(id);
+  const result = await TaskModel.findOneAndDelete({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) });
   return !!result;
 }
 
-
-// Functions for Assignees
-export async function getAssignees(): Promise<Assignee[]> {
+export async function getAssignees(userId: string): Promise<Assignee[]> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    console.error('Invalid or missing userId for getAssignees');
+    return [];
+  }
   await dbConnect();
-  const assigneeDocs = await AssigneeModel.find({}).sort({ name: 1 });
+  const assigneeDocs = await AssigneeModel.find({ createdBy: new mongoose.Types.ObjectId(userId) }).sort({ name: 1 });
   return assigneeDocs.map(doc => toPlainAssignee(doc)!);
 }
 
-export async function getAssigneeById(assigneeId: string): Promise<Assignee | null> {
+export async function getAssigneeById(userId: string, assigneeId: string): Promise<Assignee | null> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(assigneeId)) {
+    return null;
+  }
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(assigneeId)) return null;
-  const assigneeDoc = await AssigneeModel.findById(assigneeId);
+  const assigneeDoc = await AssigneeModel.findOne({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) });
   return toPlainAssignee(assigneeDoc);
 }
 
-export async function createAssignee(name: string, designation?: string): Promise<Assignee> {
+export async function createAssignee(userId: string, name: string, designation?: string): Promise<Assignee> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error('User ID is invalid or missing for assignee creation.');
+  }
   await dbConnect();
   const newAssigneeDoc = new AssigneeModel({
     name,
     designation: designation || '',
+    createdBy: new mongoose.Types.ObjectId(userId),
   });
   await newAssigneeDoc.save();
   return toPlainAssignee(newAssigneeDoc)!;
 }
 
-export async function updateAssignee(assigneeId: string, updates: { name?: string; designation?: string }): Promise<Assignee | null> {
+export async function updateAssignee(userId: string, assigneeId: string, updates: { name?: string; designation?: string }): Promise<Assignee | null> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(assigneeId)) {
+    return null;
+  }
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(assigneeId)) return null;
-  const assigneeDoc = await AssigneeModel.findByIdAndUpdate(assigneeId, updates, { new: true });
+  const assigneeDoc = await AssigneeModel.findOneAndUpdate({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) }, updates, { new: true });
   return toPlainAssignee(assigneeDoc);
 }
 
-export async function deleteAssignee(assigneeId: string): Promise<boolean> {
+export async function deleteAssignee(userId: string, assigneeId: string): Promise<boolean> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(assigneeId)) {
+    return false;
+  }
   await dbConnect();
-  if (!mongoose.Types.ObjectId.isValid(assigneeId)) return false;
 
-  const result = await AssigneeModel.findByIdAndDelete(assigneeId);
+  const result = await AssigneeModel.findOneAndDelete({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) });
   if (result) {
-    // Unassign tasks from the deleted assignee
     await TaskModel.updateMany(
-      { assignedTo: new mongoose.Types.ObjectId(assigneeId) },
+      { assignedTo: new mongoose.Types.ObjectId(assigneeId), createdBy: new mongoose.Types.ObjectId(userId) },
       { $unset: { assignedTo: "" } } 
     );
     return true;

@@ -6,8 +6,8 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { updateTask, getAssignees } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
-import type { Task, Assignee } from '@/types'; // Changed User to Assignee
+import { updateTask, getAssignees } from '@/lib/tasks'; 
+import type { Task, Assignee } from '@/types'; 
 import { useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
@@ -18,12 +18,13 @@ interface EditTaskFormProps {
   task: Task;
   onTaskUpdated: () => void;
   closeDialog: () => void;
+  currentUserId: string; // Added currentUserId
 }
 
-export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormProps) {
+export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }: EditTaskFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]); // Changed User to Assignee, renamed
+  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]); 
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
 
@@ -36,20 +37,21 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
     },
   });
 
-  const fetchAssigneesData = useCallback(async () => { // Renamed function
+  const fetchAssigneesData = useCallback(async () => { 
+    if (!currentUserId) return;
     try {
-      const fetchedAssignees = await getAssignees(); // Changed to getAssignees
-      setAssigneesForDropdown(fetchedAssignees); // Renamed state variable
+      const fetchedAssignees = await getAssignees(currentUserId); 
+      setAssigneesForDropdown(fetchedAssignees); 
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not load assignees for assignment.' });
     }
-  }, [toast]);
+  }, [toast, currentUserId]);
 
   useEffect(() => {
-    fetchAssigneesData(); // Renamed function call
+    fetchAssigneesData(); 
   }, [fetchAssigneesData]);
 
-  const handleAssigneeCreated = (newAssignee: Assignee) => { // Changed type to Assignee
+  const handleAssigneeCreated = (newAssignee: Assignee) => { 
     fetchAssigneesData().then(() => {
       form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
@@ -57,6 +59,10 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
   };
 
   async function onSubmit(values: TaskFormValues) {
+    if (!currentUserId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot update task.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const taskDataForApi = {
@@ -64,7 +70,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
         assignedTo: values.assignedTo === 'unassigned' ? null : values.assignedTo,
         deadline: values.deadline,
       };
-      await updateTask(task.id, taskDataForApi);
+      await updateTask(currentUserId, task.id, taskDataForApi);
       toast({
         title: 'Task Updated',
         description: `"${values.title}" has been updated.`,
@@ -89,28 +95,32 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog }: EditTaskFormP
           <TaskFormFields
             control={form.control}
             setValue={form.setValue}
-            assignableUsers={assigneesForDropdown} // Changed prop name and type
+            assignableUsers={assigneesForDropdown} 
             onOpenCreateAssigneeDialog={() => setIsCreateAssigneeDialogOpen(true)}
             isSubmittingAi={isSubmittingAi}
             setIsSubmittingAi={setIsSubmittingAi}
             currentTaskTitle={form.watch('title')}
+            currentUserId={currentUserId} // Pass currentUserId
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting || isSubmittingAi}>
                 Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || isSubmittingAi}>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || isSubmittingAi || !currentUserId}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
           </div>
         </form>
       </Form>
-      <CreateAssigneeDialog
-        isOpen={isCreateAssigneeDialogOpen}
-        onOpenChange={setIsCreateAssigneeDialogOpen}
-        onAssigneeCreated={handleAssigneeCreated}
-      />
+      {currentUserId && (
+        <CreateAssigneeDialog
+          isOpen={isCreateAssigneeDialogOpen}
+          onOpenChange={setIsCreateAssigneeDialogOpen}
+          onAssigneeCreated={handleAssigneeCreated}
+          currentUserId={currentUserId}
+        />
+      )}
     </>
   );
 }

@@ -25,9 +25,10 @@ interface EditNoteFormProps {
   task: Task;
   onNoteUpdated: () => void;
   closeDialog: () => void;
+  currentUserId: string; // Added currentUserId
 }
 
-export function EditNoteForm({ task, onNoteUpdated, closeDialog }: EditNoteFormProps) {
+export function EditNoteForm({ task, onNoteUpdated, closeDialog, currentUserId }: EditNoteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,9 +40,13 @@ export function EditNoteForm({ task, onNoteUpdated, closeDialog }: EditNoteFormP
   });
 
   async function onSubmit(values: NoteFormValues) {
+    if (!currentUserId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot update note.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await updateTask(task.id, { description: values.description || '' });
+      await updateTask(currentUserId, task.id, { description: values.description || '' });
       toast({
         title: 'Note Updated',
         description: `The note for task "${task.title}" has been saved.`,
@@ -84,7 +89,7 @@ export function EditNoteForm({ task, onNoteUpdated, closeDialog }: EditNoteFormP
           <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !currentUserId}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Note
           </Button>

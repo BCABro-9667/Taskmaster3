@@ -1,13 +1,14 @@
 
 'use client';
 
-import type { Task, Assignee } from '@/types'; // Changed User to Assignee
+import type { Task, Assignee } from '@/types'; 
 import { TaskItem } from './TaskItem';
 import { ClipboardList } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
-  assignableUsers: Assignee[]; // Changed User[] to Assignee[]
+  assignableUsers: Assignee[]; 
+  currentUserId: string; // Added currentUserId
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
   onMarkTaskAsComplete: (taskId: string) => void;
@@ -17,7 +18,8 @@ interface TaskListProps {
 
 export function TaskList({ 
   tasks, 
-  assignableUsers, // Prop name remains, type changed
+  assignableUsers, 
+  currentUserId, // Destructure currentUserId
   onDeleteTask, 
   onUpdateTask,
   onMarkTaskAsComplete,
@@ -40,7 +42,8 @@ export function TaskList({
         <TaskItem 
           key={task.id} 
           task={task} 
-          assignableUsers={assignableUsers} // Pass assignees
+          assignableUsers={assignableUsers} 
+          currentUserId={currentUserId} // Pass currentUserId
           onDeleteTask={onDeleteTask}
           onUpdateTask={onUpdateTask}
           onMarkTaskAsComplete={onMarkTaskAsComplete}

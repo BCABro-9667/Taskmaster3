@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { createAssignee } from '@/lib/tasks'; // Updated to createAssignee
-import type { Assignee } from '@/types'; // Updated to Assignee type
+import { createAssignee } from '@/lib/tasks'; 
+import type { Assignee } from '@/types'; 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -28,11 +28,12 @@ const assigneeFormSchema = z.object({
 type AssigneeFormValues = z.infer<typeof assigneeFormSchema>;
 
 interface CreateAssigneeFormProps {
-  onAssigneeCreated: (newAssignee: Assignee) => void; // Updated to Assignee type
+  onAssigneeCreated: (newAssignee: Assignee) => void; 
   closeDialog: () => void;
+  currentUserId: string; // Added currentUserId
 }
 
-export function CreateAssigneeForm({ onAssigneeCreated, closeDialog }: CreateAssigneeFormProps) {
+export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUserId }: CreateAssigneeFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,9 +46,13 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog }: CreateAss
   });
 
   async function onSubmit(values: AssigneeFormValues) {
+    if (!currentUserId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot create assignee.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const newAssignee = await createAssignee(values.name, values.designation); // Updated API call
+      const newAssignee = await createAssignee(currentUserId, values.name, values.designation); 
       toast({
         title: 'Assignee Created',
         description: `${newAssignee.name} has been added.`,
@@ -98,7 +103,7 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog }: CreateAss
           <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !currentUserId}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Assignee
           </Button>

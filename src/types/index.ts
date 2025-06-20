@@ -4,7 +4,6 @@ export interface User {
   email: string; 
   name: string;
   profileImageUrl?: string; 
-  // Designation removed from User
 }
 
 export interface Assignee {
@@ -13,6 +12,7 @@ export interface Assignee {
   designation?: string;
   createdAt: string; 
   updatedAt: string; 
+  createdBy: string; // Added createdBy
 }
 
 export type TaskStatus = 'todo' | 'inprogress' | 'done' | 'archived';
@@ -21,9 +21,10 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  assignedTo?: string | Assignee; // Changed to Assignee
+  assignedTo?: string | Assignee; 
   deadline: string; // ISO date string (YYYY-MM-DD)
   status: TaskStatus;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  createdBy: string; // Added createdBy
 }

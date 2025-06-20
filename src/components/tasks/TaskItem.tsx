@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Task, Assignee } from '@/types'; // Changed User to Assignee
+import type { Task, Assignee } from '@/types'; 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskStatusBadge } from './TaskStatusBadge';
@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -36,7 +35,6 @@ import {
 import { EditTaskForm } from './EditTaskForm';
 import { EditNoteDialog } from './EditNoteDialog';
 import { useState } from 'react';
-// useToast removed as it's not used in this component directly
 import { cn } from '@/lib/utils';
 
 interface TaskItemProps {
@@ -45,23 +43,21 @@ interface TaskItemProps {
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
   onMarkTaskAsComplete: (taskId: string) => void;
+  currentUserId: string; // Added currentUserId
 }
 
-export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete }: TaskItemProps) {
+export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete, currentUserId }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
 
   let assignedAssignee: Assignee | undefined = undefined;
   if (task.assignedTo) {
     if (typeof task.assignedTo === 'object' && 'id' in task.assignedTo) {
-      // task.assignedTo is already a populated Assignee object
       assignedAssignee = task.assignedTo as Assignee;
     } else if (typeof task.assignedTo === 'string') {
-      // task.assignedTo is an ID string. Look it up in the provided list.
       assignedAssignee = assignableUsers.find(user => user.id === task.assignedTo);
     }
   }
-
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
@@ -81,7 +77,11 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   const isOverdue = task.status !== 'done' && task.status !== 'archived' && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
   const isCompletable = task.status === 'todo' || task.status === 'inprogress';
-  const canEditOrAddNote = task.status !== 'archived' && task.status !== 'done';
+  
+  // Ensure currentUserId matches task.createdBy before enabling edit/note actions
+  const canModifyTask = currentUserId === task.createdBy;
+  const canEditOrAddNote = task.status !== 'archived' && task.status !== 'done' && canModifyTask;
+  const canEditTaskDetails = canModifyTask; // Can edit task details if created by current user
 
   return (
     <>
@@ -95,7 +95,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
             )}
             onClick={handleCircleClick}
-            disabled={!isCompletable}
+            disabled={!isCompletable || !canModifyTask} // Also disable if cannot modify
             aria-label={isCompletable ? "Mark task as complete" : (task.status === 'done' ? "Task completed" : "Task archived")}
           >
             {task.status === 'done' || task.status === 'archived' ? (
@@ -137,69 +137,72 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               <TaskStatusBadge status={task.status} />
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 no-print">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
-                  <StickyNote className="mr-2 h-4 w-4" />
-                  <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
-                </DropdownMenuItem>
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditOrAddNote}>
-                      <Edit3 className="mr-2 h-4 w-4" />
-                      <span>Edit Task Details</span>
-                    </DropdownMenuItem>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
-                    <DialogHeader>
-                      <DialogTitle>Edit Task</DialogTitle>
-                    </DialogHeader>
-                    <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} />
-                  </DialogContent>
-                </Dialog>
-                <DropdownMenuSeparator />
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the task
-                        "{task.title}".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => onDeleteTask(task.id)}
-                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {canModifyTask && ( // Only show dropdown if user can modify task
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 no-print">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
+                    <StickyNote className="mr-2 h-4 w-4" />
+                    <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
+                  </DropdownMenuItem>
+                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogTrigger asChild>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditTaskDetails}>
+                        <Edit3 className="mr-2 h-4 w-4" />
+                        <span>Edit Task Details</span>
+                      </DropdownMenuItem>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
+                      <DialogHeader>
+                        <DialogTitle>Edit Task</DialogTitle>
+                      </DialogHeader>
+                      <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} currentUserId={currentUserId}/>
+                    </DialogContent>
+                  </Dialog>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()} disabled={!canModifyTask}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the task
+                          "{task.title}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onDeleteTask(task.id)}
+                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </CardContent>
       </Card>
-      {isEditNoteDialogOpen && (
+      {isEditNoteDialogOpen && canModifyTask && (
         <EditNoteDialog
           task={task}
           isOpen={isEditNoteDialogOpen}
           onOpenChange={setIsEditNoteDialogOpen}
           onNoteUpdated={handleNoteUpdated}
+          currentUserId={currentUserId}
         />
       )}
     </>

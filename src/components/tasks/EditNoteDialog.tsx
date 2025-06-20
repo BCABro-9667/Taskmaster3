@@ -16,9 +16,10 @@ interface EditNoteDialogProps {
   onOpenChange: (isOpen: boolean) => void;
   task: Task;
   onNoteUpdated: () => void;
+  currentUserId: string; // Added currentUserId
 }
 
-export function EditNoteDialog({ isOpen, onOpenChange, task, onNoteUpdated }: EditNoteDialogProps) {
+export function EditNoteDialog({ isOpen, onOpenChange, task, onNoteUpdated, currentUserId }: EditNoteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -32,6 +33,7 @@ export function EditNoteDialog({ isOpen, onOpenChange, task, onNoteUpdated }: Ed
           task={task}
           onNoteUpdated={onNoteUpdated}
           closeDialog={() => onOpenChange(false)}
+          currentUserId={currentUserId} // Pass currentUserId
         />
       </DialogContent>
     </Dialog>

@@ -22,7 +22,7 @@ import {
   SelectSeparator
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { Assignee } from '@/types'; // Changed User to Assignee
+import type { Assignee } from '@/types'; 
 import type { TaskFormValues } from './TaskFormSchema';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
@@ -34,21 +34,23 @@ const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 interface TaskFormFieldsProps {
   control: Control<TaskFormValues>;
   setValue: UseFormSetValue<TaskFormValues>;
-  assignableUsers: Assignee[]; // Changed User[] to Assignee[]
+  assignableUsers: Assignee[]; 
   onOpenCreateAssigneeDialog: () => void;
   isSubmittingAi?: boolean;
   setIsSubmittingAi?: (isSubmitting: boolean) => void;
   currentTaskTitle?: string;
+  currentUserId: string; // Added currentUserId
 }
 
 export function TaskFormFields({
   control,
   setValue,
-  assignableUsers, // Prop name remains, type changed
+  assignableUsers, 
   onOpenCreateAssigneeDialog,
   isSubmittingAi,
   setIsSubmittingAi,
-  currentTaskTitle
+  currentTaskTitle,
+  currentUserId // Destructure currentUserId
 }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -128,6 +130,7 @@ export function TaskFormFields({
                   }
                 }}
                 value={field.value || 'unassigned'}
+                disabled={!currentUserId} // Disable if no currentUserId
               >
                 <FormControl>
                   <SelectTrigger>
@@ -136,7 +139,7 @@ export function TaskFormFields({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {assignableUsers.map((assignee) => ( // Iterate over assignees
+                  {assignableUsers.map((assignee) => ( 
                     <SelectItem key={assignee.id} value={assignee.id}>
                       {assignee.name}
                     </SelectItem>

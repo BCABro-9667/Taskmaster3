@@ -2,9 +2,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, notFound } from 'next/navigation';
-import type { Task, Assignee } from '@/types'; // Changed User to Assignee
-import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; // Changed function names
+import { useParams, notFound, useRouter } from 'next/navigation'; // Added useRouter
+import type { Task, Assignee, User } from '@/types'; 
+import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; 
 import { TaskList } from '@/components/tasks/TaskList';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft, Printer } from 'lucide-react';
@@ -14,42 +14,55 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TaskItem } from '@/components/tasks/TaskItem';
 import { cn } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/client-auth';
 
 export default function AssigneeDetailPage() {
   const params = useParams();
   const assigneeId = params.assigneeId as string;
+  const router = useRouter(); // For redirecting if user is not found
 
-  const [assignee, setAssignee] = useState<Assignee | null>(null); // Changed User to Assignee
+  const [assignee, setAssignee] = useState<Assignee | null>(null); 
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [allAssigneesForTaskDropdowns, setAllAssigneesForTaskDropdowns] = useState<Assignee[]>([]); // Changed User[] to Assignee[]
+  const [allAssigneesForTaskDropdowns, setAllAssigneesForTaskDropdowns] = useState<Assignee[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (!user) {
+      router.replace('/login'); // Redirect if not logged in
+    } else {
+      setCurrentUser(user);
+    }
+  }, [router]);
   
   const fetchData = useCallback(async () => {
-    if (!assigneeId) return;
+    if (!assigneeId || !currentUser?.id) return;
     setIsLoading(true);
     try {
       const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
-        getAssigneeById(assigneeId), // Changed to getAssigneeById
-        getTasks(), 
-        getAssignees() // Changed to getAssignees
+        getAssigneeById(currentUser.id, assigneeId), 
+        getTasks(currentUser.id), 
+        getAssignees(currentUser.id) 
       ]);
 
       if (!fetchedAssignee) {
-        notFound();
-        return;
-      }
-      setAssignee(fetchedAssignee);
-      setTasks(fetchedTasks.filter(task => {
-          // Handle task.assignedTo being either an ID string or a populated Assignee object
-          if (typeof task.assignedTo === 'string') {
-            return task.assignedTo === assigneeId;
-          } else if (task.assignedTo && typeof task.assignedTo === 'object') {
-            return task.assignedTo.id === assigneeId;
+        // Don't call notFound() immediately, let the component render a message
+        // or handle it gracefully, as notFound() will stop rendering.
+        setAssignee(null); // Explicitly set to null if not found under this user
+      } else {
+        setAssignee(fetchedAssignee);
+        setTasks(fetchedTasks.filter(task => {
+            if (typeof task.assignedTo === 'string') {
+              return task.assignedTo === assigneeId;
+            } else if (task.assignedTo && typeof task.assignedTo === 'object') {
+              return task.assignedTo.id === assigneeId;
+            }
+            return false;
           }
-          return false;
-        }
-      ));
+        ));
+      }
       setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
 
     } catch (error) {
@@ -61,19 +74,25 @@ export default function AssigneeDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [assigneeId, toast]);
+  }, [assigneeId, toast, currentUser]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (currentUser) { // Only fetch if currentUser is set
+      fetchData();
+    }
+  }, [fetchData, currentUser]);
+
 
   const handleTaskUpdatedOrDeleted = () => {
-    fetchData(); 
+    if (currentUser) {
+      fetchData(); 
+    }
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    if (!currentUser?.id) return;
     try {
-      await deleteTaskApi(taskId);
+      await deleteTaskApi(currentUser.id, taskId);
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
     } catch (error) {
@@ -86,10 +105,11 @@ export default function AssigneeDetailPage() {
   };
   
   const handleMarkTaskAsComplete = async (taskId: string) => {
+    if (!currentUser?.id) return;
     try {
-      await updateTask(taskId, { status: 'done' });
+      await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      fetchData(); 
+      if (currentUser) fetchData(); 
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -99,8 +119,7 @@ export default function AssigneeDetailPage() {
     }
   };
 
-
-  if (isLoading) {
+  if (isLoading || !currentUser) { // Also check for currentUser before rendering content
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -108,8 +127,15 @@ export default function AssigneeDetailPage() {
     );
   }
 
-  if (!assignee) {
-    return <div className="text-center py-10">Assignee not found.</div>;
+  if (!assignee) { // This check now happens after loading and currentUser check
+    return (
+      <div className="text-center py-10">
+        <p>Assignee not found or you do not have permission to view this assignee.</p>
+        <Button asChild className="mt-4">
+          <Link href="/assignees">Back to Assignees</Link>
+        </Button>
+      </div>
+    );
   }
 
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
@@ -119,9 +145,9 @@ export default function AssigneeDetailPage() {
     <div className="space-y-8 printable-content">
       <div className="flex items-center gap-2 no-print">
         <Button variant="outline" asChild className="mb-4">
-          <Link href="/dashboard">
+          <Link href="/assignees">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            Back to Assignees
           </Link>
         </Button>
         <Button variant="outline" onClick={() => window.print()} className="mb-4">
@@ -154,7 +180,8 @@ export default function AssigneeDetailPage() {
         </div>
         <TaskList
           tasks={pendingTasks}
-          assignableUsers={allAssigneesForTaskDropdowns} // Pass assignees here
+          assignableUsers={allAssigneesForTaskDropdowns} 
+          currentUserId={currentUser.id} // Pass currentUserId
           onDeleteTask={handleDeleteTask}
           onUpdateTask={handleTaskUpdatedOrDeleted}
           onMarkTaskAsComplete={handleMarkTaskAsComplete}
@@ -180,7 +207,8 @@ export default function AssigneeDetailPage() {
                 <AccordionContent className="p-0 border-t-0">
                   <TaskItem 
                     task={task} 
-                    assignableUsers={allAssigneesForTaskDropdowns} // Pass assignees here
+                    assignableUsers={allAssigneesForTaskDropdowns} 
+                    currentUserId={currentUser.id} // Pass currentUserId
                     onDeleteTask={handleDeleteTask}
                     onUpdateTask={handleTaskUpdatedOrDeleted}
                     onMarkTaskAsComplete={handleMarkTaskAsComplete}

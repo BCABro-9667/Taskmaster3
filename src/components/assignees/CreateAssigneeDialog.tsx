@@ -9,15 +9,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CreateAssigneeForm } from "./CreateAssigneeForm";
-import type { Assignee } from '@/types'; // Changed User to Assignee
+import type { Assignee } from '@/types'; 
 
 interface CreateAssigneeDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAssigneeCreated: (newAssignee: Assignee) => void; // Changed User to Assignee
+  onAssigneeCreated: (newAssignee: Assignee) => void; 
+  currentUserId: string; // Added currentUserId
 }
 
-export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated }: CreateAssigneeDialogProps) {
+export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated, currentUserId }: CreateAssigneeDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -29,7 +30,8 @@ export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated }
         </DialogHeader>
         <CreateAssigneeForm 
           onAssigneeCreated={onAssigneeCreated} 
-          closeDialog={() => onOpenChange(false)} 
+          closeDialog={() => onOpenChange(false)}
+          currentUserId={currentUserId} // Pass currentUserId
         />
       </DialogContent>
     </Dialog>

@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Task, Assignee } from '@/types'; // Changed User to Assignee
-import { getTasks, getAssignees } from '@/lib/tasks'; // Changed getAssignableUsers to getAssignees
+import type { Task, Assignee, User } from '@/types'; 
+import { getTasks, getAssignees } from '@/lib/tasks'; 
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, BarChart3 as PageIcon, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,6 +18,8 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
+import { getCurrentUser } from '@/lib/client-auth';
+import { Button } from '@/components/ui/button'; // Added button import
 
 
 interface AssigneeProgressData {
@@ -48,19 +50,29 @@ const chartConfig = {
 export default function TaskProgressPage() {
   const [progressData, setProgressData] = useState<AssigneeProgressData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+  }, []);
+
   const fetchDataAndProcess = useCallback(async () => {
+    if (!currentUser?.id) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const [tasks, assignees] = await Promise.all([getTasks(), getAssignees()]); // Changed users to assignees
+      const [tasks, assignees] = await Promise.all([getTasks(currentUser.id), getAssignees(currentUser.id)]); 
 
       const dataByAssignee: Record<string, AssigneeProgressData> = {};
 
-      assignees.forEach(assignee => { // Changed user to assignee
+      assignees.forEach(assignee => { 
         dataByAssignee[assignee.id] = {
           assigneeId: assignee.id,
-          assigneeName: assignee.name || 'Unnamed Assignee', // Changed user.name to assignee.name
+          assigneeName: assignee.name || 'Unnamed Assignee', 
           todo: 0,
           inprogress: 0,
           done: 0,
@@ -75,7 +87,6 @@ export default function TaskProgressPage() {
         } else if (task.assignedTo && typeof task.assignedTo === 'object') {
             assigneeIdForTask = task.assignedTo.id;
         }
-
 
         if (!assigneeIdForTask || !dataByAssignee[assigneeIdForTask]) {
           return;
@@ -102,19 +113,41 @@ export default function TaskProgressPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, currentUser]);
 
   useEffect(() => {
-    fetchDataAndProcess();
-  }, [fetchDataAndProcess]);
+    if (currentUser) {
+      fetchDataAndProcess();
+    } else {
+      setIsLoading(false);
+    }
+  }, [fetchDataAndProcess, currentUser]);
 
-  if (isLoading) {
+  if (isLoading && !currentUser) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+
+  if (!currentUser) {
+     return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <p className="text-lg text-muted-foreground">Please log in to view task progress.</p>
+         <Button onClick={() => window.location.href = '/'} className="mt-4">Go to Homepage</Button>
+      </div>
+    );
+  }
+  
+  if (isLoading) { // Show loader if current user exists but data is still loading
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-8">
@@ -128,7 +161,7 @@ export default function TaskProgressPage() {
           <CardHeader>
             <CardTitle>Task Distribution by Assignee</CardTitle>
             <CardDescription>
-              Overview of tasks by status for each assignee.
+              Overview of tasks by status for each assignee you manage.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2"> 
@@ -169,7 +202,7 @@ export default function TaskProgressPage() {
             <div className="flex flex-col items-center justify-center text-center py-12 px-4">
               <ListChecks className="h-16 w-16 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold text-foreground mb-1 font-headline">No Task Data</h3>
-              <p className="text-muted-foreground">There is no task progress data to display for assignees.</p>
+              <p className="text-muted-foreground">There is no task progress data to display for assignees you manage.</p>
             </div>
           </CardContent>
         </Card>
