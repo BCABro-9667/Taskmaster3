@@ -69,29 +69,11 @@ export default function DashboardPage() {
     }
   };
 
-  const handleTaskCreated = (newTask: Task) => {
-    // Manually populate assignee on the client for a reliable optimistic update
-    let populatedTask = { ...newTask };
-    if (typeof newTask.assignedTo === 'string') {
-      const assigneeObject = assignees.find(a => a.id === newTask.assignedTo);
-      if (assigneeObject) {
-        populatedTask.assignedTo = assigneeObject;
-      }
-    }
-  
-    setTasks(prevTasks => [populatedTask, ...prevTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-
-    if (currentUser?.id) {
-      // Re-fetch assignees in case a new one was created during task creation
-      getAssignees(currentUser.id).then(fetchedAssignees => {
-        setAssignees(fetchedAssignees);
-      }).catch(_error => {
-        toast({
-          variant: 'destructive',
-          title: 'Error refreshing assignees',
-          description: 'Could not update the list of assignees.',
-        });
-      });
+  const handleTaskCreated = () => {
+    // A task was created, so we re-fetch all data to ensure the UI is in sync
+    // This is more reliable than optimistically updating the state.
+    if (currentUser && currentUser.id) {
+      fetchData(currentUser.id);
     }
   };
 
