@@ -6,6 +6,9 @@ import TaskModel, { type ITaskDocument } from '@/models/Task';
 import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 
+// Helper to reliably convert Mongoose docs, including populated fields, to plain objects
+const toPlainObject = (doc: any) => JSON.parse(JSON.stringify(doc));
+
 export async function getTasks(userId: string): Promise<Task[]> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     console.error('Invalid or missing userId for getTasks');
@@ -13,7 +16,7 @@ export async function getTasks(userId: string): Promise<Task[]> {
   }
   await dbConnect();
   const taskDocs = await TaskModel.find({ createdBy: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: -1 }).populate('assignedTo');
-  return taskDocs.map(doc => doc.toObject());
+  return toPlainObject(taskDocs);
 }
 
 export async function getTaskById(userId: string, id: string): Promise<Task | undefined> {
@@ -23,7 +26,7 @@ export async function getTaskById(userId: string, id: string): Promise<Task | un
   await dbConnect();
   const taskDoc = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }).populate('assignedTo');
   if (!taskDoc) return undefined;
-  return taskDoc.toObject();
+  return toPlainObject(taskDoc);
 }
 
 export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'> & { assignedTo?: string }): Promise<Task> {
@@ -50,7 +53,7 @@ export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'cr
   if (!populatedTaskDoc) {
     throw new Error('Failed to retrieve newly created task for population.');
   }
-  return populatedTaskDoc.toObject();
+  return toPlainObject(populatedTaskDoc);
 }
 
 export async function updateTask(userId: string, id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'>> & { assignedTo?: string | null }): Promise<Task | null> {
@@ -69,7 +72,7 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
   }
   
   const updatedTaskDoc = await TaskModel.findOneAndUpdate({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }, updateData, { new: true }).populate('assignedTo');
-  return updatedTaskDoc ? updatedTaskDoc.toObject() : null;
+  return updatedTaskDoc ? toPlainObject(updatedTaskDoc) : null;
 }
 
 export async function deleteTask(userId: string, id: string): Promise<boolean> {
