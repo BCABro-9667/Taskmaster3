@@ -71,7 +71,6 @@ export default function DashboardPage() {
 
   const handleTaskCreated = () => {
     // Re-fetch all data to ensure the UI is in sync with the database.
-    // This is the most reliable way to handle new tasks and potentially new assignees.
     if (currentUser?.id) {
       fetchData(currentUser.id);
     }
@@ -87,8 +86,8 @@ export default function DashboardPage() {
     if (!currentUser?.id) return;
     try {
       await deleteTaskApi(currentUser.id, taskId);
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
+      fetchData(currentUser.id); // Re-fetch data from the server for consistency
     } catch (error) {
       toast({
         variant: 'destructive',
