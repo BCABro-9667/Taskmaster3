@@ -37,6 +37,7 @@ import { EditTaskForm } from './EditTaskForm';
 import { EditNoteDialog } from './EditNoteDialog';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface TaskItemProps {
   task: Task;
@@ -53,6 +54,13 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   // With the new type, task.assignedTo is either the Assignee object or undefined.
   const assignedAssignee = task.assignedTo;
+
+  const getAssigneeInitials = (name: string | undefined) => {
+    if (!name) return '??';
+    const names = name.split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
+  };
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
@@ -111,13 +119,16 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
           <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
             {assignedAssignee ? (
-              <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
-                <span className={cn("ml-1 hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedAssignee.name}</span>
+              <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
+                <Avatar className="h-6 w-6 no-print">
+                  <AvatarFallback>{getAssigneeInitials(assignedAssignee.name)}</AvatarFallback>
+                </Avatar>
+                <span className={cn("hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedAssignee.name}</span>
               </Link>
             ) : (
-              <div className="flex items-center text-muted-foreground" title="Unassigned">
+              <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
                 <UserCircle className="h-5 w-5 sm:h-6 sm-w-6 no-print" />
-                <span className="ml-1 hidden md:inline text-xs sm:text-sm">Unassigned</span>
+                <span className="hidden md:inline text-xs sm:text-sm">Unassigned</span>
               </div>
             )}
 
