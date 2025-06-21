@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, notFound, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import type { Task, Assignee, User } from '@/types'; 
 import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; 
 import { TaskList } from '@/components/tasks/TaskList';
@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TaskItem } from '@/components/tasks/TaskItem';
-import { cn } from '@/lib/utils';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 
 export default function AssigneeDetailPage() {
@@ -24,74 +23,64 @@ export default function AssigneeDetailPage() {
   const [assignee, setAssignee] = useState<Assignee | null>(null); 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allAssigneesForTaskDropdowns, setAllAssigneesForTaskDropdowns] = useState<Assignee[]>([]); 
-  const [isLoading, setIsLoading] = useState(true); // Covers initial auth check and data load
+  const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
-  
-  const fetchData = useCallback(async (userId: string) => {
-    if (!assigneeId) {
-        setIsLoading(false);
-        return;
-    }
-    setIsLoading(true);
-    try {
-      // Fetch assignee details only if the current user owns them.
-      // Fetch all tasks and all assignees for the current user (for dropdowns, etc.)
-      const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
-        getAssigneeById(userId, assigneeId), 
-        getTasks(userId), 
-        getAssignees(userId) 
-      ]);
-
-      if (!fetchedAssignee) {
-        setAssignee(null); // Assignee not found under this user
-      } else {
-        setAssignee(fetchedAssignee);
-        // Filter tasks to show only those assigned to THIS specific assignee
-        setTasks(fetchedTasks.filter(task => task.assignedTo?.id === assigneeId));
-      }
-      setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
-
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error fetching data',
-        description: 'Could not load assignee details or tasks.',
-      });
-      setAssignee(null);
-      setTasks([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [assigneeId, toast]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const user = clientAuthGetCurrentUser();
-    if (user && user.id) {
-      setCurrentUser(user);
-      fetchData(user.id);
-    } else {
-      setCurrentUser(null);
-      setAssignee(null);
-      setTasks([]);
-      setIsLoading(false); // Auth check done, no user/data
-      router.replace('/login'); // Redirect if no user after check
+    if (!user || !user.id) {
+      router.replace('/login');
+      return;
     }
-  }, [fetchData, router]); // Added router to dependency array
+    setCurrentUser(user);
 
+    const loadData = async () => {
+      if (!assigneeId) {
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
+          getAssigneeById(user.id, assigneeId),
+          getTasks(user.id),
+          getAssignees(user.id)
+        ]);
 
-  const handleTaskUpdatedOrDeleted = () => {
-    if (currentUser && currentUser.id) {
-      fetchData(currentUser.id); 
-    }
-  };
+        if (!fetchedAssignee) {
+          setAssignee(null);
+          setTasks([]);
+        } else {
+          setAssignee(fetchedAssignee);
+          setTasks(fetchedTasks.filter(task => task.assignedTo?.id === assigneeId));
+        }
+        setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error fetching data',
+          description: 'Could not load assignee details or tasks.',
+        });
+        setAssignee(null);
+        setTasks([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [assigneeId, router, toast, refreshTrigger]);
+
+  const triggerRefresh = () => setRefreshTrigger(t => t + 1);
 
   const handleDeleteTask = async (taskId: string) => {
     if (!currentUser?.id) return;
     try {
       await deleteTaskApi(currentUser.id, taskId);
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
+      triggerRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -106,7 +95,7 @@ export default function AssigneeDetailPage() {
     try {
       await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      if (currentUser && currentUser.id) fetchData(currentUser.id); 
+      triggerRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -116,7 +105,7 @@ export default function AssigneeDetailPage() {
     }
   };
 
-  if (isLoading) { // Simplified loading check
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -124,7 +113,7 @@ export default function AssigneeDetailPage() {
     );
   }
 
-  if (!currentUser) { // This case should ideally be handled by redirection in useEffect
+  if (!currentUser) {
     return (
       <div className="text-center py-10">
          <p>Please log in to view assignee details.</p>
@@ -191,7 +180,7 @@ export default function AssigneeDetailPage() {
           assignableUsers={allAssigneesForTaskDropdowns} 
           currentUserId={currentUser.id}
           onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleTaskUpdatedOrDeleted}
+          onUpdateTask={triggerRefresh}
           onMarkTaskAsComplete={handleMarkTaskAsComplete}
           emptyStateMessage={`${assignee.name} has no pending tasks.`}
           emptyStateTitle="All Caught Up!"
@@ -218,7 +207,7 @@ export default function AssigneeDetailPage() {
                     assignableUsers={allAssigneesForTaskDropdowns} 
                     currentUserId={currentUser.id}
                     onDeleteTask={handleDeleteTask}
-                    onUpdateTask={handleTaskUpdatedOrDeleted}
+                    onUpdateTask={triggerRefresh}
                     onMarkTaskAsComplete={handleMarkTaskAsComplete}
                   />
                 </AccordionContent>
