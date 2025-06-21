@@ -70,7 +70,17 @@ export default function DashboardPage() {
   };
 
   const handleTaskCreated = (newTask: Task) => {
-    setTasks(prevTasks => [newTask, ...prevTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    // Manually populate assignee on the client for a reliable optimistic update
+    let populatedTask = { ...newTask };
+    if (typeof newTask.assignedTo === 'string') {
+      const assigneeObject = assignees.find(a => a.id === newTask.assignedTo);
+      if (assigneeObject) {
+        populatedTask.assignedTo = assigneeObject;
+      }
+    }
+  
+    setTasks(prevTasks => [populatedTask, ...prevTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+
     if (currentUser?.id) {
       // Re-fetch assignees in case a new one was created during task creation
       getAssignees(currentUser.id).then(fetchedAssignees => {
@@ -248,4 +258,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
