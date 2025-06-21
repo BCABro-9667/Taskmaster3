@@ -19,13 +19,8 @@ const AssigneeSchema = new Schema<IAssigneeDocument>(AssigneeSchemaFields, {
   toJSON: {
     virtuals: true, 
     transform: function (_doc, ret) {
-      ret.id = ret._id.toString(); 
       delete ret._id;
       delete ret.__v;
-       // Ensure createdBy is a string if it exists
-      if (ret.createdBy) {
-        ret.createdBy = ret.createdBy.toString();
-      }
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();
       if (ret.updatedAt) ret.updatedAt = new Date(ret.updatedAt).toISOString();
     },
@@ -33,18 +28,18 @@ const AssigneeSchema = new Schema<IAssigneeDocument>(AssigneeSchemaFields, {
   toObject: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id.toString();
       delete ret._id;
       delete ret.__v;
-      // Ensure createdBy is a string if it exists
-      if (ret.createdBy) {
-        ret.createdBy = ret.createdBy.toString();
-      }
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();
       if (ret.updatedAt) ret.updatedAt = new Date(ret.updatedAt).toISOString();
     },
   },
 });
+
+AssigneeSchema.virtual('id').get(function() {
+  return this._id.toHexString();
+});
+
 
 const AssigneeModel = mongoose.models.Assignee || mongoose.model<IAssigneeDocument>('Assignee', AssigneeSchema);
 

@@ -1,6 +1,7 @@
 
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 import type { Task as TaskType } from '@/types';
+import './Assignee'; // Ensures Assignee model is registered for population
 
 export interface ITaskDocument extends Omit<TaskType, 'id' | 'assignedTo' | 'createdBy'>, Document {
   assignedTo?: Types.ObjectId;
@@ -19,16 +20,6 @@ const TaskSchema = new Schema<ITaskDocument>({
   toJSON: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id.toString();
-      if (ret.assignedTo && typeof ret.assignedTo === 'object' && typeof ret.assignedTo.toJSON === 'function') {
-        ret.assignedTo = ret.assignedTo.toJSON();
-      } else if (ret.assignedTo) {
-        ret.assignedTo = ret.assignedTo.toString();
-      }
-      // Ensure createdBy is a string if it exists
-      if (ret.createdBy) {
-        ret.createdBy = ret.createdBy.toString();
-      }
       delete ret._id;
       delete ret.__v;
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();
@@ -38,22 +29,16 @@ const TaskSchema = new Schema<ITaskDocument>({
   toObject: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id.toString();
-      if (ret.assignedTo && typeof ret.assignedTo === 'object' && typeof ret.assignedTo.toObject === 'function') {
-        ret.assignedTo = ret.assignedTo.toObject();
-      } else if (ret.assignedTo) {
-        ret.assignedTo = ret.assignedTo.toString();
-      }
-      // Ensure createdBy is a string if it exists
-      if (ret.createdBy) {
-        ret.createdBy = ret.createdBy.toString();
-      }
       delete ret._id;
       delete ret.__v;
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();
       if (ret.updatedAt) ret.updatedAt = new Date(ret.updatedAt).toISOString();
     },
   },
+});
+
+TaskSchema.virtual('id').get(function() {
+  return this._id.toHexString();
 });
 
 

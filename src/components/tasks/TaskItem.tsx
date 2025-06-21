@@ -51,14 +51,8 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
 
-  let assignedAssignee: Assignee | undefined = undefined;
-  if (task.assignedTo) {
-    if (typeof task.assignedTo === 'object' && 'id' in task.assignedTo) {
-      assignedAssignee = task.assignedTo as Assignee;
-    } else if (typeof task.assignedTo === 'string') {
-      assignedAssignee = assignableUsers.find(user => user.id === task.assignedTo);
-    }
-  }
+  // Simplified assignee logic: if task.assignedTo is an object with a name, it's our assignee.
+  const assignedAssignee = (typeof task.assignedTo === 'object' && task.assignedTo?.name) ? task.assignedTo : undefined;
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
