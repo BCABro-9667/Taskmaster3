@@ -51,8 +51,8 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
 
-  // Simplified assignee logic: if task.assignedTo is an object with a name, it's our assignee.
-  const assignedAssignee = (typeof task.assignedTo === 'object' && task.assignedTo?.name) ? task.assignedTo : undefined;
+  // With the new type, task.assignedTo is either the Assignee object or undefined.
+  const assignedAssignee = task.assignedTo;
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
@@ -116,7 +116,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               </Link>
             ) : (
               <div className="flex items-center text-muted-foreground" title="Unassigned">
-                <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 no-print" />
+                <UserCircle className="h-5 w-5 sm:h-6 sm-w-6 no-print" />
                 <span className="ml-1 hidden md:inline text-xs sm:text-sm">Unassigned</span>
               </div>
             )}

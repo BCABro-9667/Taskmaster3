@@ -48,15 +48,7 @@ export default function AssigneeDetailPage() {
       } else {
         setAssignee(fetchedAssignee);
         // Filter tasks to show only those assigned to THIS specific assignee
-        setTasks(fetchedTasks.filter(task => {
-            if (typeof task.assignedTo === 'string') {
-              return task.assignedTo === assigneeId;
-            } else if (task.assignedTo && typeof task.assignedTo === 'object') {
-              return task.assignedTo.id === assigneeId;
-            }
-            return false;
-          }
-        ));
+        setTasks(fetchedTasks.filter(task => task.assignedTo?.id === assigneeId));
       }
       setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
 

@@ -19,6 +19,7 @@ const AssigneeSchema = new Schema<IAssigneeDocument>(AssigneeSchemaFields, {
   toJSON: {
     virtuals: true, 
     transform: function (_doc, ret) {
+      ret.id = ret._id.toString(); // Ensure id is a string
       delete ret._id;
       delete ret.__v;
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();
@@ -28,6 +29,7 @@ const AssigneeSchema = new Schema<IAssigneeDocument>(AssigneeSchemaFields, {
   toObject: {
     virtuals: true,
     transform: function (_doc, ret) {
+      ret.id = ret._id.toString();
       delete ret._id;
       delete ret.__v;
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();

@@ -20,6 +20,7 @@ const TaskSchema = new Schema<ITaskDocument>({
   toJSON: {
     virtuals: true,
     transform: function (_doc, ret) {
+      ret.id = ret._id.toString(); // Ensure id is a string
       delete ret._id;
       delete ret.__v;
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();
@@ -29,6 +30,7 @@ const TaskSchema = new Schema<ITaskDocument>({
   toObject: {
     virtuals: true,
     transform: function (_doc, ret) {
+      ret.id = ret._id.toString();
       delete ret._id;
       delete ret.__v;
       if (ret.createdAt) ret.createdAt = new Date(ret.createdAt).toISOString();

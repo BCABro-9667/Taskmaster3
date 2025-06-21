@@ -32,7 +32,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: task.title,
-      assignedTo: typeof task.assignedTo === 'string' ? task.assignedTo : (task.assignedTo?.id || 'unassigned'),
+      assignedTo: task.assignedTo?.id || 'unassigned',
       deadline: task.deadline,
     },
   });

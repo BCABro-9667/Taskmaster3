@@ -21,7 +21,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  assignedTo?: string | Assignee; 
+  assignedTo?: Assignee; // Changed from string | Assignee
   deadline: string; // ISO date string (YYYY-MM-DD)
   status: TaskStatus;
   createdAt: string; // ISO date string

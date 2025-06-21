@@ -6,16 +6,8 @@ import TaskModel, { type ITaskDocument } from '@/models/Task';
 import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 
-function toPlainTask(taskDoc: ITaskDocument | null): Task | null {
-  if (!taskDoc) return null;
-  const taskObject = taskDoc.toObject();
-  return taskObject as Task;
-}
-
-function toPlainAssignee(assigneeDoc: IAssigneeDocument | null): Assignee | null {
-  if (!assigneeDoc) return null;
-  return assigneeDoc.toObject() as Assignee;
-}
+// Using JSON.parse(JSON.stringify(doc)) is a reliable way to get a plain object
+// from a Mongoose document, including virtuals and populated fields.
 
 export async function getTasks(userId: string): Promise<Task[]> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -24,7 +16,7 @@ export async function getTasks(userId: string): Promise<Task[]> {
   }
   await dbConnect();
   const taskDocs = await TaskModel.find({ createdBy: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: -1 }).populate('assignedTo');
-  return taskDocs.map(doc => doc.toObject() as Task);
+  return JSON.parse(JSON.stringify(taskDocs));
 }
 
 export async function getTaskById(userId: string, id: string): Promise<Task | undefined> {
@@ -34,7 +26,7 @@ export async function getTaskById(userId: string, id: string): Promise<Task | un
   await dbConnect();
   const taskDoc = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }).populate('assignedTo');
   if (!taskDoc) return undefined;
-  return toPlainTask(taskDoc);
+  return JSON.parse(JSON.stringify(taskDoc));
 }
 
 export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'> & { assignedTo?: string }): Promise<Task> {
@@ -58,7 +50,7 @@ export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'cr
   const newTaskDoc = new TaskModel(newTaskData);
   await newTaskDoc.save();
   const populatedTaskDoc = await TaskModel.findById(newTaskDoc._id).populate('assignedTo');
-  return toPlainTask(populatedTaskDoc)!;
+  return JSON.parse(JSON.stringify(populatedTaskDoc));
 }
 
 export async function updateTask(userId: string, id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'>> & { assignedTo?: string | null }): Promise<Task | null> {
@@ -77,7 +69,7 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
   }
   
   const updatedTaskDoc = await TaskModel.findOneAndUpdate({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }, updateData, { new: true }).populate('assignedTo');
-  return toPlainTask(updatedTaskDoc);
+  return JSON.parse(JSON.stringify(updatedTaskDoc));
 }
 
 export async function deleteTask(userId: string, id: string): Promise<boolean> {
@@ -96,7 +88,7 @@ export async function getAssignees(userId: string): Promise<Assignee[]> {
   }
   await dbConnect();
   const assigneeDocs = await AssigneeModel.find({ createdBy: new mongoose.Types.ObjectId(userId) }).sort({ name: 1 });
-  return assigneeDocs.map(doc => toPlainAssignee(doc)!);
+  return JSON.parse(JSON.stringify(assigneeDocs));
 }
 
 export async function getAssigneeById(userId: string, assigneeId: string): Promise<Assignee | null> {
@@ -105,7 +97,7 @@ export async function getAssigneeById(userId: string, assigneeId: string): Promi
   }
   await dbConnect();
   const assigneeDoc = await AssigneeModel.findOne({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) });
-  return toPlainAssignee(assigneeDoc);
+  return JSON.parse(JSON.stringify(assigneeDoc));
 }
 
 export async function createAssignee(userId: string, name: string, designation?: string): Promise<Assignee> {
@@ -119,7 +111,7 @@ export async function createAssignee(userId: string, name: string, designation?:
     createdBy: new mongoose.Types.ObjectId(userId),
   });
   await newAssigneeDoc.save();
-  return toPlainAssignee(newAssigneeDoc)!;
+  return JSON.parse(JSON.stringify(newAssigneeDoc));
 }
 
 export async function updateAssignee(userId: string, assigneeId: string, updates: { name?: string; designation?: string }): Promise<Assignee | null> {
@@ -128,7 +120,7 @@ export async function updateAssignee(userId: string, assigneeId: string, updates
   }
   await dbConnect();
   const assigneeDoc = await AssigneeModel.findOneAndUpdate({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) }, updates, { new: true });
-  return toPlainAssignee(assigneeDoc);
+  return JSON.parse(JSON.stringify(assigneeDoc));
 }
 
 export async function deleteAssignee(userId: string, assigneeId: string): Promise<boolean> {
