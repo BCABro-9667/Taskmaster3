@@ -69,20 +69,11 @@ export default function DashboardPage() {
     }
   };
 
-  const handleTaskCreated = (newTask: Task) => {
-    // Optimistically add the new task to the top of the list.
-    setTasks(prevTasks => [newTask, ...prevTasks]);
-    
-    // If a new assignee was created during task creation, the main assignees list needs an update.
-    // Check if the assignee from the new task exists in our current list.
-    if (newTask.assignedTo && typeof newTask.assignedTo === 'object') {
-      const assigneeExists = assignees.some(a => a.id === (newTask.assignedTo as Assignee).id);
-      if (!assigneeExists) {
-        // If not, it means a new assignee was created. Refresh the assignees list.
-        if (currentUser?.id) {
-          getAssignees(currentUser.id).then(setAssignees);
-        }
-      }
+  const handleTaskCreated = () => {
+    // Re-fetch all data to ensure the UI is in sync with the database.
+    // This is the most reliable way to handle new tasks and potentially new assignees.
+    if (currentUser?.id) {
+      fetchData(currentUser.id);
     }
   };
 

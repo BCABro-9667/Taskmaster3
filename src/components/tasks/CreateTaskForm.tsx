@@ -38,7 +38,7 @@ import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialo
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
-  onTaskCreated: (newTask: Task) => void; 
+  onTaskCreated: () => void; 
   currentUserId: string | null; // Added currentUserId prop
 }
 
@@ -146,7 +146,7 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
         title: 'Task Created',
         description: `"${newTask.title}" has been added to your tasks.`,
       });
-      onTaskCreated(newTask); 
+      onTaskCreated(); 
       form.reset({
         title: '',
         assignedTo: 'unassigned',
