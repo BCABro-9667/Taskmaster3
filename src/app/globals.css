@@ -5,15 +5,15 @@
 
 @layer base {
   :root {
-    --background: 240 13% 96%; /* Light Gray */
-    --foreground: 231 30% 25%; /* Darker Indigo for text */
-    --card: 0 0% 100%; /* White */
+    --background: 0 0% 100%;
+    --foreground: 231 30% 25%;
+    --card: 0 0% 100%;
     --card-foreground: 231 30% 25%;
     --popover: 0 0% 100%;
     --popover-foreground: 231 30% 25%;
     --primary: 231 48% 48%; /* Deep Indigo */
     --primary-foreground: 0 0% 98%; /* Whiteish */
-    --secondary: 231 40% 90%; /* Lighter Indigo/Gray */
+    --secondary: 240 10% 95%; /* Lighter Gray */
     --secondary-foreground: 231 48% 30%; /* Dark Indigo */
     --muted: 240 10% 90%; /* Slightly darker light gray */
     --muted-foreground: 240 5% 45%;
@@ -88,6 +88,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  
+  /* Custom Cursor Style */
+  .hide-cursor, .hide-cursor * {
+    cursor: none !important;
+  }
 }
 
 @media screen {
@@ -127,13 +132,18 @@
     font-family: sans-serif; /* Use a common print font */
     font-size: 10pt;
     margin: 0;
-    padding: 0;
+    padding: 5mm;
   }
 
   .printable-content {
     width: 100%;
     margin: 0;
-    padding: 5mm 10mm; /* Adjust as needed */
+    padding: 0; 
+  }
+
+  .printable-content .print-header {
+    text-align: center;
+    margin-bottom: 2rem;
   }
 
   /* Ensure all children within printable area use transparent background and black text */
@@ -154,7 +164,7 @@
   }
   
    .printable-content .card-header {
-    padding-bottom: 1rem !important;
+    padding-bottom: 0 !important;
   }
 
   .printable-content h1, .printable-content h2, .printable-content h3 {
