@@ -82,13 +82,9 @@ export default function AssigneeDetailPage() {
   const handleDeleteTask = async (taskId: string) => {
     if (!currentUser?.id) return;
     try {
-      const success = await deleteTaskApi(currentUser.id, taskId);
-      if (success) {
-        toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
-        handleDataRefresh();
-      } else {
-        throw new Error('Failed to delete the task on the server.');
-      }
+      await deleteTaskApi(currentUser.id, taskId);
+      toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
+      handleDataRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',

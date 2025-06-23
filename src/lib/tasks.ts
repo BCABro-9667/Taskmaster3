@@ -90,13 +90,23 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
   return updatedTask ? updatedTask as Task : null;
 }
 
-export async function deleteTask(userId: string, id: string): Promise<boolean> {
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
-    return false;
+export async function deleteTask(userId: string, id: string): Promise<void> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error('Invalid user ID provided for deletion.');
   }
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error('Invalid task ID provided for deletion.');
+  }
+
   await dbConnect();
-  const result = await TaskModel.findOneAndDelete({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) });
-  return !!result;
+  const result = await TaskModel.findOneAndDelete({
+    _id: new mongoose.Types.ObjectId(id),
+    createdBy: new mongoose.Types.ObjectId(userId),
+  });
+
+  if (!result) {
+    throw new Error("Task not found, or you don't have permission to delete it.");
+  }
 }
 
 export async function getAssignees(userId: string): Promise<Assignee[]> {
