@@ -62,7 +62,7 @@ export function CustomCursor() {
       <div
         className={cn(
           'rounded-full bg-[#4152B5] transition-all duration-200 ease-out -translate-x-1/2 -translate-y-1/2',
-          isPointer ? 'h-10 w-10 opacity-50' : 'h-4 w-4 opacity-100'
+          isPointer ? 'h-20 w-20 opacity-50' : 'h-8 w-8 opacity-100'
         )}
       />
     </div>
