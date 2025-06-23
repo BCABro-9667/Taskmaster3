@@ -12,7 +12,9 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 
 const testimonials = [
   {
@@ -42,12 +44,52 @@ const testimonials = [
     stars: 4,
     text: "We adopted TaskMaster early on, and it's scaled perfectly with our growing team. The assignee management is simple yet powerful.",
   },
+  {
+    name: 'Mike D.',
+    role: 'Lead Engineer',
+    avatar: 'https://placehold.co/100x100.png',
+    avatarFallback: 'MD',
+    avatarHint: 'profile photo',
+    stars: 5,
+    text: "The performance and reliability are top-notch. It's an indispensable tool in our daily workflow.",
+  },
+  {
+    name: 'Jessica P.',
+    role: 'Digital Marketer',
+    avatar: 'https://placehold.co/100x100.png',
+    avatarFallback: 'JP',
+    avatarHint: 'profile photo',
+    stars: 5,
+    text: "Managing multiple campaigns is so much easier with TaskMaster. The visualization of progress is fantastic.",
+  }
 ];
 
 export function TestimonialsSection() {
   const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 3000, stopOnInteraction: true })
   );
+  
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [current, setCurrent] = React.useState(0)
+ 
+  React.useEffect(() => {
+    if (!api) {
+      return
+    }
+ 
+    setCurrent(api.selectedScrollSnap())
+ 
+    const onSelect = () => {
+      setCurrent(api.selectedScrollSnap())
+    }
+ 
+    api.on("select", onSelect)
+ 
+    return () => {
+      api.off("select", onSelect)
+    }
+  }, [api])
+
 
   return (
     <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-background">
@@ -64,20 +106,24 @@ export function TestimonialsSection() {
           </p>
         </div>
         <Carousel
+          setApi={setApi}
           plugins={[plugin.current]}
-          className="w-full max-w-2xl mx-auto"
+          className="w-full max-w-6xl mx-auto"
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
           opts={{
-            align: "start",
+            align: "center",
             loop: true,
           }}
         >
-          <CarouselContent>
-            {testimonials.map((testimonial) => (
-              <CarouselItem key={testimonial.name}>
-                <div className="p-1">
-                  <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <CarouselContent className="-ml-4">
+            {testimonials.map((testimonial, index) => (
+              <CarouselItem key={testimonial.name} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                <div className={cn(
+                    "p-1 h-full transition-transform duration-500 ease-in-out",
+                    current === index ? "scale-100" : "scale-90 opacity-50"
+                  )}>
+                  <Card className="h-full shadow-lg">
                     <CardHeader className="pb-4">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
