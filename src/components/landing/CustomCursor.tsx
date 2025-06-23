@@ -57,6 +57,7 @@ export function CustomCursor() {
         )}
         style={{
           borderColor: '#4152B5',
+          backgroundColor: 'rgba(65, 82, 181, 0.2)',
           left: `${position.x}px`,
           top: `${position.y}px`,
           transform: 'translate(-50%, -50%)',
