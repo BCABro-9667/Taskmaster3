@@ -6,9 +6,17 @@ import TaskModel, { type ITaskDocument } from '@/models/Task';
 import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 
-// Helper to reliably convert Mongoose docs to plain objects
+// Helper to reliably convert Mongoose docs to plain objects respecting virtuals
 function toPlainObject<T>(doc: any): T {
-  return JSON.parse(JSON.stringify(doc));
+  if (!doc) {
+    return doc;
+  }
+  // If it's an array, map over it
+  if (Array.isArray(doc)) {
+    return doc.map(item => item.toObject ? item.toObject() : item) as T;
+  }
+  // If it's a single document, convert it
+  return (doc.toObject ? doc.toObject() : doc) as T;
 }
 
 
@@ -71,23 +79,30 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
   }
   await dbConnect();
 
-  const updateData: any = { ...updates };
-  if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
-    updateData.$unset = { assignedTo: 1 };
-    delete updateData.assignedTo;
-  } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
-    updateData.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
-  } else {
-    delete updateData.assignedTo;
+  const taskToUpdate = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) });
+
+  if (!taskToUpdate) {
+    return null;
   }
   
-  const updatedTaskDoc = await TaskModel.findOneAndUpdate(
-    { _id: id, createdBy: new mongoose.Types.ObjectId(userId) },
-    updateData,
-    { new: true }
-  ).populate('assignedTo');
+  // Apply updates to the document
+  if (updates.title !== undefined) taskToUpdate.title = updates.title;
+  if (updates.description !== undefined) taskToUpdate.description = updates.description;
+  if (updates.deadline !== undefined) taskToUpdate.deadline = updates.deadline;
+  if (updates.status !== undefined) taskToUpdate.status = updates.status;
+
+  if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
+    taskToUpdate.assignedTo = undefined;
+  } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
+    taskToUpdate.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
+  }
+
+  await taskToUpdate.save();
   
-  return updatedTaskDoc ? toPlainObject<Task>(updatedTaskDoc) : null;
+  // Re-fetch and populate to ensure data is fresh and correctly populated
+  const populatedTask = await TaskModel.findById(taskToUpdate._id).populate('assignedTo');
+  
+  return populatedTask ? toPlainObject<Task>(populatedTask) : null;
 }
 
 export async function deleteTask(userId: string, id: string): Promise<void> {
