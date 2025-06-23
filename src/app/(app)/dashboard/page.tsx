@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import type { Task, Assignee, User } from '@/types';
 import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks';
 import { TaskList } from '@/components/tasks/TaskList';
@@ -18,68 +18,56 @@ import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assignees, setAssignees] = useState<Assignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Covers initial auth check and data load
+  const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const fetchData = useCallback(async (userId: string) => {
-    setIsLoading(true);
-    try {
-      const [fetchedTasks, fetchedAssignees] = await Promise.all([
-        getTasks(userId),
-        getAssignees(userId)
-      ]);
-      setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      setAssignees(fetchedAssignees);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error fetching data',
-        description: 'Could not load tasks or assignees. Please try refreshing.',
-      });
-      setTasks([]);
-      setAssignees([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const triggerRefresh = () => setRefreshTrigger(t => t + 1);
 
   useEffect(() => {
     const user = clientAuthGetCurrentUser();
-    if (user && user.id) {
-      setCurrentUser(user);
-      fetchData(user.id);
-    } else {
+    if (!user || !user.id) {
       setCurrentUser(null);
       setTasks([]);
       setAssignees([]);
-      setIsLoading(false); // Auth check done, no user/data
+      setIsLoading(false);
+      return;
     }
-  }, [fetchData]); // fetchData is stable due to useCallback with stable deps
+    
+    setCurrentUser(user);
+    
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [fetchedTasks, fetchedAssignees] = await Promise.all([
+          getTasks(user.id),
+          getAssignees(user.id)
+        ]);
+        setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        setAssignees(fetchedAssignees);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error fetching data',
+          description: 'Could not load tasks or assignees. Please try refreshing.',
+        });
+        setTasks([]);
+        setAssignees([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleRefreshData = () => {
-    if (currentUser && currentUser.id) {
-      fetchData(currentUser.id);
-    } else {
-       toast({
-        variant: 'destructive',
-        title: 'Cannot Refresh',
-        description: 'User not identified. Please log in again.',
-      });
-    }
-  };
+    fetchData();
+  }, [refreshTrigger, toast]);
 
   const handleTaskCreated = () => {
-    // Re-fetch all data to ensure the UI is in sync with the database.
-    if (currentUser?.id) {
-      fetchData(currentUser.id);
-    }
+    triggerRefresh();
   };
 
   const handleTaskUpdated = () => {
-    if (currentUser && currentUser.id) {
-      fetchData(currentUser.id);
-    }
+    triggerRefresh();
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -87,7 +75,7 @@ export default function DashboardPage() {
     try {
       await deleteTaskApi(currentUser.id, taskId);
       toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
-      fetchData(currentUser.id); // Re-fetch data from the server for consistency
+      triggerRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -102,9 +90,7 @@ export default function DashboardPage() {
     try {
       await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      if (currentUser && currentUser.id) { // Ensure user and id before fetching
-         fetchData(currentUser.id);
-      }
+      triggerRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -119,7 +105,6 @@ export default function DashboardPage() {
   const completedTasks = tasks.filter(task => task.status === 'done');
 
   if (!currentUser && isLoading) { 
-    // Initial load, currentUser not yet determined from localStorage, show loader
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -128,7 +113,6 @@ export default function DashboardPage() {
   }
   
   if (!currentUser && !isLoading) { 
-    // Auth check done, no user found
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <p className="text-lg text-muted-foreground">Please log in to view your dashboard.</p>
@@ -137,7 +121,6 @@ export default function DashboardPage() {
     );
   }
   
-  // If currentUser exists, but still loading data:
   if (currentUser && isLoading) {
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -147,13 +130,12 @@ export default function DashboardPage() {
   }
 
 
-  // currentUser exists and data loading is finished (isLoading is false)
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefreshData} disabled={isLoading} aria-label="Refresh tasks">
+          <Button variant="outline" onClick={triggerRefresh} disabled={isLoading} aria-label="Refresh tasks">
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -222,7 +204,7 @@ export default function DashboardPage() {
           </section>
         )}
         
-        {completedTasks.length === 0 && ( // Removed !isLoading here as it's covered by page isLoading
+        {completedTasks.length === 0 && (
           <section>
              <div className="flex items-center mb-4">
               <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
