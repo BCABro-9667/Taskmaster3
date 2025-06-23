@@ -1,7 +1,18 @@
 
+'use client';
+
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star } from 'lucide-react';
+import Autoplay from "embla-carousel-autoplay";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const testimonials = [
   {
@@ -34,6 +45,10 @@ const testimonials = [
 ];
 
 export function TestimonialsSection() {
+  const plugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
+
   return (
     <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-background">
       <div className="container px-4 md:px-6">
@@ -48,35 +63,52 @@ export function TestimonialsSection() {
             Hear what our users have to say about their experience with TaskMaster.
           </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 md:gap-8">
-          {testimonials.map((testimonial) => (
-            <Card key={testimonial.name} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.avatarHint} />
-                    <AvatarFallback>{testimonial.avatarFallback}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg font-semibold">{testimonial.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
+        <Carousel
+          plugins={[plugin.current]}
+          className="w-full max-w-2xl mx-auto"
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+        >
+          <CarouselContent>
+            {testimonials.map((testimonial) => (
+              <CarouselItem key={testimonial.name}>
+                <div className="p-1">
+                  <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.avatarHint} />
+                          <AvatarFallback>{testimonial.avatarFallback}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg font-semibold">{testimonial.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex mb-2">
+                        {Array(testimonial.stars).fill(0).map((_, i) => (
+                          <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                        ))}
+                        {Array(5 - testimonial.stars).fill(0).map((_, i) => (
+                           <Star key={i+testimonial.stars} className="h-5 w-5 text-muted-foreground" />
+                        ))}
+                      </div>
+                      <p className="text-muted-foreground text-sm leading-relaxed">"{testimonial.text}"</p>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex mb-2">
-                  {Array(testimonial.stars).fill(0).map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                  {Array(5 - testimonial.stars).fill(0).map((_, i) => (
-                     <Star key={i+testimonial.stars} className="h-5 w-5 text-muted-foreground" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">"{testimonial.text}"</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden sm:flex" />
+          <CarouselNext className="hidden sm:flex" />
+        </Carousel>
       </div>
     </section>
   );
