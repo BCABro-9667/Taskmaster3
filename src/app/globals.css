@@ -133,7 +133,7 @@
   .printable-content {
     width: 100%;
     margin: 0;
-    padding: 10mm; /* Adjust as needed */
+    padding: 5mm 10mm; /* Adjust as needed */
   }
 
   /* Ensure all children within printable area use transparent background and black text */

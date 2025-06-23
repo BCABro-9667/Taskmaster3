@@ -158,8 +158,8 @@ export default function AssigneeDetailPage() {
       </div>
 
       <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center gap-4">
-          <div>
+        <CardHeader className="flex flex-row items-center gap-4 print:justify-center">
+          <div className="print:text-center">
             <CardTitle className="text-3xl font-headline text-primary flex items-center">
               <UserIcon className="mr-3 h-8 w-8 no-print" /> 
               {assignee.name}
