@@ -8,10 +8,8 @@ import { TaskList } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, ClipboardList } from 'lucide-react';
+import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { TaskItem } from '@/components/tasks/TaskItem';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 
 
@@ -167,49 +165,24 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {completedTasks.length > 0 && currentUser?.id && (
-          <section>
-            <div className="flex items-center mb-4">
-              <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
-              <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
-            </div>
-            <Accordion type="multiple" className="w-full space-y-2">
-              {completedTasks.map(task => (
-                <AccordionItem key={task.id} value={task.id} className="bg-card border border-border rounded-lg shadow-sm data-[state=open]:shadow-md">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 rounded-t-lg data-[state=open]:rounded-b-none data-[state=open]:border-b">
-                    <div className="flex justify-between items-center w-full">
-                      <span className="text-left font-medium text-card-foreground truncate">{task.title}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-0 border-t-0"> 
-                    <TaskItem 
-                      task={task} 
-                      assignableUsers={assignees}
-                      currentUserId={currentUser!.id} 
-                      onDeleteTask={handleDeleteTask}
-                      onUpdateTask={handleDataRefresh}
-                      onMarkTaskAsComplete={handleMarkTaskAsComplete}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </section>
-        )}
-        
-        {completedTasks.length === 0 && (
-          <section>
-             <div className="flex items-center mb-4">
-              <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
-              <h2 className="text-2xl font-semibold font-headline">Completed Tasks (0)</h2>
-            </div>
-            <div className="flex flex-col items-center justify-center text-center py-12 px-4 border-2 border-dashed border-border rounded-lg bg-card">
-              <ClipboardList className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-1">No Completed Tasks</h3>
-              <p className="text-muted-foreground">Completed tasks will appear here once they are marked as 'Done'.</p>
-            </div>
-          </section>
-        )}
+        <section>
+          <div className="flex items-center mb-4">
+            <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
+            <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
+          </div>
+          {currentUser?.id && (
+            <TaskList
+              tasks={completedTasks}
+              assignableUsers={assignees}
+              currentUserId={currentUser.id}
+              onDeleteTask={handleDeleteTask}
+              onUpdateTask={handleDataRefresh}
+              onMarkTaskAsComplete={handleMarkTaskAsComplete}
+              emptyStateMessage="Completed tasks will appear here once they are marked as 'Done'."
+              emptyStateTitle="No Completed Tasks"
+            />
+          )}
+        </section>
       </div>
     </div>
   );

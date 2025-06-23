@@ -11,8 +11,6 @@ import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { TaskItem } from '@/components/tasks/TaskItem';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 
 export default function AssigneeDetailPage() {
@@ -196,35 +194,16 @@ export default function AssigneeDetailPage() {
           <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
           <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
         </div>
-        {completedTasks.length > 0 ? (
-          <Accordion type="multiple" className="w-full space-y-2">
-            {completedTasks.map(task => (
-              <AccordionItem key={task.id} value={task.id} className="bg-card border border-border rounded-lg shadow-sm data-[state=open]:shadow-md">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 rounded-t-lg data-[state=open]:rounded-b-none data-[state=open]:border-b">
-                  <div className="flex justify-between items-center w-full">
-                    <span className="text-left font-medium text-card-foreground truncate">{task.title}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-0 border-t-0">
-                  <TaskItem 
-                    task={task} 
-                    assignableUsers={allAssigneesForTaskDropdowns} 
-                    currentUserId={currentUser.id}
-                    onDeleteTask={handleDeleteTask}
-                    onUpdateTask={handleDataRefresh}
-                    onMarkTaskAsComplete={handleMarkTaskAsComplete}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center py-12 px-4 border-2 border-dashed border-border rounded-lg bg-card">
-            <CheckCircle2 className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-1 font-headline">No Completed Tasks</h3>
-            <p className="text-muted-foreground">{assignee.name} has not completed any tasks yet.</p>
-          </div>
-        )}
+        <TaskList
+          tasks={completedTasks}
+          assignableUsers={allAssigneesForTaskDropdowns}
+          currentUserId={currentUser.id}
+          onDeleteTask={handleDeleteTask}
+          onUpdateTask={handleDataRefresh}
+          onMarkTaskAsComplete={handleMarkTaskAsComplete}
+          emptyStateMessage={`${assignee.name} has not completed any tasks yet.`}
+          emptyStateTitle="No Completed Tasks"
+        />
       </section>
     </div>
   );
