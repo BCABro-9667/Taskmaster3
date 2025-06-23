@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Task, Assignee, User } from '@/types'; 
 import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; 
@@ -26,7 +26,40 @@ export default function AssigneeDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchData = useCallback(async (userId: string, currentAssigneeId: string) => {
+    if (!currentAssigneeId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
+        getAssigneeById(userId, currentAssigneeId),
+        getTasks(userId),
+        getAssignees(userId)
+      ]);
+
+      if (!fetchedAssignee) {
+        setAssignee(null);
+        setTasks([]);
+      } else {
+        setAssignee(fetchedAssignee);
+        setTasks(fetchedTasks.filter(task => task.assignedTo?.id === currentAssigneeId));
+      }
+      setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching data',
+        description: 'Could not load assignee details or tasks.',
+      });
+      setAssignee(null);
+      setTasks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     const user = clientAuthGetCurrentUser();
@@ -35,57 +68,32 @@ export default function AssigneeDetailPage() {
       return;
     }
     setCurrentUser(user);
+    if (assigneeId) {
+      fetchData(user.id, assigneeId);
+    }
+  }, [assigneeId, router, fetchData]);
 
-    const loadData = async () => {
-      if (!assigneeId) {
-        setIsLoading(false);
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
-          getAssigneeById(user.id, assigneeId),
-          getTasks(user.id),
-          getAssignees(user.id)
-        ]);
-
-        if (!fetchedAssignee) {
-          setAssignee(null);
-          setTasks([]);
-        } else {
-          setAssignee(fetchedAssignee);
-          setTasks(fetchedTasks.filter(task => task.assignedTo?.id === assigneeId));
-        }
-        setAllAssigneesForTaskDropdowns(fetchedAllAssignees);
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error fetching data',
-          description: 'Could not load assignee details or tasks.',
-        });
-        setAssignee(null);
-        setTasks([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [assigneeId, router, toast, refreshTrigger]);
-
-  const triggerRefresh = () => setRefreshTrigger(t => t + 1);
+  const handleDataRefresh = () => {
+    if (currentUser?.id && assigneeId) {
+      fetchData(currentUser.id, assigneeId);
+    }
+  };
 
   const handleDeleteTask = async (taskId: string) => {
     if (!currentUser?.id) return;
     try {
-      await deleteTaskApi(currentUser.id, taskId);
-      toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
-      triggerRefresh();
+      const success = await deleteTaskApi(currentUser.id, taskId);
+      if (success) {
+        toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
+        handleDataRefresh();
+      } else {
+        throw new Error('Failed to delete the task on the server.');
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error Deleting Task',
-        description: 'Could not delete the task. Please try again.',
+        description: (error as Error).message || 'Could not delete the task. Please try again.',
       });
     }
   };
@@ -95,7 +103,7 @@ export default function AssigneeDetailPage() {
     try {
       await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      triggerRefresh();
+      handleDataRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -180,7 +188,7 @@ export default function AssigneeDetailPage() {
           assignableUsers={allAssigneesForTaskDropdowns} 
           currentUserId={currentUser.id}
           onDeleteTask={handleDeleteTask}
-          onUpdateTask={triggerRefresh}
+          onUpdateTask={handleDataRefresh}
           onMarkTaskAsComplete={handleMarkTaskAsComplete}
           emptyStateMessage={`${assignee.name} has no pending tasks.`}
           emptyStateTitle="All Caught Up!"
@@ -207,7 +215,7 @@ export default function AssigneeDetailPage() {
                     assignableUsers={allAssigneesForTaskDropdowns} 
                     currentUserId={currentUser.id}
                     onDeleteTask={handleDeleteTask}
-                    onUpdateTask={triggerRefresh}
+                    onUpdateTask={handleDataRefresh}
                     onMarkTaskAsComplete={handleMarkTaskAsComplete}
                   />
                 </AccordionContent>

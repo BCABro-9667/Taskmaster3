@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { Task, Assignee, User } from '@/types';
 import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks';
 import { TaskList } from '@/components/tasks/TaskList';
@@ -21,66 +21,63 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const triggerRefresh = () => setRefreshTrigger(t => t + 1);
+  const fetchData = useCallback(async (userId: string) => {
+    setIsLoading(true);
+    try {
+      const [fetchedTasks, fetchedAssignees] = await Promise.all([
+        getTasks(userId),
+        getAssignees(userId)
+      ]);
+      setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setAssignees(fetchedAssignees);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching data',
+        description: 'Could not load tasks or assignees. Please try refreshing.',
+      });
+      setTasks([]);
+      setAssignees([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     const user = clientAuthGetCurrentUser();
-    if (!user || !user.id) {
+    if (user && user.id) {
+      setCurrentUser(user);
+      fetchData(user.id);
+    } else {
       setCurrentUser(null);
       setTasks([]);
       setAssignees([]);
       setIsLoading(false);
-      return;
     }
-    
-    setCurrentUser(user);
-    
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [fetchedTasks, fetchedAssignees] = await Promise.all([
-          getTasks(user.id),
-          getAssignees(user.id)
-        ]);
-        setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        setAssignees(fetchedAssignees);
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error fetching data',
-          description: 'Could not load tasks or assignees. Please try refreshing.',
-        });
-        setTasks([]);
-        setAssignees([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  }, [fetchData]);
 
-    fetchData();
-  }, [refreshTrigger, toast]);
-
-  const handleTaskCreated = () => {
-    triggerRefresh();
-  };
-
-  const handleTaskUpdated = () => {
-    triggerRefresh();
+  const handleDataRefresh = () => {
+    if (currentUser?.id) {
+      fetchData(currentUser.id);
+    }
   };
 
   const handleDeleteTask = async (taskId: string) => {
     if (!currentUser?.id) return;
     try {
-      await deleteTaskApi(currentUser.id, taskId);
-      toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
-      triggerRefresh();
+      const success = await deleteTaskApi(currentUser.id, taskId);
+      if (success) {
+        toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
+        handleDataRefresh();
+      } else {
+        throw new Error('Failed to delete the task on the server.');
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error Deleting Task',
-        description: 'Could not delete the task. Please try again.',
+        description: (error as Error).message || 'Could not delete the task. Please try again.',
       });
     }
   };
@@ -90,7 +87,7 @@ export default function DashboardPage() {
     try {
       await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      triggerRefresh();
+      handleDataRefresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -135,7 +132,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={triggerRefresh} disabled={isLoading} aria-label="Refresh tasks">
+          <Button variant="outline" onClick={handleDataRefresh} disabled={isLoading} aria-label="Refresh tasks">
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -150,7 +147,7 @@ export default function DashboardPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {currentUser?.id && <CreateTaskForm onTaskCreated={handleTaskCreated} currentUserId={currentUser.id} />}
+          {currentUser?.id && <CreateTaskForm onTaskCreated={handleDataRefresh} currentUserId={currentUser.id} />}
         </CardContent>
       </Card>
 
@@ -167,7 +164,7 @@ export default function DashboardPage() {
               assignableUsers={assignees}
               currentUserId={currentUser.id}
               onDeleteTask={handleDeleteTask}
-              onUpdateTask={handleTaskUpdated}
+              onUpdateTask={handleDataRefresh}
               onMarkTaskAsComplete={handleMarkTaskAsComplete}
               emptyStateMessage="No pending tasks. Way to go!"
             />
@@ -194,7 +191,7 @@ export default function DashboardPage() {
                       assignableUsers={assignees}
                       currentUserId={currentUser!.id} 
                       onDeleteTask={handleDeleteTask}
-                      onUpdateTask={handleTaskUpdated}
+                      onUpdateTask={handleDataRefresh}
                       onMarkTaskAsComplete={handleMarkTaskAsComplete}
                     />
                   </AccordionContent>
