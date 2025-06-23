@@ -6,6 +6,12 @@ import TaskModel, { type ITaskDocument } from '@/models/Task';
 import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 
+// Helper to reliably convert Mongoose docs to plain objects
+function toPlainObject<T>(doc: any): T {
+  return JSON.parse(JSON.stringify(doc));
+}
+
+
 export async function getTasks(userId: string): Promise<Task[]> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     console.error('Invalid or missing userId for getTasks');
@@ -16,8 +22,7 @@ export async function getTasks(userId: string): Promise<Task[]> {
     .sort({ createdAt: -1 })
     .populate('assignedTo');
 
-  const tasks = taskDocs.map(doc => doc.toObject());
-  return tasks as Task[];
+  return toPlainObject<Task[]>(taskDocs);
 }
 
 export async function getTaskById(userId: string, id: string): Promise<Task | undefined> {
@@ -28,7 +33,7 @@ export async function getTaskById(userId: string, id: string): Promise<Task | un
   const taskDoc = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) })
     .populate('assignedTo');
   if (!taskDoc) return undefined;
-  return taskDoc.toObject() as Task;
+  return toPlainObject<Task>(taskDoc);
 }
 
 export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'> & { assignedTo?: string }): Promise<Task> {
@@ -57,7 +62,7 @@ export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'cr
   if (!populatedTaskDoc) {
     throw new Error('Failed to retrieve newly created task for population.');
   }
-  return populatedTaskDoc.toObject() as Task;
+  return toPlainObject<Task>(populatedTaskDoc);
 }
 
 export async function updateTask(userId: string, id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'>> & { assignedTo?: string | null }): Promise<Task | null> {
@@ -82,7 +87,7 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
     { new: true }
   ).populate('assignedTo');
   
-  return updatedTaskDoc ? updatedTaskDoc.toObject() as Task : null;
+  return updatedTaskDoc ? toPlainObject<Task>(updatedTaskDoc) : null;
 }
 
 export async function deleteTask(userId: string, id: string): Promise<void> {
@@ -113,8 +118,7 @@ export async function getAssignees(userId: string): Promise<Assignee[]> {
   const assigneeDocs = await AssigneeModel.find({ createdBy: new mongoose.Types.ObjectId(userId) })
     .sort({ name: 1 });
   
-  const assignees = assigneeDocs.map(doc => doc.toObject());
-  return assignees as Assignee[];
+  return toPlainObject<Assignee[]>(assigneeDocs);
 }
 
 export async function getAssigneeById(userId: string, assigneeId: string): Promise<Assignee | null> {
@@ -123,7 +127,7 @@ export async function getAssigneeById(userId: string, assigneeId: string): Promi
   }
   await dbConnect();
   const assigneeDoc = await AssigneeModel.findOne({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) });
-  return assigneeDoc ? assigneeDoc.toObject() as Assignee : null;
+  return assigneeDoc ? toPlainObject<Assignee>(assigneeDoc) : null;
 }
 
 export async function createAssignee(userId: string, name: string, designation?: string): Promise<Assignee> {
@@ -137,7 +141,7 @@ export async function createAssignee(userId: string, name: string, designation?:
     createdBy: new mongoose.Types.ObjectId(userId),
   });
   await newAssigneeDoc.save();
-  return newAssigneeDoc.toObject();
+  return toPlainObject<Assignee>(newAssigneeDoc);
 }
 
 export async function updateAssignee(userId: string, assigneeId: string, updates: { name?: string; designation?: string }): Promise<Assignee | null> {
@@ -150,7 +154,7 @@ export async function updateAssignee(userId: string, assigneeId: string, updates
     updates,
     { new: true }
   );
-  return assigneeDoc ? assigneeDoc.toObject() as Assignee : null;
+  return assigneeDoc ? toPlainObject<Assignee>(assigneeDoc) : null;
 }
 
 export async function deleteAssignee(userId: string, assigneeId: string): Promise<boolean> {
