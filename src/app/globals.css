@@ -90,11 +90,35 @@
   }
 }
 
+@media screen {
+  .print-view {
+    display: none !important;
+  }
+}
+
 @media print {
   .navbar-component,
   .footer-component,
-  .no-print {
+  .no-print,
+  .screen-view {
     display: none !important;
+  }
+
+  .print-view {
+    display: flex !important;
+    align-items: center;
+    padding: 4px 8px !important;
+    font-size: 9pt;
+  }
+  
+  .print-view .task-title {
+    flex-grow: 1;
+    padding: 0 8px;
+  }
+
+  .print-view .task-deadline {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   body { /* Reset body for printing */
@@ -122,57 +146,29 @@
   }
   
   .printable-content .card {
-    border: 1px solid #ccc !important;
-    page-break-inside: avoid; /* Try to keep card content together */
-    margin-bottom: 0.5rem; /* Space between cards */
-  }
-
-  /* Specific to TaskItem's card for print adjustments */
-  .printable-content .task-item-display .lucide-circle,
-  .printable-content .task-item-display .lucide-check-circle-2,
-  .printable-content .task-item-display .lucide-edit-3, 
-  .printable-content .task-item-display .lucide-trash-2,
-  .printable-content .task-item-display .lucide-more-vertical,
-  .printable-content .task-item-display button[aria-label*="Mark task"],
-  .printable-content .task-item-display .avatar { /* Hiding avatar as profile images removed */
-    display: none !important;
-  }
-
-  .printable-content .task-item-display .task-title-print {
-    font-weight: bold;
+    border: none !important; /* Remove card border for a cleaner list */
+    page-break-inside: avoid;
+    margin-bottom: 0;
+    border-bottom: 1px solid #eee !important; /* Use a light line between tasks */
+    border-radius: 0 !important;
   }
   
-  .printable-content .task-item-display .assignee-name-print,
-  .printable-content .task-item-display .deadline-print {
-     margin-left: 0.5em; /* Adjust spacing as needed now avatar is gone */
+   .printable-content .card-header {
+    padding-bottom: 1rem !important;
   }
-  .printable-content .task-item-display .task-status-badge {
-    border: 1px solid #ccc !important;
-    padding: 2px 4px;
-    font-size: 0.8em;
-    display: inline-block !important; 
-    visibility: visible !important; /* Ensure badge is visible */
-  }
-   .printable-content .task-item-display .lucide-user-circle { /* Hide generic user icon too */
-    display: none !important;
-  }
-
 
   .printable-content h1, .printable-content h2, .printable-content h3 {
     page-break-after: avoid; /* Avoid breaking pages right after a heading */
+    padding-bottom: 5px;
   }
 
   /* Improve link appearance for print */
   .printable-content a, .printable-content a:visited {
-    text-decoration: underline;
+    text-decoration: none; /* No underlines for cleaner look */
   }
-  .printable-content a[href]:after { /* Show URLs for external links, useful for print */
-    content: " (" attr(href) ")";
-    font-size: 0.8em;
-  }
-  /* Do not show URLs for internal/anchor links */
-  .printable-content a[href^="/"]:after, 
-  .printable-content a[href^="#"]:after {
-      content: ""; 
+  
+  /* Remove URL printing for all links in print content */
+  .printable-content a[href]:after { 
+    content: ""; 
   }
 }

@@ -88,118 +88,132 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   return (
     <>
-      <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg task-item-display")}>
-        <CardContent className="p-3 sm:p-4 flex items-start gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-7 w-7 rounded-full p-0 shrink-0 mt-1",
-              isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
-            )}
-            onClick={handleCircleClick}
-            disabled={!isCompletable || !canModifyTask} // Also disable if cannot modify
-            aria-label={isCompletable ? "Mark task as complete" : (task.status === 'done' ? "Task completed" : "Task archived")}
-          >
-            {task.status === 'done' || task.status === 'archived' ? (
-              <CheckCircle2 className={cn("h-5 w-5", task.status === 'done' ? "text-green-500" : "text-muted-foreground")} />
-            ) : (
-              <Circle className="h-5 w-5" />
-            )}
-          </Button>
+      <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg")}>
+        <CardContent className="p-0">
 
-          <div className="flex-grow min-w-0">
-            <p className="font-medium text-card-foreground break-words truncate task-title-print" title={task.title}>{task.title}</p>
-            {task.description && (
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words whitespace-pre-wrap">
-                {task.description}
-              </p>
-            )}
-          </div>
+          {/* Screen View */}
+          <div className="screen-view p-3 sm:p-4 flex items-start gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-7 w-7 rounded-full p-0 shrink-0 mt-1",
+                isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
+              )}
+              onClick={handleCircleClick}
+              disabled={!isCompletable || !canModifyTask} // Also disable if cannot modify
+              aria-label={isCompletable ? "Mark task as complete" : (task.status === 'done' ? "Task completed" : "Task archived")}
+            >
+              {task.status === 'done' || task.status === 'archived' ? (
+                <CheckCircle2 className={cn("h-5 w-5", task.status === 'done' ? "text-green-500" : "text-muted-foreground")} />
+              ) : (
+                <Circle className="h-5 w-5" />
+              )}
+            </Button>
 
-          <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
-            {assignedAssignee ? (
-              <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
-                <Avatar className="h-6 w-6 no-print">
-                  <AvatarFallback>{getAssigneeInitials(assignedAssignee.name)}</AvatarFallback>
-                </Avatar>
-                <span className={cn("hidden md:inline text-foreground text-xs sm:text-sm assignee-name-print")}>{assignedAssignee.name}</span>
-              </Link>
-            ) : (
-              <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
-                <UserCircle className="h-5 w-5 sm:h-6 sm-w-6 no-print" />
-                <span className="hidden md:inline text-xs sm:text-sm">Unassigned</span>
+            <div className="flex-grow min-w-0">
+              <p className="font-medium text-card-foreground break-words truncate" title={task.title}>{task.title}</p>
+              {task.description && (
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words whitespace-pre-wrap">
+                  {task.description}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
+              {assignedAssignee ? (
+                <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback>{getAssigneeInitials(assignedAssignee.name)}</AvatarFallback>
+                  </Avatar>
+                  <span className={cn("hidden md:inline text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
+                </Link>
+              ) : (
+                <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
+                  <UserCircle className="h-5 w-5 sm:h-6 sm-w-6" />
+                  <span className="hidden md:inline text-xs sm:text-sm">Unassigned</span>
+                </div>
+              )}
+
+              <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
+                <CalendarDays className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
+                <span className={cn("hidden sm:inline text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
+                  {format(parseISO(task.deadline), 'MMM d')}
+                </span>
               </div>
-            )}
 
-            <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
-              <CalendarDays className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-              <span className={cn("hidden sm:inline text-xs sm:text-sm deadline-print", isOverdue ? 'font-medium' : '')}>
-                {format(parseISO(task.deadline), 'MMM d')}
-              </span>
+              <div className="hidden xs:block">
+                <TaskStatusBadge status={task.status} />
+              </div>
+
+              {canModifyTask && ( // Only show dropdown if user can modify task
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
+                      <StickyNote className="mr-2 h-4 w-4" />
+                      <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
+                    </DropdownMenuItem>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditTaskDetails}>
+                          <Edit3 className="mr-2 h-4 w-4" />
+                          <span>Edit Task Details</span>
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle>Edit Task</DialogTitle>
+                        </DialogHeader>
+                        <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} currentUserId={currentUserId}/>
+                      </DialogContent>
+                    </Dialog>
+                    <DropdownMenuSeparator />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()} disabled={!canModifyTask}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the task
+                            "{task.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onDeleteTask(task.id)}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
-
-            <div className="hidden xs:block task-status-badge">
-              <TaskStatusBadge status={task.status} />
-            </div>
-
-            {canModifyTask && ( // Only show dropdown if user can modify task
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 no-print">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
-                    <StickyNote className="mr-2 h-4 w-4" />
-                    <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
-                  </DropdownMenuItem>
-                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <DialogTrigger asChild>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditTaskDetails}>
-                        <Edit3 className="mr-2 h-4 w-4" />
-                        <span>Edit Task Details</span>
-                      </DropdownMenuItem>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
-                      <DialogHeader>
-                        <DialogTitle>Edit Task</DialogTitle>
-                      </DialogHeader>
-                      <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} currentUserId={currentUserId}/>
-                    </DialogContent>
-                  </Dialog>
-                  <DropdownMenuSeparator />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()} disabled={!canModifyTask}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Delete</span>
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the task
-                          "{task.title}".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => onDeleteTask(task.id)}
-                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
+
+          {/* Print View */}
+          <div className="print-view">
+              <Circle className="h-4 w-4 text-black shrink-0" />
+              <p className="task-title break-words">{task.title}</p>
+              <p className="task-deadline text-xs whitespace-nowrap">
+                {format(parseISO(task.deadline), 'MMM d, yyyy')}
+              </p>
+          </div>
+
         </CardContent>
       </Card>
       {isEditNoteDialogOpen && canModifyTask && (
