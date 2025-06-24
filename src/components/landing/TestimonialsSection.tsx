@@ -1,5 +1,7 @@
 
 'use client';
+import img1 from './p1.jpg'
+import img2 from './p2.jpg'
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,28 +20,28 @@ import { cn } from "@/lib/utils";
 
 const testimonials = [
   {
-    name: 'Sarah L.',
+    name: 'Abhisekh P.',
     role: 'Project Manager',
     avatar: 'https://placehold.co/100x100.png',
-    avatarFallback: 'SL',
+    avatarFallback: 'AP',
     avatarHint: 'profile photo',
     stars: 5,
     text: "TaskMaster has revolutionized how our team handles projects. The AI deadline suggestions are a game-changer!",
   },
   {
-    name: 'John B.',
-    role: 'Freelance Developer',
-    avatar: 'https://placehold.co/100x100.png',
-    avatarFallback: 'JB',
+    name: 'Avdhesh Kumar.',
+    role: 'Web Developer',
+    avatar: {img2},
+    avatarFallback: 'AK',
     avatarHint: 'profile photo',
     stars: 5,
     text: "As a freelancer, staying organized is key. TaskMaster's intuitive interface and progress tracking help me stay on top of all my client work.",
   },
   {
-    name: 'Emily K.',
+    name: 'Ayush Saini.',
     role: 'Startup Founder',
-    avatar: 'https://placehold.co/100x100.png',
-    avatarFallback: 'EK',
+    avatar: {img1},
+    avatarFallback: 'AK',
     avatarHint: 'profile photo',
     stars: 4,
     text: "We adopted TaskMaster early on, and it's scaled perfectly with our growing team. The assignee management is simple yet powerful.",
