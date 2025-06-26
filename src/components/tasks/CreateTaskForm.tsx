@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,7 +55,7 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
     defaultValues: {
       title: '',
       assignedTo: 'unassigned', 
-      deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+      deadline: format(new Date(), 'yyyy-MM-dd'),
     },
   });
 
@@ -150,7 +149,7 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
       form.reset({
         title: '',
         assignedTo: 'unassigned',
-        deadline: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+        deadline: format(new Date(), 'yyyy-MM-dd'),
       });
     } catch (error) {
       toast({
