@@ -207,13 +207,25 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
           {/* Print View */}
           <div className="print-view">
-              <Circle className="h-4 w-4 text-black shrink-0" />
-              <p className="task-title break-words">{task.title}</p>
-              <p className="task-deadline text-xs whitespace-nowrap">
-                {format(parseISO(task.deadline), 'MMM d, yyyy')}
-              </p>
+            <div className="print-task-header">
+                <Circle className="h-4 w-4 text-black shrink-0" />
+                <p className="task-title">{task.title}</p>
+                <p className="task-deadline">{format(parseISO(task.deadline), 'MMM d, yyyy')}</p>
+            </div>
+            {(assignedAssignee || task.description) && (
+                 <div className="print-task-details">
+                    {assignedAssignee && (
+                        <p className="task-assignee-print">Assigned to: {assignedAssignee.name}</p>
+                    )}
+                    {task.description && (
+                        <p className="task-notes-print">
+                            <span className="task-notes-label">Note: </span>
+                            {task.description}
+                        </p>
+                    )}
+                </div>
+            )}
           </div>
-
         </CardContent>
       </Card>
       {isEditNoteDialogOpen && canModifyTask && (
