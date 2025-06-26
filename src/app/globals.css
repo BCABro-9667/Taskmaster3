@@ -152,29 +152,40 @@
   .print-task-header {
     display: flex !important;
     align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .print-task-title-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+    min-width: 0;
   }
 
   .print-view .task-title {
     font-weight: 600;
-    flex-grow: 1;
-    padding: 0 8px;
+    padding: 0;
+    word-break: break-word;
+  }
+  
+  .print-task-meta-section {
+    flex-shrink: 0;
+    text-align: right;
   }
 
-  .print-view .task-deadline {
-    flex-shrink: 0;
+  .print-task-meta-section .task-meta-text {
     font-size: 8pt;
     color: #333 !important;
+    white-space: nowrap;
   }
 
   .print-task-details {
     margin-top: 4px;
-    padding-left: 24px; /* Align with title */
+    padding-left: 24px;
     font-size: 8pt;
     color: #555 !important;
-  }
-
-  .print-view .task-assignee-print {
-    margin-bottom: 2px;
   }
 
   .print-view .task-notes-print {
