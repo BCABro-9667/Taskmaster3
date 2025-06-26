@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,23 +33,23 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
-// getCurrentUser removed, currentUserId is now a prop
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
   onTaskCreated: () => void; 
-  currentUserId: string | null; // Added currentUserId prop
+  currentUserId: string | null; 
 }
 
 export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormProps) {
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
   const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
-  // currentUserId state removed, using prop instead
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -132,6 +133,7 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
       return;
     }
     setIsSubmitting(true);
+    start();
     try {
       const taskDataForApi = {
         title: values.title,
@@ -159,6 +161,7 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
       });
     } finally {
       setIsSubmitting(false);
+      complete();
     }
   }
 
@@ -282,7 +285,7 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
           </Button>
         </form>
       </Form>
-      {currentUserId && ( // Only render if currentUserId is available
+      {currentUserId && ( 
         <CreateAssigneeDialog 
           isOpen={isCreateAssigneeDialogOpen}
           onOpenChange={setIsCreateAssigneeDialogOpen}

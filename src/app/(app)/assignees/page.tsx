@@ -37,10 +37,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 export default function AssigneesPage() {
   const [assignees, setAssignees] = useState<Assignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Covers initial auth check and data load
+  const [isLoading, setIsLoading] = useState(true); 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAssignee, setEditingAssignee] = useState<Assignee | null>(null);
@@ -48,6 +49,7 @@ export default function AssigneesPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
 
   const fetchData = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -74,7 +76,7 @@ export default function AssigneesPage() {
     } else {
       setCurrentUser(null);
       setAssignees([]);
-      setIsLoading(false); // Auth check done, no user/data
+      setIsLoading(false); 
     }
   }, [fetchData]);
 
@@ -87,12 +89,11 @@ export default function AssigneesPage() {
   const handleAssigneeUpdated = (updatedAssignee: Assignee) => {
     setAssignees(prev => prev.map(item => item.id === updatedAssignee.id ? updatedAssignee : item).sort((a,b) => (a.name || '').localeCompare(b.name || '')));
     setEditingAssignee(null);
-    // Optionally re-fetch if complex updates might affect sorting or other derived state
-    // if (currentUser && currentUser.id) fetchData(currentUser.id);
   };
 
   const confirmDeleteAssignee = async () => {
     if (!deletingAssignee || !currentUser?.id) return;
+    start();
     try {
       await deleteAssigneeApi(currentUser.id, deletingAssignee.id);
       setAssignees(prev => prev.filter(item => item.id !== deletingAssignee.id));
@@ -105,11 +106,12 @@ export default function AssigneesPage() {
       });
     } finally {
       setDeletingAssignee(null);
+      complete();
     }
   };
 
   const filteredAssignees = useMemo(() => {
-    return assignees.filter(assigneeItem => // Renamed to avoid conflict with state
+    return assignees.filter(assigneeItem => 
       assigneeItem.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       assigneeItem.designation?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -175,7 +177,7 @@ export default function AssigneesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAssignees.map(assigneeItem => ( // Renamed to avoid conflict
+              {filteredAssignees.map(assigneeItem => ( 
                 <TableRow key={assigneeItem.id}>
                   <TableCell className="font-medium">{assigneeItem.name}</TableCell>
                   <TableCell>{assigneeItem.designation || 'N/A'}</TableCell>

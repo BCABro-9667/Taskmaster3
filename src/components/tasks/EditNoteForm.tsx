@@ -19,17 +19,19 @@ import type { Task } from '@/types';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { noteFormSchema, type NoteFormValues } from './TaskFormSchema';
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 
 interface EditNoteFormProps {
   task: Task;
   onNoteUpdated: () => void;
   closeDialog: () => void;
-  currentUserId: string; // Added currentUserId
+  currentUserId: string; 
 }
 
 export function EditNoteForm({ task, onNoteUpdated, closeDialog, currentUserId }: EditNoteFormProps) {
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NoteFormValues>({
@@ -45,6 +47,7 @@ export function EditNoteForm({ task, onNoteUpdated, closeDialog, currentUserId }
       return;
     }
     setIsSubmitting(true);
+    start();
     try {
       await updateTask(currentUserId, task.id, { description: values.description || '' });
       toast({
@@ -61,6 +64,7 @@ export function EditNoteForm({ task, onNoteUpdated, closeDialog, currentUserId }
       });
     } finally {
       setIsSubmitting(false);
+      complete();
     }
   }
 

@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 export default function AssigneeDetailPage() {
   const params = useParams();
@@ -24,6 +25,7 @@ export default function AssigneeDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
 
   const fetchData = useCallback(async (userId: string, currentAssigneeId: string) => {
     if (!currentAssigneeId) {
@@ -79,6 +81,7 @@ export default function AssigneeDetailPage() {
 
   const handleDeleteTask = async (taskId: string) => {
     if (!currentUser?.id) return;
+    start();
     try {
       await deleteTaskApi(currentUser.id, taskId);
       toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
@@ -89,11 +92,14 @@ export default function AssigneeDetailPage() {
         title: 'Error Deleting Task',
         description: (error as Error).message || 'Could not delete the task. Please try again.',
       });
+    } finally {
+      complete();
     }
   };
   
   const handleMarkTaskAsComplete = async (taskId: string) => {
     if (!currentUser?.id) return;
+    start();
     try {
       await updateTask(currentUser.id, taskId, { status: 'done' });
       toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
@@ -104,6 +110,8 @@ export default function AssigneeDetailPage() {
         title: 'Error Updating Task',
         description: 'Could not mark the task as complete. Please try again.',
       });
+    } finally {
+      complete();
     }
   };
 

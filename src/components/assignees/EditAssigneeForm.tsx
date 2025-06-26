@@ -19,6 +19,7 @@ import { updateAssignee } from '@/lib/tasks';
 import type { Assignee } from '@/types'; 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 const editAssigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
@@ -31,11 +32,12 @@ interface EditAssigneeFormProps {
   assignee: Assignee; 
   onAssigneeUpdated: (updatedAssignee: Assignee) => void; 
   closeDialog: () => void;
-  currentUserId: string; // Added currentUserId
+  currentUserId: string; 
 }
 
 export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog, currentUserId }: EditAssigneeFormProps) {
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<EditAssigneeFormValues>({
@@ -52,6 +54,7 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog, cur
       return;
     }
     setIsSubmitting(true);
+    start();
     try {
       const updatedData = await updateAssignee(currentUserId, assignee.id, values); 
       if (updatedData) {
@@ -72,6 +75,7 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog, cur
       });
     } finally {
       setIsSubmitting(false);
+      complete();
     }
   }
 

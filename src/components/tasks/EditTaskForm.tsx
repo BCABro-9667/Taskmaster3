@@ -13,16 +13,18 @@ import { Loader2 } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
 import { TaskFormFields } from './TaskFormFields';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 interface EditTaskFormProps {
   task: Task;
   onTaskUpdated: () => void;
   closeDialog: () => void;
-  currentUserId: string; // Added currentUserId
+  currentUserId: string; 
 }
 
 export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }: EditTaskFormProps) {
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]); 
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
@@ -64,6 +66,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
       return;
     }
     setIsSubmitting(true);
+    start();
     try {
       const taskDataForApi = {
         title: values.title,
@@ -85,6 +88,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
       });
     } finally {
       setIsSubmitting(false);
+      complete();
     }
   }
 
@@ -100,7 +104,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
             isSubmittingAi={isSubmittingAi}
             setIsSubmittingAi={setIsSubmittingAi}
             currentTaskTitle={form.watch('title')}
-            currentUserId={currentUserId} // Pass currentUserId
+            currentUserId={currentUserId} 
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting || isSubmittingAi}>

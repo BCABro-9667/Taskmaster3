@@ -19,6 +19,7 @@ import { createAssignee } from '@/lib/tasks';
 import type { Assignee } from '@/types'; 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 const assigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
@@ -30,11 +31,12 @@ type AssigneeFormValues = z.infer<typeof assigneeFormSchema>;
 interface CreateAssigneeFormProps {
   onAssigneeCreated: (newAssignee: Assignee) => void; 
   closeDialog: () => void;
-  currentUserId: string; // Added currentUserId
+  currentUserId: string; 
 }
 
 export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUserId }: CreateAssigneeFormProps) {
   const { toast } = useToast();
+  const { start, complete } = useLoadingBar();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AssigneeFormValues>({
@@ -51,6 +53,7 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUser
       return;
     }
     setIsSubmitting(true);
+    start();
     try {
       const newAssignee = await createAssignee(currentUserId, values.name, values.designation); 
       toast({
@@ -67,6 +70,7 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUser
       });
     } finally {
       setIsSubmitting(false);
+      complete();
     }
   }
 

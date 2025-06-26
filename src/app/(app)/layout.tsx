@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/client-auth'; // Updated import
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { LoadingBarProvider } from '@/hooks/use-loading-bar';
 
 export default function AppLayout({
   children,
@@ -33,14 +34,16 @@ export default function AppLayout({
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-      <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border footer-component">
-        © {new Date().getFullYear()} TaskMaster. All rights reserved.
-      </footer>
-    </div>
+    <LoadingBarProvider>
+      <div className="flex flex-col min-h-screen bg-background">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </main>
+        <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border footer-component">
+          © {new Date().getFullYear()} TaskMaster. All rights reserved.
+        </footer>
+      </div>
+    </LoadingBarProvider>
   );
 }
