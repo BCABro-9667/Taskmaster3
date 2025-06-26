@@ -1,16 +1,26 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Task, Assignee, User } from '@/types';
 import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks';
 import { TaskList } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2 } from 'lucide-react';
+import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 export default function DashboardPage() {
@@ -20,6 +30,9 @@ export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState('createdAtDesc');
+
   const fetchData = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
@@ -27,7 +40,7 @@ export default function DashboardPage() {
         getTasks(userId),
         getAssignees(userId)
       ]);
-      setTasks(fetchedTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setTasks(fetchedTasks);
       setAssignees(fetchedAssignees);
     } catch (error) {
       toast({
@@ -91,9 +104,33 @@ export default function DashboardPage() {
     }
   };
 
-
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
   const completedTasks = tasks.filter(task => task.status === 'done');
+
+  const filteredAndSortedTasks = useMemo(() => {
+    let filtered = pendingTasks.filter(task => 
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (sortOption === 'createdAtDesc') {
+        return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } 
+    
+    if (sortOption === 'assigneeNameAsc') {
+        return filtered.sort((a, b) => {
+            const nameA = a.assignedTo?.name || 'zzzz'; // Unassigned at the end
+            const nameB = b.assignedTo?.name || 'zzzz';
+            return nameA.localeCompare(nameB);
+        });
+    }
+
+    return filtered;
+  }, [pendingTasks, searchTerm, sortOption]);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   if (!currentUser && isLoading) { 
     return (
@@ -123,7 +160,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
         <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleDataRefresh} disabled={isLoading} aria-label="Refresh tasks">
@@ -133,7 +170,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg no-print">
         <CardHeader>
           <CardTitle className="text-xl font-headline flex items-center">
             <PlusCircle className="mr-2 h-5 w-5 text-accent" />
@@ -147,25 +184,59 @@ export default function DashboardPage() {
 
 
       <div className="space-y-8">
-        <section>
-          <div className="flex items-center mb-4">
-            <ListTodo className="mr-3 h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({pendingTasks.length})</h2>
+        <section className="dashboard-printable-area">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+            <div className="flex items-center">
+              <ListTodo className="mr-3 h-6 w-6 text-primary no-print" />
+              <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto no-print">
+              <div className="relative flex-grow sm:flex-grow-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search tasks..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    Sort
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                    <DropdownMenuRadioItem value="createdAtDesc">Date</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="assigneeNameAsc">Assignee</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="outline" onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print
+              </Button>
+            </div>
           </div>
           {currentUser?.id && (
             <TaskList 
-              tasks={pendingTasks} 
+              tasks={filteredAndSortedTasks} 
               assignableUsers={assignees}
               currentUserId={currentUser.id}
               onDeleteTask={handleDeleteTask}
               onUpdateTask={handleDataRefresh}
               onMarkTaskAsComplete={handleMarkTaskAsComplete}
-              emptyStateMessage="No pending tasks. Way to go!"
+              emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
             />
           )}
         </section>
 
-        <section>
+        <section className="no-print">
           <div className="flex items-center mb-4">
             <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
             <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>

@@ -108,6 +108,38 @@
   .screen-view {
     display: none !important;
   }
+  
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: white !important;
+    color: black !important;
+    font-family: sans-serif; /* Use a common print font */
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  .dashboard-printable-area, .printable-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .dashboard-printable-area h2, .printable-content .print-header {
+     text-align: center;
+     width: 100%;
+     margin-bottom: 1rem;
+     font-size: 16pt;
+  }
 
   .print-view {
     display: flex !important;
@@ -125,29 +157,9 @@
     flex-shrink: 0;
     margin-left: auto;
   }
-
-  body { /* Reset body for printing */
-    background-color: white !important;
-    color: black !important;
-    font-family: sans-serif; /* Use a common print font */
-    font-size: 10pt;
-    margin: 0;
-    padding: 5mm;
-  }
-
-  .printable-content {
-    width: 100%;
-    margin: 0;
-    padding: 0; 
-  }
-
-  .printable-content .print-header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
+  
   /* Ensure all children within printable area use transparent background and black text */
-  .printable-content *, .printable-content *:before, .printable-content *:after {
+  .dashboard-printable-area *, .printable-content *, .printable-content *:before, .printable-content *:after {
     background-color: transparent !important;
     color: black !important;
     box-shadow: none !important;
@@ -155,7 +167,7 @@
     border-color: #ccc !important; /* Lighten borders for print */
   }
   
-  .printable-content .card {
+  .dashboard-printable-area .card, .printable-content .card {
     border: none !important; /* Remove card border for a cleaner list */
     page-break-inside: avoid;
     margin-bottom: 0;
@@ -167,7 +179,7 @@
     padding-bottom: 0 !important;
   }
 
-  .printable-content h1, .printable-content h2, .printable-content h3 {
+  .dashboard-printable-area h2, .printable-content h1, .printable-content h2, .printable-content h3 {
     page-break-after: avoid; /* Avoid breaking pages right after a heading */
     padding-bottom: 5px;
   }
