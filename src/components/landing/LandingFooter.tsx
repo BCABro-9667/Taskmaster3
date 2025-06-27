@@ -6,9 +6,9 @@ export function LandingFooter() {
         <p className="text-sm text-muted-foreground text-center">
           &copy; {new Date().getFullYear()} TaskMaster. All rights reserved.
         </p>
-        <p className="text-xs text-muted-foreground text-center">
+        {/* <p className="text-xs text-muted-foreground text-center">
           Built with Next.js, Tailwind CSS, and ShadCN UI.
-        </p>
+        </p> */}
       </div>
     </footer>
   );
