@@ -23,7 +23,7 @@ import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 const assigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
-  designation: z.string().min(2, { message: 'Designation must be at least 2 characters.' }).max(50, 'Designation must be 50 characters or less.').optional(),
+  designation: z.string().max(50, 'Designation must be 50 characters or less.').optional(),
 });
 
 type AssigneeFormValues = z.infer<typeof assigneeFormSchema>;
