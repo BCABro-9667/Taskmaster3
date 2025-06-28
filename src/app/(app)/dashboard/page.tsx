@@ -8,7 +8,7 @@ import { TaskList } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown } from 'lucide-react';
+import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -34,6 +36,7 @@ export default function DashboardPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('createdAtDesc');
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
 
   const fetchData = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -121,6 +124,12 @@ export default function DashboardPage() {
         task.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    if (selectedAssigneeIds.length > 0) {
+      filtered = filtered.filter(task => 
+        task.assignedTo && selectedAssigneeIds.includes(task.assignedTo.id)
+      );
+    }
+
     if (sortOption === 'createdAtDesc') {
         return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } 
@@ -134,7 +143,7 @@ export default function DashboardPage() {
     }
 
     return filtered;
-  }, [pendingTasks, searchTerm, sortOption]);
+  }, [pendingTasks, searchTerm, sortOption, selectedAssigneeIds]);
 
   const handlePrint = () => {
     window.print();
@@ -209,6 +218,35 @@ export default function DashboardPage() {
                     className="pl-10 w-full"
                   />
               </div>
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <Filter className="mr-2 h-4 w-4" />
+                      Assignee
+                      {selectedAssigneeIds.length > 0 && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">{selectedAssigneeIds.length}</span>}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Filter by Assignee</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {assignees.map(assignee => (
+                        <DropdownMenuCheckboxItem
+                            key={assignee.id}
+                            checked={selectedAssigneeIds.includes(assignee.id)}
+                            onCheckedChange={(checked) => {
+                                return checked
+                                    ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
+                                    : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
+                            }}
+                        >
+                            {assignee.name}
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                    {assignees.length === 0 && (
+                      <DropdownMenuItem disabled>No assignees to filter</DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
