@@ -17,12 +17,12 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuCheckboxItem,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from '@/components/ui/checkbox';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 
@@ -230,17 +230,20 @@ export default function DashboardPage() {
                     <DropdownMenuLabel>Filter by Assignee</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {assignees.map(assignee => (
-                        <DropdownMenuCheckboxItem
-                            key={assignee.id}
-                            checked={selectedAssigneeIds.includes(assignee.id)}
-                            onCheckedChange={(checked) => {
-                                return checked
-                                    ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
-                                    : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
-                            }}
-                        >
-                            {assignee.name}
-                        </DropdownMenuCheckboxItem>
+                      <DropdownMenuItem key={assignee.id} onSelect={(e) => e.preventDefault()}>
+                        <Checkbox
+                          id={`filter-assignee-${assignee.id}`}
+                          className="mr-2"
+                          checked={selectedAssigneeIds.includes(assignee.id)}
+                          onCheckedChange={(checked) => {
+                            const isChecked = !!checked;
+                            return isChecked
+                              ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
+                              : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
+                          }}
+                        />
+                        <label htmlFor={`filter-assignee-${assignee.id}`} className="w-full cursor-pointer">{assignee.name}</label>
+                      </DropdownMenuItem>
                     ))}
                     {assignees.length === 0 && (
                       <DropdownMenuItem disabled>No assignees to filter</DropdownMenuItem>
