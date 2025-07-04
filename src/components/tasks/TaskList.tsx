@@ -16,6 +16,19 @@ interface TaskListProps {
   emptyStateTitle?: string;
 }
 
+export function PrintOnlyBlankTasks({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <div className="print-only">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={`blank-${i}`} className="print-blank-item">
+          <div className="print-blank-item-circle" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function TaskList({ 
   tasks, 
   assignableUsers, 
@@ -28,7 +41,7 @@ export function TaskList({
 }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-12 px-4 border-2 border-dashed border-border rounded-lg bg-card">
+      <div className="flex flex-col items-center justify-center text-center py-12 px-4 border-2 border-dashed border-border rounded-lg bg-card screen-view">
         <ClipboardList className="h-16 w-16 text-muted-foreground mb-4" />
         <h3 className="text-xl font-semibold text-foreground mb-1 font-headline">{emptyStateTitle}</h3>
         <p className="text-muted-foreground">{emptyStateMessage}</p>
@@ -37,7 +50,7 @@ export function TaskList({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:gap-4">
+    <div className="task-list-container">
       {tasks.map((task) => (
         <TaskItem 
           key={task.id} 

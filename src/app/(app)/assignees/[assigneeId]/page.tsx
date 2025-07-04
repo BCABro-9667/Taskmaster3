@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Task, Assignee, User } from '@/types'; 
 import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; 
-import { TaskList } from '@/components/tasks/TaskList';
+import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft, Printer } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -149,7 +149,7 @@ export default function AssigneeDetailPage() {
   const completedTasks = tasks.filter(task => task.status === 'done');
 
   return (
-    <div className="space-y-8 printable-content">
+    <div className="space-y-8">
       <div className="flex items-center gap-2 no-print">
         <Button variant="outline" asChild className="mb-4">
           <Link href="/assignees">
@@ -162,40 +162,50 @@ export default function AssigneeDetailPage() {
           Print
         </Button>
       </div>
-
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center gap-4 print:justify-center">
-          <div className="print:text-center">
-            <CardTitle className="text-3xl font-headline text-primary flex items-center">
-              <UserIcon className="mr-3 h-8 w-8 no-print" /> 
-              {assignee.name}
-            </CardTitle>
-            {assignee.designation && (
-              <CardDescription className="text-lg flex items-center mt-1">
-                <Briefcase className="mr-2 h-5 w-5 text-muted-foreground no-print" />
-                {assignee.designation}
-              </CardDescription>
-            )}
-          </div>
-        </CardHeader>
-      </Card>
-
-      <section>
-        <div className="flex items-center mb-4">
-          <ListTodo className="mr-3 h-6 w-6 text-primary no-print" />
-          <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({pendingTasks.length})</h2>
+      
+      <div className="printable-content">
+        <div className="print-page-header">
+          <span className="underline">
+            {assignee.name} {assignee.designation && `(${assignee.designation})`}
+          </span>
         </div>
-        <TaskList
-          tasks={pendingTasks}
-          assignableUsers={allAssigneesForTaskDropdowns} 
-          currentUserId={currentUser.id}
-          onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleDataRefresh}
-          onMarkTaskAsComplete={handleMarkTaskAsComplete}
-          emptyStateMessage={`${assignee.name} has no pending tasks.`}
-          emptyStateTitle="All Caught Up!"
-        />
-      </section>
+        
+        <Card className="shadow-lg screen-view">
+          <CardHeader className="flex flex-row items-center gap-4">
+            <div>
+              <CardTitle className="text-3xl font-headline text-primary flex items-center">
+                <UserIcon className="mr-3 h-8 w-8" /> 
+                {assignee.name}
+              </CardTitle>
+              {assignee.designation && (
+                <CardDescription className="text-lg flex items-center mt-1">
+                  <Briefcase className="mr-2 h-5 w-5 text-muted-foreground" />
+                  {assignee.designation}
+                </CardDescription>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+
+        <section>
+          <div className="flex items-center mb-4 no-print">
+            <ListTodo className="mr-3 h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({pendingTasks.length})</h2>
+          </div>
+          <TaskList
+            tasks={pendingTasks}
+            assignableUsers={allAssigneesForTaskDropdowns} 
+            currentUserId={currentUser.id}
+            onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleDataRefresh}
+            onMarkTaskAsComplete={handleMarkTaskAsComplete}
+            emptyStateMessage={`${assignee.name} has no pending tasks.`}
+            emptyStateTitle="All Caught Up!"
+          />
+          <PrintOnlyBlankTasks count={25 - pendingTasks.length} />
+        </section>
+      </div>
+
 
       <section className="no-print">
         <div className="flex items-center mb-4">

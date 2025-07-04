@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Task, Assignee, User } from '@/types';
 import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks';
-import { TaskList } from '@/components/tasks/TaskList';
+import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -205,7 +205,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
             <div className="flex items-center">
               <ListTodo className="mr-3 h-6 w-6 text-primary no-print" />
-              <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
+              <h2 className="text-2xl font-semibold font-headline print-page-header">Pending Tasks ({filteredAndSortedTasks.length})</h2>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto no-print">
               <div className="relative flex-grow sm:flex-grow-0">
@@ -273,15 +273,18 @@ export default function DashboardPage() {
             </div>
           </div>
           {currentUser?.id && (
-            <TaskList 
-              tasks={filteredAndSortedTasks} 
-              assignableUsers={assignees}
-              currentUserId={currentUser.id}
-              onDeleteTask={handleDeleteTask}
-              onUpdateTask={handleDataRefresh}
-              onMarkTaskAsComplete={handleMarkTaskAsComplete}
-              emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
-            />
+            <>
+              <TaskList 
+                tasks={filteredAndSortedTasks} 
+                assignableUsers={assignees}
+                currentUserId={currentUser.id}
+                onDeleteTask={handleDeleteTask}
+                onUpdateTask={handleDataRefresh}
+                onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
+              />
+              <PrintOnlyBlankTasks count={25 - filteredAndSortedTasks.length} />
+            </>
           )}
         </section>
 

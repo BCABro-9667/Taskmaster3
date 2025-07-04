@@ -81,18 +81,15 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   const isOverdue = task.status !== 'done' && task.status !== 'archived' && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
   const isCompletable = task.status === 'todo' || task.status === 'inprogress';
   
-  // Ensure currentUserId matches task.createdBy before enabling edit/note actions
   const canModifyTask = currentUserId === task.createdBy;
   const canEditOrAddNote = task.status !== 'archived' && task.status !== 'done' && canModifyTask;
-  const canEditTaskDetails = canModifyTask; // Can edit task details if created by current user
+  const canEditTaskDetails = canModifyTask; 
 
   return (
     <>
-      <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg")}>
+      <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg screen-view")}>
         <CardContent className="p-0">
-
-          {/* Screen View */}
-          <div className="screen-view p-3 sm:p-4 flex items-start gap-3">
+          <div className="p-3 sm:p-4 flex items-start gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -101,7 +98,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
                 isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
               )}
               onClick={handleCircleClick}
-              disabled={!isCompletable || !canModifyTask} // Also disable if cannot modify
+              disabled={!isCompletable || !canModifyTask}
               aria-label={isCompletable ? "Mark task as complete" : (task.status === 'done' ? "Task completed" : "Task archived")}
             >
               {task.status === 'done' || task.status === 'archived' ? (
@@ -146,7 +143,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
                 <TaskStatusBadge status={task.status} />
               </div>
 
-              {canModifyTask && ( // Only show dropdown if user can modify task
+              {canModifyTask && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -204,34 +201,18 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               )}
             </div>
           </div>
-
-          {/* Print View */}
-          <div className="print-view">
-            <div className="print-task-header">
-                <div className="print-task-title-section">
-                    <Circle className="h-4 w-4 text-black shrink-0" />
-                    <p className="task-title">{task.title}</p>
-                </div>
-                <div className="print-task-meta-section">
-                    <span className="task-meta-text">
-                        {assignedAssignee && (
-                            <>{assignedAssignee.name}, </>
-                        )}
-                        {format(parseISO(task.deadline), 'MMM d, yyyy')}
-                    </span>
-                </div>
-            </div>
-            {task.description && (
-                 <div className="print-task-details">
-                    <p className="task-notes-print">
-                        <span className="task-notes-label">Note: </span>
-                        {task.description}
-                    </p>
-                </div>
-            )}
-          </div>
         </CardContent>
       </Card>
+      
+      {/* Print View */}
+      <div className="print-task-item print-only">
+        <div className="print-task-item-circle" />
+        <span className="print-task-item-title">{task.title}</span>
+        {assignedAssignee && (
+          <span className="print-task-item-assignee">({assignedAssignee.name})</span>
+        )}
+      </div>
+
       {isEditNoteDialogOpen && canModifyTask && (
         <EditNoteDialog
           task={task}

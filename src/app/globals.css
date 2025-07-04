@@ -95,20 +95,27 @@
   }
 }
 
-@media screen {
-  .print-view {
-    display: none !important;
-  }
+/* Default screen styles */
+.print-only {
+  display: none !important;
 }
 
+/* Print Styles */
 @media print {
+  /* Hide elements not meant for printing */
   .navbar-component,
   .footer-component,
   .no-print,
   .screen-view {
     display: none !important;
   }
-  
+
+  /* Show elements only meant for printing */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Page setup */
   @page {
     size: A4;
     margin: 1cm;
@@ -119,118 +126,102 @@
     print-color-adjust: exact !important;
     background-color: white !important;
     color: black !important;
-    font-family: sans-serif; /* Use a common print font */
-    font-size: 10pt;
+    font-family: sans-serif;
+    font-size: 11pt;
     margin: 0;
     padding: 0;
   }
 
-  .dashboard-printable-area, .printable-content {
+  /* General reset for printable elements */
+  .dashboard-printable-area *,
+  .printable-content *,
+  .printable-content *:before,
+  .printable-content *:after {
+    background-color: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: #000 !important;
+    font-family: sans-serif;
+  }
+
+  .dashboard-printable-area,
+  .printable-content {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 1cm;
+    border: none !important;
   }
-
-  .dashboard-printable-area h2, .printable-content .print-header {
-     text-align: center;
-     width: 100%;
-     margin-bottom: 1rem;
-     font-size: 16pt;
-  }
-
-  .print-view {
+  
+  .task-list-container {
     display: block !important;
-    padding: 8px 4px !important;
-    font-size: 9pt;
-    border-bottom: 1px solid #ddd !important;
-    page-break-inside: avoid;
+    gap: 0 !important;
   }
 
-  .print-task-header {
+  /* Header styles for print */
+  .print-page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 16pt;
+    font-weight: bold;
+    display: block !important;
+  }
+  .print-page-header .underline {
+    border-bottom: 2px solid #888;
+    padding-bottom: 4px;
+    display: inline-block;
+  }
+
+  /* Remove card styles completely */
+  .printable-content .card,
+  .dashboard-printable-area .card {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .printable-content .card-content,
+  .dashboard-printable-area .card-content {
+    padding: 0 !important;
+  }
+
+  /* Task item styles */
+  .print-task-item, .print-blank-item {
     display: flex !important;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid black !important;
+    page-break-inside: avoid;
+    min-height: 38px; /* Ensure consistent height */
   }
 
-  .print-task-title-section {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .print-task-item-circle, .print-blank-item-circle {
+    width: 16px;
+    height: 16px;
+    border: 1px solid black;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .print-task-item-title {
     flex-grow: 1;
     min-width: 0;
-  }
-
-  .print-view .task-title {
-    font-weight: 600;
-    padding: 0;
     word-break: break-word;
   }
-  
-  .print-task-meta-section {
+
+  .print-task-item-assignee {
     flex-shrink: 0;
-    text-align: right;
-  }
-
-  .print-task-meta-section .task-meta-text {
-    font-size: 8pt;
-    color: #333 !important;
-    white-space: nowrap;
-  }
-
-  .print-task-details {
-    margin-top: 4px;
-    padding-left: 24px;
-    font-size: 8pt;
+    margin-left: 16px;
+    font-size: 10pt;
     color: #555 !important;
   }
-
-  .print-view .task-notes-print {
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
   
-  .print-view .task-notes-label {
-    font-weight: 600;
-    color: #333 !important;
-  }
-  
-  /* Ensure all children within printable area use transparent background and black text */
-  .dashboard-printable-area *, .printable-content *, .printable-content *:before, .printable-content *:after {
-    background-color: transparent !important;
-    color: black !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    border-color: #ccc !important; /* Lighten borders for print */
-  }
-  
-  .dashboard-printable-area .card, .printable-content .card {
-    border: none !important; /* Remove card border for a cleaner list */
-    page-break-inside: avoid;
-    margin-bottom: 0;
-    border-bottom: 1px solid #eee !important; /* Use a light line between tasks */
-    border-radius: 0 !important;
-  }
-  
-   .printable-content .card-header {
-    padding-bottom: 0 !important;
-  }
-
-  .dashboard-printable-area h2, .printable-content h1, .printable-content h2, .printable-content h3 {
-    page-break-after: avoid; /* Avoid breaking pages right after a heading */
-    padding-bottom: 5px;
-  }
-
-  /* Improve link appearance for print */
-  .printable-content a, .printable-content a:visited {
-    text-decoration: none; /* No underlines for cleaner look */
-  }
-  
-  /* Remove URL printing for all links in print content */
-  .printable-content a[href]:after { 
+  a[href]:after { 
     content: ""; 
   }
 }
