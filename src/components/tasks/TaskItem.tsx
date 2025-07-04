@@ -208,9 +208,6 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
       <div className="print-task-item print-only">
         <div className="print-task-item-circle" />
         <span className="print-task-item-title">{task.title}</span>
-        {assignedAssignee && (
-          <span className="print-task-item-assignee">({assignedAssignee.name})</span>
-        )}
       </div>
 
       {isEditNoteDialogOpen && canModifyTask && (
