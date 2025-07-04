@@ -1,6 +1,8 @@
+
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
+import { CheckCircle } from "lucide-react"
 import {
   Toast,
   ToastClose,
@@ -18,6 +20,7 @@ export function Toaster() {
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
+            {props.variant === 'success' && <CheckCircle className="h-5 w-5" />}
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

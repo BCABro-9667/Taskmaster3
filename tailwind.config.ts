@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -72,6 +73,9 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        'success-toast-bg': 'hsl(var(--success-toast-background))',
+        'success-toast-fg': 'hsl(var(--success-toast-foreground))',
+        'success-toast-border': 'hsl(var(--success-toast-border))',
       },
       borderRadius: {
         lg: "var(--radius)",

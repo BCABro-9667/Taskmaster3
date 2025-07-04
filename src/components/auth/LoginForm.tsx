@@ -52,8 +52,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       if (user) {
         setCurrentUser(user); // Update client-side localStorage
         toast({
-          title: 'Login Successful',
-          description: `Welcome back, ${user.name}!`,
+          variant: 'success',
+          title: `Welcome back, ${user.name}!`,
+          description: "You've successfully logged in.",
         });
         if (onSuccess) {
           onSuccess();
