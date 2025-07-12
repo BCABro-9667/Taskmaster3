@@ -4,6 +4,7 @@ export interface User {
   email: string; 
   name: string;
   profileImageUrl?: string; 
+  backgroundImageUrl?: string;
 }
 
 export interface Assignee {

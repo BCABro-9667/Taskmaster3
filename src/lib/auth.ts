@@ -38,7 +38,7 @@ export async function register(name: string, email: string, password?: string): 
     name,
     email: email.toLowerCase(),
     password, 
-    // designation removed, profileImageUrl defaults to empty string via schema
+    // profileImageUrl and backgroundImageUrl default to empty string via schema
   });
 
   await newUserDoc.save();
@@ -61,7 +61,7 @@ export async function updateCurrentUser(userId: string, updates: Partial<Omit<Us
   // Apply updates
   if (updates.name !== undefined) userDoc.name = updates.name;
   if (updates.profileImageUrl !== undefined) userDoc.profileImageUrl = updates.profileImageUrl;
-  // Designation updates removed
+  if (updates.backgroundImageUrl !== undefined) userDoc.backgroundImageUrl = updates.backgroundImageUrl;
 
   await userDoc.save();
   return toPlainUser(userDoc); 

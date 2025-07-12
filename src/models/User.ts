@@ -1,3 +1,4 @@
+
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import type { User as UserType } from '@/types';
 
@@ -11,8 +12,8 @@ const UserSchemaFields = {
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   password: { type: String, required: true }, // Password is required for login users
   name: { type: String, required: true, trim: true },
-  // designation field removed from User model
   profileImageUrl: { type: String, trim: true, default: '' },
+  backgroundImageUrl: { type: String, trim: true, default: '' },
 };
 
 const UserSchema = new Schema<IUserDocument>(UserSchemaFields, {

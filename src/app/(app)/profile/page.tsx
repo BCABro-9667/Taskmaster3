@@ -14,12 +14,12 @@ import { useToast } from '@/hooks/use-toast';
 import { updateCurrentUser } from '@/lib/auth'; // Server Action
 import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
-import { Loader2, UserCircle, Image as ImageIcon, Save } from 'lucide-react';
+import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper } from 'lucide-react';
 
 const profileFormSchema = z.object({
   name: z.string().min(1, 'Name is required.').max(50, 'Name must be 50 characters or less.'),
   profileImageUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
-  // Designation field removed
+  backgroundImageUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -38,6 +38,7 @@ export default function ProfilePage() {
     defaultValues: {
       name: '',
       profileImageUrl: '',
+      backgroundImageUrl: '',
     },
   });
 
@@ -48,6 +49,7 @@ export default function ProfilePage() {
       form.reset({
         name: user.name || '',
         profileImageUrl: user.profileImageUrl || '',
+        backgroundImageUrl: user.backgroundImageUrl || '',
       });
       setPreviewImageUrl(user.profileImageUrl || null);
     } else {
@@ -84,7 +86,7 @@ export default function ProfilePage() {
       const updatedUserFromDb = await updateCurrentUser(currentUserForForm.id, {
         name: data.name,
         profileImageUrl: data.profileImageUrl || '',
-        // Designation update removed
+        backgroundImageUrl: data.backgroundImageUrl || '',
       });
 
       if (updatedUserFromDb) {
@@ -129,7 +131,7 @@ export default function ProfilePage() {
             <UserCircle className="h-8 w-8 text-primary" />
             <CardTitle className="text-3xl font-headline">Your Profile</CardTitle>
           </div>
-          <CardDescription>Update your personal information here. Your name will be displayed in the app navigation.</CardDescription>
+          <CardDescription>Update your personal and background information here. Your name will be displayed in the app navigation.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -189,6 +191,22 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground">No image URL provided or URL is invalid.</p>
               </div>
             )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="backgroundImageUrl">Background Image URL</Label>
+               <div className="flex items-center gap-2">
+                <Wallpaper className="h-5 w-5 text-muted-foreground" />
+                <Input
+                    id="backgroundImageUrl"
+                    {...form.register('backgroundImageUrl')}
+                    placeholder="https://example.com/your-background.png"
+                    className={form.formState.errors.backgroundImageUrl ? 'border-destructive' : ''}
+                />
+               </div>
+              {form.formState.errors.backgroundImageUrl && (
+                <p className="text-sm text-destructive pl-7">{form.formState.errors.backgroundImageUrl.message}</p>
+              )}
+            </div>
 
             <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
               {isSaving ? (

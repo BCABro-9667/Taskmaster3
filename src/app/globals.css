@@ -112,7 +112,8 @@
   .navbar-component,
   .footer-component,
   .no-print,
-  .screen-view {
+  .screen-view,
+  .no-print-bg {
     display: none !important;
   }
 
@@ -127,9 +128,10 @@
     margin: 1cm;
   }
 
-  body {
+  body, .print-bg-reset {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    background-image: none !important;
     background-color: white !important;
     color: black !important;
     font-family: sans-serif;
