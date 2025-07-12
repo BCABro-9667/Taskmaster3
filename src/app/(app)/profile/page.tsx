@@ -126,7 +126,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Card className="shadow-lg bg-card/80">
+      <Card className="shadow-lg bg-card/60">
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <UserCircle className="h-8 w-8 text-primary" />

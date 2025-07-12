@@ -160,7 +160,7 @@ export default function AssigneesPage() {
         />
       </div>
       {filteredAssignees.length > 0 ? (
-        <div className="border rounded-lg shadow-sm bg-card/80">
+        <div className="border rounded-lg shadow-sm bg-card/60">
           <Table>
             <TableHeader>
               <TableRow>
@@ -193,7 +193,7 @@ export default function AssigneesPage() {
           </Table>
         </div>
       ) : (
-        <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg bg-card/80">
+        <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg bg-card/60">
           <p>No assignees found{searchTerm ? ' matching your search' : ''}.</p>
         </div>
       )}

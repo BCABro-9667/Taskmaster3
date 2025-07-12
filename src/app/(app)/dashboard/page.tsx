@@ -120,7 +120,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Card className="shadow-lg no-print bg-card/80">
+      <Card className="shadow-lg no-print bg-card/60">
         <CardHeader>
           <CardTitle className="text-xl font-headline flex items-center">
             <PlusCircle className="mr-2 h-5 w-5 text-accent" />

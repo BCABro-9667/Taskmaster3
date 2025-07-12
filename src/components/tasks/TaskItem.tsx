@@ -87,7 +87,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   return (
     <>
-      <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg screen-view bg-card/80")}>
+      <Card className={cn("w-full shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out rounded-lg screen-view bg-card/60")}>
         <CardContent className="p-0">
           <div className="p-3 sm:p-4 flex items-start gap-3">
             <Button
