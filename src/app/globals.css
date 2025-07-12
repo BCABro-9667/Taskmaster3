@@ -121,8 +121,11 @@
     display: block !important;
   }
   
-  .app-layout-main-container {
-    background: none !important;
+  /* Reset the background for the main containers */
+  .main-bg-container, .app-layout-main-container {
+    background-image: none !important;
+    background-color: white !important;
+    background: white !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -171,7 +174,8 @@
   }
   
   .task-list-container {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
     gap: 0 !important;
   }
 

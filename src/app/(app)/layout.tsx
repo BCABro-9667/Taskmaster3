@@ -54,7 +54,7 @@ export default function AppLayout({
   return (
     <LoadingBarProvider>
        <div 
-        className="flex flex-col min-h-screen bg-background bg-cover bg-center bg-no-repeat bg-fixed" 
+        className="flex flex-col min-h-screen bg-background bg-cover bg-center bg-no-repeat bg-fixed main-bg-container" 
         style={backgroundStyle}
       >
         <div className="flex flex-col min-h-screen bg-background/60 backdrop-blur-sm app-layout-main-container">
