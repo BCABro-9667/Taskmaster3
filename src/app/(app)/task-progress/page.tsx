@@ -153,7 +153,7 @@ export default function TaskProgressPage() {
       </div>
 
       {progressData.length > 0 ? (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card/80">
           <CardHeader>
             <CardTitle>Task Distribution by Assignee</CardTitle>
             <CardDescription>
@@ -193,7 +193,7 @@ export default function TaskProgressPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card/80">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center text-center py-12 px-4">
               <ListChecks className="h-16 w-16 text-muted-foreground mb-4" />
@@ -204,7 +204,7 @@ export default function TaskProgressPage() {
         </Card>
       )}
       
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-card/80">
         <CardHeader>
           <CardTitle>More Insights Coming Soon</CardTitle>
           <CardDescription>Additional statistics and visualizations will be available here in the future.</CardDescription>

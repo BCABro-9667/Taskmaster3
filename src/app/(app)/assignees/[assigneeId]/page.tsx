@@ -170,7 +170,7 @@ export default function AssigneeDetailPage() {
           </span>
         </div>
         
-        <Card className="shadow-lg screen-view">
+        <Card className="shadow-lg screen-view bg-card/80">
           <CardHeader className="flex flex-row items-center gap-4">
             <div>
               <CardTitle className="text-3xl font-headline text-primary flex items-center">

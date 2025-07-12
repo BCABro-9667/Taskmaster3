@@ -160,7 +160,7 @@ export default function AssigneesPage() {
         />
       </div>
       {filteredAssignees.length > 0 ? (
-        <div className="border rounded-lg shadow-sm">
+        <div className="border rounded-lg shadow-sm bg-card/80">
           <Table>
             <TableHeader>
               <TableRow>
@@ -171,7 +171,7 @@ export default function AssigneesPage() {
             </TableHeader>
             <TableBody>
               {filteredAssignees.map(assigneeItem => ( 
-                <TableRow key={assigneeItem.id}>
+                <TableRow key={assigneeItem.id} className="bg-transparent hover:bg-muted/50">
                   <TableCell className="font-medium">{assigneeItem.name}</TableCell>
                   <TableCell>{assigneeItem.designation || 'N/A'}</TableCell>
                   <TableCell className="text-right space-x-2">
@@ -193,7 +193,7 @@ export default function AssigneesPage() {
           </Table>
         </div>
       ) : (
-        <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg">
+        <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg bg-card/80">
           <p>No assignees found{searchTerm ? ' matching your search' : ''}.</p>
         </div>
       )}

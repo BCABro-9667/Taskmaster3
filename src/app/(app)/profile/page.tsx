@@ -96,7 +96,8 @@ export default function ProfilePage() {
           title: 'Profile Updated',
           description: 'Your profile information has been saved.',
         });
-        router.refresh(); 
+        // Force a hard reload to apply the new background image across the app
+        window.location.reload(); 
       } else {
         throw new Error('Failed to update profile on the server.');
       }
@@ -125,7 +126,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-card/80">
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <UserCircle className="h-8 w-8 text-primary" />
