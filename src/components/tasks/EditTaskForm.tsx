@@ -6,14 +6,13 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { updateTask, getAssignees } from '@/lib/tasks'; 
 import type { Task, Assignee } from '@/types'; 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
 import { TaskFormFields } from './TaskFormFields';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
-import { useLoadingBar } from '@/hooks/use-loading-bar';
+import { useAssignees, useUpdateTask } from '@/hooks/use-tasks';
 
 interface EditTaskFormProps {
   task: Task;
@@ -24,12 +23,12 @@ interface EditTaskFormProps {
 
 export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }: EditTaskFormProps) {
   const { toast } = useToast();
-  const { start, complete } = useLoadingBar();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]); 
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
 
+  const { data: assigneesForDropdown = [], refetch: refetchAssignees } = useAssignees(currentUserId);
+  const { mutate: updateTask, isPending: isSubmitting } = useUpdateTask(currentUserId);
+  
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
@@ -39,57 +38,42 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
     },
   });
 
-  const fetchAssigneesData = useCallback(async () => { 
-    if (!currentUserId) return;
-    try {
-      const fetchedAssignees = await getAssignees(currentUserId); 
-      setAssigneesForDropdown(fetchedAssignees); 
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not load assignees for assignment.' });
-    }
-  }, [toast, currentUserId]);
-
-  useEffect(() => {
-    fetchAssigneesData(); 
-  }, [fetchAssigneesData]);
-
   const handleAssigneeCreated = (newAssignee: Assignee) => { 
-    fetchAssigneesData().then(() => {
+    refetchAssignees().then(() => {
       form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
     setIsCreateAssigneeDialogOpen(false);
   };
 
-  async function onSubmit(values: TaskFormValues) {
+  function onSubmit(values: TaskFormValues) {
     if (!currentUserId) {
       toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot update task.' });
       return;
     }
-    setIsSubmitting(true);
-    start();
-    try {
-      const taskDataForApi = {
-        title: values.title,
-        assignedTo: values.assignedTo === 'unassigned' ? null : values.assignedTo,
-        deadline: values.deadline,
-      };
-      await updateTask(currentUserId, task.id, taskDataForApi);
-      toast({
-        title: 'Task Updated',
-        description: `"${values.title}" has been updated.`,
-      });
-      onTaskUpdated();
-      closeDialog();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to Update Task',
-        description: (error as Error).message || 'An unexpected error occurred.',
-      });
-    } finally {
-      setIsSubmitting(false);
-      complete();
-    }
+    
+    const taskDataForApi = {
+      title: values.title,
+      assignedTo: values.assignedTo === 'unassigned' ? null : values.assignedTo,
+      deadline: values.deadline,
+    };
+
+    updateTask({ id: task.id, updates: taskDataForApi }, {
+      onSuccess: () => {
+        toast({
+          title: 'Task Updated',
+          description: `"${values.title}" has been updated.`,
+        });
+        onTaskUpdated();
+        closeDialog();
+      },
+      onError: (error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to Update Task',
+          description: error.message || 'An unexpected error occurred.',
+        });
+      }
+    });
   }
 
   return (

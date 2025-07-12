@@ -1,8 +1,9 @@
 
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,9 +14,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { createTask, getAssignees } from '@/lib/tasks';
-import type { Assignee, Task, TaskStatus } from '@/types';
-import { useEffect, useState, useCallback } from 'react';
+import type { Assignee } from '@/types';
+import { useState, useCallback } from 'react';
 import { Loader2, CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
 import { Input } from '@/components/ui/input';
@@ -33,23 +33,22 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
-import { useLoadingBar } from '@/hooks/use-loading-bar';
+import { useAssignees, useCreateTask } from '@/hooks/use-tasks';
 
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
-  onTaskCreated: () => void; 
   currentUserId: string | null; 
 }
 
-export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormProps) {
+export function CreateTaskForm({ currentUserId }: CreateTaskFormProps) {
   const { toast } = useToast();
-  const { start, complete } = useLoadingBar();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
-  const [assigneesForDropdown, setAssigneesForDropdown] = useState<Assignee[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
+
+  const { data: assigneesForDropdown = [], refetch: refetchAssignees } = useAssignees(currentUserId);
+  const { mutate: createTask, isPending: isSubmitting } = useCreateTask(currentUserId);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -60,24 +59,8 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
     },
   });
 
-  const fetchAssigneesData = useCallback(async () => {
-    if (!currentUserId) return;
-    try {
-      const fetchedAssignees = await getAssignees(currentUserId);
-      setAssigneesForDropdown(fetchedAssignees);
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not load assignees for assignment.' });
-    }
-  }, [toast, currentUserId]);
-
-  useEffect(() => {
-    if (currentUserId) {
-      fetchAssigneesData();
-    }
-  }, [fetchAssigneesData, currentUserId]);
-
   const handleAssigneeCreated = (newAssignee: Assignee) => {
-    fetchAssigneesData().then(() => {
+    refetchAssignees().then(() => {
       form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
     setIsCreateAssigneeDialogOpen(false);
@@ -127,42 +110,40 @@ export function CreateTaskForm({ onTaskCreated, currentUserId }: CreateTaskFormP
     }
   };
 
-  async function onSubmit(values: TaskFormValues) {
+  function onSubmit(values: TaskFormValues) {
     if (!currentUserId) {
       toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot create task.' });
       return;
     }
-    setIsSubmitting(true);
-    start();
-    try {
-      const taskDataForApi = {
-        title: values.title,
-        description: '', 
-        assignedTo: values.assignedTo === 'unassigned' ? undefined : values.assignedTo,
-        deadline: values.deadline,
-        status: 'todo' as TaskStatus, 
-      };
-      const newTask = await createTask(currentUserId, taskDataForApi); 
-      toast({
-        title: 'Task Created',
-        description: `"${newTask.title}" has been added to your tasks.`,
-      });
-      onTaskCreated(); 
-      form.reset({
-        title: '',
-        assignedTo: 'unassigned',
-        deadline: format(new Date(), 'yyyy-MM-dd'),
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to Create Task',
-        description: (error as Error).message || 'An unexpected error occurred.',
-      });
-    } finally {
-      setIsSubmitting(false);
-      complete();
-    }
+    
+    const taskDataForApi = {
+      title: values.title,
+      description: '', 
+      assignedTo: values.assignedTo === 'unassigned' ? undefined : values.assignedTo,
+      deadline: values.deadline,
+      status: 'todo' as const, 
+    };
+
+    createTask(taskDataForApi, {
+      onSuccess: (newTask) => {
+        toast({
+          title: 'Task Created',
+          description: `"${newTask.title}" has been added to your tasks.`,
+        });
+        form.reset({
+          title: '',
+          assignedTo: 'unassigned',
+          deadline: format(new Date(), 'yyyy-MM-dd'),
+        });
+      },
+      onError: (error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to Create Task',
+          description: error.message || 'An unexpected error occurred.',
+        });
+      }
+    });
   }
 
   return (

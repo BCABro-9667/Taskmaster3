@@ -1,13 +1,11 @@
 
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import type { Task, Assignee, User } from '@/types';
-import { getTasks, deleteTask as deleteTaskApi, getAssignees, updateTask } from '@/lib/tasks';
+import { useState, useMemo } from 'react';
+import type { User } from '@/types';
 import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
@@ -23,96 +21,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from '@/components/ui/checkbox';
-import { useLoadingBar } from '@/hooks/use-loading-bar';
-
+import { useTasks, useAssignees, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [assignees, setAssignees] = useState<Assignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const currentUser: User | null = clientAuthGetCurrentUser();
   const { toast } = useToast();
-  const { start, complete } = useLoadingBar();
+
+  const { data: tasks = [], isLoading: isLoadingTasks, isFetching: isFetchingTasks, refetch: refetchTasks } = useTasks(currentUser?.id);
+  const { data: assignees = [], isLoading: isLoadingAssignees } = useAssignees(currentUser?.id);
+  const { mutate: updateTask } = useUpdateTask(currentUser?.id);
+  const { mutate: deleteTask } = useDeleteTask(currentUser?.id);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('createdAtDesc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
 
-  const fetchData = useCallback(async (userId: string) => {
-    setIsLoading(true);
-    try {
-      const [fetchedTasks, fetchedAssignees] = await Promise.all([
-        getTasks(userId),
-        getAssignees(userId)
-      ]);
-      setTasks(fetchedTasks);
-      setAssignees(fetchedAssignees);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error fetching data',
-        description: 'Could not load tasks or assignees. Please try refreshing.',
-      });
-      setTasks([]);
-      setAssignees([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    const user = clientAuthGetCurrentUser();
-    if (user && user.id) {
-      setCurrentUser(user);
-      fetchData(user.id);
-    } else {
-      setCurrentUser(null);
-      setTasks([]);
-      setAssignees([]);
-      setIsLoading(false);
-    }
-  }, [fetchData]);
-
   const handleDataRefresh = () => {
-    if (currentUser?.id) {
-      fetchData(currentUser.id);
-    }
+    refetchTasks();
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!currentUser?.id) return;
-    start();
-    try {
-      await deleteTaskApi(currentUser.id, taskId);
-      toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
-      handleDataRefresh();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error Deleting Task',
-        description: (error as Error).message || 'Could not delete the task. Please try again.',
-      });
-    } finally {
-      complete();
-    }
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask(taskId, {
+      onSuccess: () => toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' }),
+      onError: (error) => toast({ variant: 'destructive', title: 'Error Deleting Task', description: error.message }),
+    });
   };
   
-  const handleMarkTaskAsComplete = async (taskId: string) => {
-    if (!currentUser?.id) return;
-    start();
-    try {
-      await updateTask(currentUser.id, taskId, { status: 'done' });
-      toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
-      handleDataRefresh();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error Updating Task',
-        description: 'Could not mark the task as complete. Please try again.',
-      });
-    } finally {
-      complete();
-    }
+  const handleMarkTaskAsComplete = (taskId: string) => {
+    updateTask({ id: taskId, updates: { status: 'done' } }, {
+      onSuccess: () => toast({ title: 'Task Completed!', description: 'The task has been marked as done.' }),
+      onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not mark the task as complete.' }),
+    });
   };
 
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
@@ -149,15 +89,9 @@ export default function DashboardPage() {
     window.print();
   };
 
-  if (!currentUser && isLoading) { 
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const isLoading = isLoadingTasks || isLoadingAssignees;
   
-  if (!currentUser && !isLoading) { 
+  if (!currentUser) { 
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <p className="text-lg text-muted-foreground">Please log in to view your dashboard.</p>
@@ -166,7 +100,7 @@ export default function DashboardPage() {
     );
   }
   
-  if (currentUser && isLoading) {
+  if (isLoading) {
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -174,14 +108,13 @@ export default function DashboardPage() {
     );
   }
 
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
         <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDataRefresh} disabled={isLoading} aria-label="Refresh tasks">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <Button variant="outline" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
@@ -195,7 +128,7 @@ export default function DashboardPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {currentUser?.id && <CreateTaskForm onTaskCreated={handleDataRefresh} currentUserId={currentUser.id} />}
+          {currentUser?.id && <CreateTaskForm currentUserId={currentUser.id} />}
         </CardContent>
       </Card>
 

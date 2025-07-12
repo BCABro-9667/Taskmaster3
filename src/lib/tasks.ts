@@ -7,16 +7,50 @@ import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 
 // Helper to reliably convert Mongoose docs to plain objects respecting virtuals
+// This is no longer necessary with .lean(), but good to have if we ever need hydrated docs.
 function toPlainObject<T>(doc: any): T {
   if (!doc) {
     return doc;
   }
-  // If it's an array, map over it
   if (Array.isArray(doc)) {
     return doc.map(item => item.toObject ? item.toObject() : item) as T;
   }
-  // If it's a single document, convert it
   return (doc.toObject ? doc.toObject() : doc) as T;
+}
+
+// Helper to convert lean object ID to string 'id'
+function leanToPlain<T extends { _id: mongoose.Types.ObjectId }>(doc: T | null): Omit<T, '_id'> & { id: string } | null {
+  if (!doc) return null;
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest } as Omit<T, '_id'> & { id: string };
+}
+
+function leanArrayToPlain<T extends { _id: mongoose.Types.ObjectId }>(docs: T[]): (Omit<T, '_id'> & { id: string })[] {
+  return docs.map(doc => leanToPlain(doc)!)
+}
+
+// Helper to create a plain JS object from a lean query result
+// This is necessary because lean results don't have the virtual 'id' field automatically.
+function processLeanTask(task: any): Task {
+  const plainTask = {
+    ...task,
+    id: task._id.toString(),
+    assignedTo: task.assignedTo ? {
+      ...task.assignedTo,
+      id: task.assignedTo._id.toString(),
+      _id: undefined, // remove mongoose properties
+      __v: undefined,
+    } : undefined,
+    _id: undefined,
+    __v: undefined,
+  };
+  delete plainTask._id;
+  delete plainTask.__v;
+  if (plainTask.assignedTo) {
+      delete plainTask.assignedTo._id;
+      delete plainTask.assignedTo.__v;
+  }
+  return plainTask as Task;
 }
 
 
@@ -28,9 +62,10 @@ export async function getTasks(userId: string): Promise<Task[]> {
   await dbConnect();
   const taskDocs = await TaskModel.find({ createdBy: new mongoose.Types.ObjectId(userId) })
     .sort({ createdAt: -1 })
-    .populate('assignedTo');
+    .populate('assignedTo')
+    .lean();
 
-  return toPlainObject<Task[]>(taskDocs);
+  return taskDocs.map(processLeanTask);
 }
 
 export async function getTaskById(userId: string, id: string): Promise<Task | undefined> {
@@ -39,9 +74,10 @@ export async function getTaskById(userId: string, id: string): Promise<Task | un
   }
   await dbConnect();
   const taskDoc = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) })
-    .populate('assignedTo');
+    .populate('assignedTo')
+    .lean();
   if (!taskDoc) return undefined;
-  return toPlainObject<Task>(taskDoc);
+  return processLeanTask(taskDoc);
 }
 
 export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'> & { assignedTo?: string }): Promise<Task> {
@@ -62,50 +98,48 @@ export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'cr
     newTaskData.assignedTo = undefined;
   }
 
+  // We can't use .lean() for creation, so we save and then re-fetch with .lean()
   const newTaskDoc = new TaskModel(newTaskData);
   await newTaskDoc.save();
-
-  const populatedTaskDoc = await TaskModel.findById(newTaskDoc._id)
-    .populate('assignedTo');
-  if (!populatedTaskDoc) {
-    throw new Error('Failed to retrieve newly created task for population.');
+  
+  const createdTask = await getTaskById(userId, newTaskDoc._id.toString());
+  if(!createdTask) {
+    throw new Error('Failed to retrieve newly created task.');
   }
-  return toPlainObject<Task>(populatedTaskDoc);
+  
+  return createdTask;
 }
 
 export async function updateTask(userId: string, id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assignedTo' | 'createdBy'>> & { assignedTo?: string | null }): Promise<Task | null> {
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
-    return null;
-  }
-  await dbConnect();
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
+        return null;
+    }
+    await dbConnect();
 
-  const taskToUpdate = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) });
+    // With lean(), we fetch a plain object first to check existence
+    const taskExists = await TaskModel.findOne({ _id: id, createdBy: new mongoose.Types.ObjectId(userId) }).select('_id').lean();
+    if (!taskExists) {
+        return null;
+    }
+    
+    // Prepare the update payload
+    const updatePayload: any = { ...updates };
+    if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
+        updatePayload.assignedTo = undefined;
+    } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
+        updatePayload.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
+    }
 
-  if (!taskToUpdate) {
-    return null;
-  }
-  
-  // Apply updates to the document
-  if (updates.title !== undefined) taskToUpdate.title = updates.title;
-  if (updates.description !== undefined) taskToUpdate.description = updates.description;
-  if (updates.deadline !== undefined) taskToUpdate.deadline = updates.deadline;
-  if (updates.status !== undefined) taskToUpdate.status = updates.status;
+    const updatedTaskDoc = await TaskModel.findOneAndUpdate(
+        { _id: id, createdBy: new mongoose.Types.ObjectId(userId) },
+        { $set: updatePayload },
+        { new: true }
+    ).populate('assignedTo').lean();
 
-  if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
-    taskToUpdate.assignedTo = undefined;
-  } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
-    taskToUpdate.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
-  }
-
-  await taskToUpdate.save();
-  
-  // Re-fetch and populate to ensure data is fresh and correctly populated
-  const populatedTask = await TaskModel.findById(taskToUpdate._id).populate('assignedTo');
-  
-  return populatedTask ? toPlainObject<Task>(populatedTask) : null;
+    return updatedTaskDoc ? processLeanTask(updatedTaskDoc) : null;
 }
 
-export async function deleteTask(userId: string, id: string): Promise<void> {
+export async function deleteTask(userId: string, id: string): Promise<{ deletedTaskId: string }> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error('Invalid user ID provided for deletion.');
   }
@@ -117,11 +151,12 @@ export async function deleteTask(userId: string, id: string): Promise<void> {
   const result = await TaskModel.findOneAndDelete({
     _id: new mongoose.Types.ObjectId(id),
     createdBy: new mongoose.Types.ObjectId(userId),
-  });
+  }).lean();
 
   if (!result) {
     throw new Error("Task not found, or you don't have permission to delete it.");
   }
+  return { deletedTaskId: id };
 }
 
 export async function getAssignees(userId: string): Promise<Assignee[]> {
@@ -131,9 +166,10 @@ export async function getAssignees(userId: string): Promise<Assignee[]> {
   }
   await dbConnect();
   const assigneeDocs = await AssigneeModel.find({ createdBy: new mongoose.Types.ObjectId(userId) })
-    .sort({ name: 1 });
+    .sort({ name: 1 })
+    .lean();
   
-  return toPlainObject<Assignee[]>(assigneeDocs);
+  return leanArrayToPlain(assigneeDocs) as unknown as Assignee[];
 }
 
 export async function getAssigneeById(userId: string, assigneeId: string): Promise<Assignee | null> {
@@ -141,8 +177,8 @@ export async function getAssigneeById(userId: string, assigneeId: string): Promi
     return null;
   }
   await dbConnect();
-  const assigneeDoc = await AssigneeModel.findOne({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) });
-  return assigneeDoc ? toPlainObject<Assignee>(assigneeDoc) : null;
+  const assigneeDoc = await AssigneeModel.findOne({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) }).lean();
+  return leanToPlain(assigneeDoc) as unknown as Assignee | null;
 }
 
 export async function createAssignee(userId: string, name: string, designation?: string): Promise<Assignee> {
@@ -168,8 +204,8 @@ export async function updateAssignee(userId: string, assigneeId: string, updates
     { _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) },
     updates,
     { new: true }
-  );
-  return assigneeDoc ? toPlainObject<Assignee>(assigneeDoc) : null;
+  ).lean();
+  return leanToPlain(assigneeDoc) as unknown as Assignee | null;
 }
 
 export async function deleteAssignee(userId: string, assigneeId: string): Promise<boolean> {
