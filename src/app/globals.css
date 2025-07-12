@@ -121,6 +121,12 @@
   .print-only {
     display: block !important;
   }
+  
+  .app-layout-main-container {
+    background: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
 
   /* Page setup */
   @page {
@@ -128,7 +134,7 @@
     margin: 1cm;
   }
 
-  body, .print-bg-reset {
+  body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     background-image: none !important;
@@ -141,6 +147,8 @@
   }
 
   /* General reset for printable elements */
+  .dashboard-printable-area,
+  .printable-content,
   .dashboard-printable-area *,
   .printable-content *,
   .printable-content *:before,
@@ -155,12 +163,11 @@
 
   .dashboard-printable-area,
   .printable-content {
-    position: absolute;
-    left: 0;
-    top: 0;
+    display: block !important; /* Ensure the content area is visible */
+    position: static; /* Let it flow in the document */
     width: 100%;
     margin: 0;
-    padding: 1cm;
+    padding: 0;
     border: none !important;
   }
   
