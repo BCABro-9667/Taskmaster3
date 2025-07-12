@@ -112,8 +112,7 @@
   .navbar-component,
   .footer-component,
   .no-print,
-  .screen-view,
-  .no-print-bg {
+  .screen-view {
     display: none !important;
   }
 
