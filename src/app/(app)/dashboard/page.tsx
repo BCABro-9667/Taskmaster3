@@ -64,6 +64,22 @@ export default function DashboardPage() {
     localStorage.setItem('lastSelectedAssigneeId', assigneeId);
   }
 
+  const handleFilterChange = (isChecked: boolean, assigneeId: string) => {
+    const newSelectedIds = isChecked
+      ? [...selectedAssigneeIds, assigneeId]
+      : selectedAssigneeIds.filter(id => id !== assigneeId);
+    
+    setSelectedAssigneeIds(newSelectedIds);
+
+    if (isChecked) {
+      handleAssigneeChange(assigneeId);
+    } else if (newSelectedIds.length > 0) {
+      handleAssigneeChange(newSelectedIds[newSelectedIds.length - 1]);
+    } else {
+      handleAssigneeChange('unassigned');
+    }
+  };
+
 
   const handleDataRefresh = () => {
     refetchTasks();
@@ -205,10 +221,7 @@ export default function DashboardPage() {
                               className="mr-2"
                               checked={selectedAssigneeIds.includes(assignee.id)}
                               onCheckedChange={(checked) => {
-                                const isChecked = !!checked;
-                                return isChecked
-                                  ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
-                                  : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
+                                handleFilterChange(!!checked, assignee.id);
                               }}
                             />
                             {assignee.name}
