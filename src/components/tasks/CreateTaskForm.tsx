@@ -137,11 +137,6 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
           title: 'Task Created',
           description: `"${newTask.title}" has been added to your tasks.`,
         });
-        form.reset({
-          title: '',
-          assignedTo: lastSelectedAssigneeId,
-          deadline: format(new Date(), 'yyyy-MM-dd'),
-        });
       },
       onError: (error) => {
         toast({
@@ -150,6 +145,13 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
           description: error.message || 'An unexpected error occurred.',
         });
       }
+    });
+
+    // Reset the form immediately for an optimistic UI feel
+    form.reset({
+      title: '',
+      assignedTo: lastSelectedAssigneeId,
+      deadline: format(new Date(), 'yyyy-MM-dd'),
     });
   }
 
@@ -268,8 +270,7 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
             )}
           />
 
-          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmitting || isSubmittingAi || !currentUserId}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmittingAi || !currentUserId}>
             Create Task
           </Button>
         </form>
