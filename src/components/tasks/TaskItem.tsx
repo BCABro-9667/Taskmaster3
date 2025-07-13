@@ -109,7 +109,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
             </Button>
 
             <div className="flex-grow min-w-0">
-              <p className={cn("font-medium text-card-foreground break-words", task.status === 'done' && 'line-through')} title={task.title}>{task.title}</p>
+              <p className={cn("font-medium text-card-foreground break-words truncate", task.status === 'done' && 'line-through')} title={task.title}>{task.title}</p>
               {task.description && (
                 <p className={cn("text-xs sm:text-sm text-muted-foreground mt-1 break-words whitespace-pre-wrap", task.status === 'done' && 'line-through')}>
                   {task.description}
