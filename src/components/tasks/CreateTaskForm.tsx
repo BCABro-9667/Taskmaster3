@@ -54,7 +54,6 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    mode: 'onChange',
     defaultValues: {
       title: '',
       assignedTo: lastSelectedAssigneeId, 
@@ -94,15 +93,6 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
       const datePattern = /^\d{4}-\d{2}-\d{2}$/;
       if (result.suggestedDeadline && datePattern.test(result.suggestedDeadline)) {
         form.setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
-        toast({
-          title: 'Deadline Suggested',
-          description: (
-            <div>
-              <p>Suggested: {format(parseISO(result.suggestedDeadline), 'MMMM d, yyyy')}</p>
-              <p className="text-xs text-muted-foreground mt-1">Reasoning: {result.reasoning}</p>
-            </div>
-          ),
-        });
       } else {
         throw new Error('AI returned an invalid date format.');
       }
@@ -265,8 +255,10 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
             )}
           />
 
-          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmittingAi || !currentUserId}>
-            Create Task
+          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmittingAi || isSubmitting || !currentUserId}>
+            {isSubmitting ? (
+                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : "Create Task"}
           </Button>
         </form>
       </Form>
