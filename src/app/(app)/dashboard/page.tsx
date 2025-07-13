@@ -87,21 +87,18 @@ export default function DashboardPage() {
 
   const handleDeleteTask = (taskId: string) => {
     deleteTask(taskId, {
-      onSuccess: () => toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' }),
       onError: (error) => toast({ variant: 'destructive', title: 'Error Deleting Task', description: error.message }),
     });
   };
   
   const handleMarkTaskAsComplete = (taskId: string) => {
     updateTask({ id: taskId, updates: { status: 'done' } }, {
-      onSuccess: () => toast({ title: 'Task Completed!', description: 'The task has been marked as done.' }),
       onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not mark the task as complete.' }),
     });
   };
   
   const handleDeleteAllCompleted = () => {
     deleteCompletedTasks(undefined, {
-      onSuccess: () => toast({ title: 'All Completed Tasks Deleted', description: 'Your completed tasks have been cleared.' }),
       onError: (error) => toast({ variant: 'destructive', title: 'Error Deleting Tasks', description: error.message }),
       onSettled: () => setIsDeleteAllConfirmOpen(false),
     });

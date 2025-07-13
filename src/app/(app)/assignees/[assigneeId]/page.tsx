@@ -87,7 +87,6 @@ export default function AssigneeDetailPage() {
     start();
     try {
       await deleteTaskApi(currentUser.id, taskId);
-      toast({ title: 'Task Deleted', description: 'The task has been successfully deleted.' });
       handleDataRefresh();
     } catch (error) {
       toast({
@@ -105,7 +104,6 @@ export default function AssigneeDetailPage() {
     start();
     try {
       await updateTask(currentUser.id, taskId, { status: 'done' });
-      toast({ title: 'Task Completed!', description: 'The task has been marked as done.' });
       handleDataRefresh();
     } catch (error) {
       toast({
@@ -274,4 +272,3 @@ export default function AssigneeDetailPage() {
     </div>
   );
 }
-

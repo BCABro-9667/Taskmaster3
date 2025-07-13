@@ -50,10 +50,6 @@ export function EditNoteForm({ task, onNoteUpdated, closeDialog, currentUserId }
     start();
     try {
       await updateTask(currentUserId, task.id, { description: values.description || '' });
-      toast({
-        title: 'Note Updated',
-        description: `The note for task "${task.title}" has been saved.`,
-      });
       onNoteUpdated();
       closeDialog();
     } catch (error) {

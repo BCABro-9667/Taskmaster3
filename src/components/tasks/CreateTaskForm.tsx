@@ -132,12 +132,6 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
     };
 
     createTask(taskDataForApi, {
-      onSuccess: (newTask) => {
-        toast({
-          title: 'Task Created',
-          description: `"${newTask.title}" has been added to your tasks.`,
-        });
-      },
       onError: (error) => {
         toast({
           variant: 'destructive',

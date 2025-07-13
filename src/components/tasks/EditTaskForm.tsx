@@ -59,10 +59,6 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
 
     updateTask({ id: task.id, updates: taskDataForApi }, {
       onSuccess: () => {
-        toast({
-          title: 'Task Updated',
-          description: `"${values.title}" has been updated.`,
-        });
         onTaskUpdated();
         closeDialog();
       },
