@@ -7,12 +7,13 @@ import type { Task, Assignee, User } from '@/types';
 import { getTasks, getAssigneeById, getAssignees, deleteTask as deleteTaskApi, updateTask } from '@/lib/tasks'; 
 import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft, Printer } from 'lucide-react';
+import { Loader2, User as UserIcon, Briefcase, ListTodo, CheckCircle2, ArrowLeft, Printer, Sigma, Hourglass } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function AssigneeDetailPage() {
   const params = useParams();
@@ -33,6 +34,7 @@ export default function AssigneeDetailPage() {
       return;
     }
     setIsLoading(true);
+    start();
     try {
       const [fetchedAssignee, fetchedTasks, fetchedAllAssignees] = await Promise.all([
         getAssigneeById(userId, currentAssigneeId),
@@ -58,8 +60,9 @@ export default function AssigneeDetailPage() {
       setTasks([]);
     } finally {
       setIsLoading(false);
+      complete();
     }
-  }, [toast]);
+  }, [toast, start, complete]);
 
   useEffect(() => {
     const user = clientAuthGetCurrentUser();
@@ -114,6 +117,14 @@ export default function AssigneeDetailPage() {
       complete();
     }
   };
+  
+  const getAssigneeInitials = (name: string | undefined) => {
+    if (!name) return '??';
+    const names = name.split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
+  };
+
 
   if (isLoading) {
     return (
@@ -147,17 +158,18 @@ export default function AssigneeDetailPage() {
 
   const pendingTasks = tasks.filter(task => task.status === 'todo' || task.status === 'inprogress');
   const completedTasks = tasks.filter(task => task.status === 'done');
+  const totalTasks = tasks.length;
 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 no-print">
-        <Button variant="outline" asChild className="mb-4">
+        <Button variant="outline" asChild>
           <Link href="/assignees">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Assignees
           </Link>
         </Button>
-        <Button variant="outline" onClick={() => window.print()} className="mb-4">
+        <Button variant="outline" onClick={() => window.print()} className="mb-0">
           <Printer className="mr-2 h-4 w-4" />
           Print
         </Button>
@@ -171,14 +183,16 @@ export default function AssigneeDetailPage() {
         </div>
         
         <Card className="shadow-lg screen-view bg-card/60">
-          <CardHeader className="flex flex-row items-center gap-4">
-            <div>
-              <CardTitle className="text-3xl font-headline text-primary flex items-center">
-                <UserIcon className="mr-3 h-8 w-8" /> 
+          <CardHeader className="flex flex-col md:flex-row items-center gap-4">
+            <Avatar className="h-24 w-24 border-4 border-primary/20">
+               <AvatarFallback className="text-3xl bg-muted">{getAssigneeInitials(assignee.name)}</AvatarFallback>
+            </Avatar>
+            <div className="text-center md:text-left">
+              <CardTitle className="text-3xl font-headline text-primary flex items-center justify-center md:justify-start">
                 {assignee.name}
               </CardTitle>
               {assignee.designation && (
-                <CardDescription className="text-lg flex items-center mt-1">
+                <CardDescription className="text-lg flex items-center mt-1 justify-center md:justify-start">
                   <Briefcase className="mr-2 h-5 w-5 text-muted-foreground" />
                   {assignee.designation}
                 </CardDescription>
@@ -186,8 +200,42 @@ export default function AssigneeDetailPage() {
             </div>
           </CardHeader>
         </Card>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 screen-view">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+                <Sigma className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalTasks}</div>
+                <p className="text-xs text-muted-foreground">All assigned tasks</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                <Hourglass className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingTasks.length}</div>
+                <p className="text-xs text-muted-foreground">Tasks in-progress or to-do</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{completedTasks.length}</div>
+                <p className="text-xs text-muted-foreground">Tasks marked as done</p>
+              </CardContent>
+            </Card>
+        </div>
 
-        <section>
+
+        <section className="mt-8">
           <div className="flex items-center mb-4 no-print">
             <ListTodo className="mr-3 h-6 w-6 text-primary" />
             <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({pendingTasks.length})</h2>
@@ -226,3 +274,4 @@ export default function AssigneeDetailPage() {
     </div>
   );
 }
+
