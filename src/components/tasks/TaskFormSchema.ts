@@ -3,7 +3,7 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 
 export const taskFormSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters.' }).max(100, { message: 'Title must be 100 characters or less.' }),
+  title: z.string().min(1, { message: 'Title is required.' }).max(100, { message: 'Title must be 100 characters or less.' }),
   // Description is now handled separately
   assignedTo: z.string().optional(),
   deadline: z.string().refine((date) => {
