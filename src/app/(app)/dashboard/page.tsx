@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { User } from '@/types';
 import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
@@ -50,6 +50,7 @@ export default function DashboardPage() {
   const [sortOption, setSortOption] = useState('createdAtDesc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
+  const [lastSelectedAssigneeId, setLastSelectedAssigneeId] = useState<string>('unassigned');
 
 
   const handleDataRefresh = () => {
@@ -134,8 +135,6 @@ export default function DashboardPage() {
   return (
     <>
       <div className="space-y-8">
-        {/* This section has been removed as per your request */}
-
         <Card className="shadow-lg no-print bg-card/60">
           <CardHeader>
             <CardTitle className="text-xl font-headline flex items-center">
@@ -144,7 +143,11 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {currentUser?.id && <CreateTaskForm currentUserId={currentUser.id} />}
+            {currentUser?.id && <CreateTaskForm 
+              currentUserId={currentUser.id} 
+              lastSelectedAssigneeId={lastSelectedAssigneeId}
+              onAssigneeChange={setLastSelectedAssigneeId}
+            />}
           </CardContent>
         </Card>
 

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import type { Assignee } from '@/types';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Loader2, CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
 import { Input } from '@/components/ui/input';
@@ -39,9 +39,11 @@ const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
 interface CreateTaskFormProps {
   currentUserId: string | null; 
+  lastSelectedAssigneeId: string;
+  onAssigneeChange: (assigneeId: string) => void;
 }
 
-export function CreateTaskForm({ currentUserId }: CreateTaskFormProps) {
+export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssigneeChange }: CreateTaskFormProps) {
   const { toast } = useToast();
   const [isSubmittingAi, setIsSubmittingAi] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -54,13 +56,18 @@ export function CreateTaskForm({ currentUserId }: CreateTaskFormProps) {
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: '',
-      assignedTo: 'unassigned', 
+      assignedTo: lastSelectedAssigneeId, 
       deadline: format(new Date(), 'yyyy-MM-dd'),
     },
   });
 
+  useEffect(() => {
+    form.setValue('assignedTo', lastSelectedAssigneeId);
+  }, [lastSelectedAssigneeId, form]);
+
   const handleAssigneeCreated = (newAssignee: Assignee) => {
     refetchAssignees().then(() => {
+      onAssigneeChange(newAssignee.id);
       form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
     setIsCreateAssigneeDialogOpen(false);
@@ -132,7 +139,7 @@ export function CreateTaskForm({ currentUserId }: CreateTaskFormProps) {
         });
         form.reset({
           title: '',
-          assignedTo: 'unassigned',
+          assignedTo: lastSelectedAssigneeId,
           deadline: format(new Date(), 'yyyy-MM-dd'),
         });
       },
@@ -176,6 +183,7 @@ export function CreateTaskForm({ currentUserId }: CreateTaskFormProps) {
                       setIsCreateAssigneeDialogOpen(true);
                     } else {
                       field.onChange(value);
+                      onAssigneeChange(value);
                     }
                   }} 
                   value={field.value || 'unassigned'}
