@@ -2,7 +2,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { getTasks, createTask, updateTask, deleteTask, getAssignees } from '@/lib/tasks';
+import { getTasks, createTask, updateTask, deleteTask, getAssignees, deleteCompletedTasks } from '@/lib/tasks';
 import type { Task, Assignee } from '@/types';
 import { getCurrentUser } from '@/lib/client-auth';
 
@@ -130,6 +130,36 @@ export function useDeleteTask(userId: string | null | undefined) {
     },
   });
 }
+
+
+export function useDeleteCompletedTasks(userId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: () => {
+      if (!userId) throw new Error("User not authenticated");
+      return deleteCompletedTasks(userId);
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.list(userId!) });
+      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.list(userId!));
+      
+      // Optimistically remove all 'done' tasks
+      queryClient.setQueryData<Task[]>(taskKeys.list(userId!), (old = []) => 
+        old.filter(task => task.status !== 'done')
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(taskKeys.list(userId!), context?.previousTasks);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
+    },
+  });
+}
+
 
 
 // --- Hooks for Assignees ---

@@ -159,6 +159,23 @@ export async function deleteTask(userId: string, id: string): Promise<{ deletedT
   return { deletedTaskId: id };
 }
 
+export async function deleteCompletedTasks(userId: string): Promise<{ deletedCount: number }> {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error('Invalid user ID provided for deletion.');
+  }
+  await dbConnect();
+  const result = await TaskModel.deleteMany({
+    createdBy: new mongoose.Types.ObjectId(userId),
+    status: 'done',
+  });
+  
+  if (result.deletedCount === 0) {
+    // This isn't an error, but could be useful information.
+    // We don't throw an error to prevent issues if the button is clicked with no completed tasks.
+  }
+  return { deletedCount: result.deletedCount };
+}
+
 export async function getAssignees(userId: string): Promise<Assignee[]> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     console.error('Invalid or missing userId for getAssignees');

@@ -6,7 +6,7 @@ import type { User } from '@/types';
 import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
-import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter } from 'lucide-react';
+import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { Input } from '@/components/ui/input';
@@ -21,8 +21,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from '@/components/ui/checkbox';
-import { useTasks, useAssignees, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks';
+import { useTasks, useAssignees, useUpdateTask, useDeleteTask, useDeleteCompletedTasks } from '@/hooks/use-tasks';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 export default function DashboardPage() {
   const currentUser: User | null = clientAuthGetCurrentUser();
@@ -32,10 +43,14 @@ export default function DashboardPage() {
   const { data: assignees = [], isLoading: isLoadingAssignees } = useAssignees(currentUser?.id);
   const { mutate: updateTask } = useUpdateTask(currentUser?.id);
   const { mutate: deleteTask } = useDeleteTask(currentUser?.id);
+  const { mutate: deleteCompletedTasks } = useDeleteCompletedTasks(currentUser?.id);
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('createdAtDesc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
+  const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
+
 
   const handleDataRefresh = () => {
     refetchTasks();
@@ -52,6 +67,14 @@ export default function DashboardPage() {
     updateTask({ id: taskId, updates: { status: 'done' } }, {
       onSuccess: () => toast({ title: 'Task Completed!', description: 'The task has been marked as done.' }),
       onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not mark the task as complete.' }),
+    });
+  };
+  
+  const handleDeleteAllCompleted = () => {
+    deleteCompletedTasks(undefined, {
+      onSuccess: () => toast({ title: 'All Completed Tasks Deleted', description: 'Your completed tasks have been cleared.' }),
+      onError: (error) => toast({ variant: 'destructive', title: 'Error Deleting Tasks', description: error.message }),
+      onSettled: () => setIsDeleteAllConfirmOpen(false),
     });
   };
 
@@ -109,133 +132,164 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* This section has been removed as per your request */}
-
-      <Card className="shadow-lg no-print bg-card/60">
-        <CardHeader>
-          <CardTitle className="text-xl font-headline flex items-center">
-            <PlusCircle className="mr-2 h-5 w-5 text-accent" />
-            Add New Task
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {currentUser?.id && <CreateTaskForm currentUserId={currentUser.id} />}
-        </CardContent>
-      </Card>
-
-
+    <>
       <div className="space-y-8">
-        <section className="dashboard-printable-area">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 no-print">
-            <div className="flex items-center">
-              <ListTodo className="mr-3 h-6 w-6 text-primary" />
-              <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-               <Button variant="outline" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
-                <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-              <div className="relative flex-grow sm:flex-grow-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search tasks..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full"
-                  />
+        {/* This section has been removed as per your request */}
+
+        <Card className="shadow-lg no-print bg-card/60">
+          <CardHeader>
+            <CardTitle className="text-xl font-headline flex items-center">
+              <PlusCircle className="mr-2 h-5 w-5 text-accent" />
+              Add New Task
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {currentUser?.id && <CreateTaskForm currentUserId={currentUser.id} />}
+          </CardContent>
+        </Card>
+
+
+        <div className="space-y-8">
+          <section className="dashboard-printable-area">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 no-print">
+              <div className="flex items-center">
+                <ListTodo className="mr-3 h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
               </div>
-              <DropdownMenu>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                 <Button variant="outline" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <div className="relative flex-grow sm:flex-grow-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Search tasks..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full"
+                    />
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <Filter className="mr-2 h-4 w-4" />
+                        Assignee
+                        {selectedAssigneeIds.length > 0 && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">{selectedAssigneeIds.length}</span>}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Filter by Assignee</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {assignees.map(assignee => (
+                        <DropdownMenuItem key={assignee.id} onSelect={(e) => e.preventDefault()}>
+                          <Checkbox
+                            id={`filter-assignee-${assignee.id}`}
+                            className="mr-2"
+                            checked={selectedAssigneeIds.includes(assignee.id)}
+                            onCheckedChange={(checked) => {
+                              const isChecked = !!checked;
+                              return isChecked
+                                ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
+                                : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
+                            }}
+                          />
+                          <label htmlFor={`filter-assignee-${assignee.id}`} className="w-full cursor-pointer">{assignee.name}</label>
+                        </DropdownMenuItem>
+                      ))}
+                      {assignees.length === 0 && (
+                        <DropdownMenuItem disabled>No assignees to filter</DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
-                      <Filter className="mr-2 h-4 w-4" />
-                      Assignee
-                      {selectedAssigneeIds.length > 0 && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">{selectedAssigneeIds.length}</span>}
+                      <ArrowUpDown className="mr-2 h-4 w-4" />
+                      Sort
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Filter by Assignee</DropdownMenuLabel>
+                    <DropdownMenuLabel>Sort by</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {assignees.map(assignee => (
-                      <DropdownMenuItem key={assignee.id} onSelect={(e) => e.preventDefault()}>
-                        <Checkbox
-                          id={`filter-assignee-${assignee.id}`}
-                          className="mr-2"
-                          checked={selectedAssigneeIds.includes(assignee.id)}
-                          onCheckedChange={(checked) => {
-                            const isChecked = !!checked;
-                            return isChecked
-                              ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
-                              : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
-                          }}
-                        />
-                        <label htmlFor={`filter-assignee-${assignee.id}`} className="w-full cursor-pointer">{assignee.name}</label>
-                      </DropdownMenuItem>
-                    ))}
-                    {assignees.length === 0 && (
-                      <DropdownMenuItem disabled>No assignees to filter</DropdownMenuItem>
-                    )}
+                    <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                      <DropdownMenuRadioItem value="createdAtDesc">Date</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="assigneeNameAsc">Assignee</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <ArrowUpDown className="mr-2 h-4 w-4" />
-                    Sort
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
-                    <DropdownMenuRadioItem value="createdAtDesc">Date</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="assigneeNameAsc">Assignee</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button variant="outline" onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print
-              </Button>
+                </DropdownMenu>
+                <Button variant="outline" onClick={handlePrint}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print
+                </Button>
+              </div>
             </div>
-          </div>
-          {currentUser?.id && (
-            <>
-              <TaskList 
-                tasks={filteredAndSortedTasks} 
+            {currentUser?.id && (
+              <>
+                <TaskList 
+                  tasks={filteredAndSortedTasks} 
+                  assignableUsers={assignees}
+                  currentUserId={currentUser.id}
+                  onDeleteTask={handleDeleteTask}
+                  onUpdateTask={handleDataRefresh}
+                  onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                  emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
+                />
+                <PrintOnlyBlankTasks count={25 - filteredAndSortedTasks.length} />
+              </>
+            )}
+          </section>
+
+          <section className="no-print">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                    <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
+                    <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
+                </div>
+                {completedTasks.length > 0 && (
+                  <Button variant="destructive" size="sm" onClick={() => setIsDeleteAllConfirmOpen(true)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete All
+                  </Button>
+                )}
+            </div>
+            {currentUser?.id && (
+              <TaskList
+                tasks={completedTasks}
                 assignableUsers={assignees}
                 currentUserId={currentUser.id}
                 onDeleteTask={handleDeleteTask}
                 onUpdateTask={handleDataRefresh}
                 onMarkTaskAsComplete={handleMarkTaskAsComplete}
-                emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
+                emptyStateMessage="Completed tasks will appear here once they are marked as 'Done'."
+                emptyStateTitle="No Completed Tasks"
               />
-              <PrintOnlyBlankTasks count={25 - filteredAndSortedTasks.length} />
-            </>
-          )}
-        </section>
-
-        <section className="no-print">
-          <div className="flex items-center mb-4">
-            <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
-            <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
-          </div>
-          {currentUser?.id && (
-            <TaskList
-              tasks={completedTasks}
-              assignableUsers={assignees}
-              currentUserId={currentUser.id}
-              onDeleteTask={handleDeleteTask}
-              onUpdateTask={handleDataRefresh}
-              onMarkTaskAsComplete={handleMarkTaskAsComplete}
-              emptyStateMessage="Completed tasks will appear here once they are marked as 'Done'."
-              emptyStateTitle="No Completed Tasks"
-            />
-          )}
-        </section>
+            )}
+          </section>
+        </div>
       </div>
-    </div>
+      
+      <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete all {completedTasks.length} completed tasks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllCompleted}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Yes, delete all
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+    </>
   );
 }
