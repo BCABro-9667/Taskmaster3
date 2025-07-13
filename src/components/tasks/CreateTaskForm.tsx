@@ -54,6 +54,7 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
+    mode: 'onChange',
     defaultValues: {
       title: '',
       assignedTo: lastSelectedAssigneeId, 

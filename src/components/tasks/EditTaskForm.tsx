@@ -31,6 +31,7 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
   
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
+    mode: 'onChange',
     defaultValues: {
       title: task.title,
       assignedTo: task.assignedTo?.id || 'unassigned',
