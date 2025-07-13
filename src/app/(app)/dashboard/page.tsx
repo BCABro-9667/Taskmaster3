@@ -110,15 +110,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
-        <h1 className="text-3xl font-bold font-headline text-primary">My Tasks</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
+      {/* This section has been removed as per your request */}
 
       <Card className="shadow-lg no-print bg-card/60">
         <CardHeader>
@@ -141,6 +133,10 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
+               <Button variant="outline" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
+                <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
               <div className="relative flex-grow sm:flex-grow-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
