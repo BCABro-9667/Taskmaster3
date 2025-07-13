@@ -51,6 +51,18 @@ export default function DashboardPage() {
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const [lastSelectedAssigneeId, setLastSelectedAssigneeId] = useState<string>('unassigned');
+  
+  useEffect(() => {
+    const savedAssigneeId = localStorage.getItem('lastSelectedAssigneeId');
+    if (savedAssigneeId) {
+      setLastSelectedAssigneeId(savedAssigneeId);
+    }
+  }, []);
+  
+  const handleAssigneeChange = (assigneeId: string) => {
+    setLastSelectedAssigneeId(assigneeId);
+    localStorage.setItem('lastSelectedAssigneeId', assigneeId);
+  }
 
 
   const handleDataRefresh = () => {
@@ -146,7 +158,7 @@ export default function DashboardPage() {
             {currentUser?.id && <CreateTaskForm 
               currentUserId={currentUser.id} 
               lastSelectedAssigneeId={lastSelectedAssigneeId}
-              onAssigneeChange={setLastSelectedAssigneeId}
+              onAssigneeChange={handleAssigneeChange}
             />}
           </CardContent>
         </Card>
@@ -187,18 +199,20 @@ export default function DashboardPage() {
                       <DropdownMenuSeparator />
                       {assignees.map(assignee => (
                         <DropdownMenuItem key={assignee.id} onSelect={(e) => e.preventDefault()}>
-                          <Checkbox
-                            id={`filter-assignee-${assignee.id}`}
-                            className="mr-2"
-                            checked={selectedAssigneeIds.includes(assignee.id)}
-                            onCheckedChange={(checked) => {
-                              const isChecked = !!checked;
-                              return isChecked
-                                ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
-                                : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
-                            }}
-                          />
-                          <label htmlFor={`filter-assignee-${assignee.id}`} className="w-full cursor-pointer">{assignee.name}</label>
+                           <label htmlFor={`filter-assignee-${assignee.id}`} className="w-full cursor-pointer flex items-center p-2 border rounded-md hover:bg-muted/50">
+                            <Checkbox
+                              id={`filter-assignee-${assignee.id}`}
+                              className="mr-2"
+                              checked={selectedAssigneeIds.includes(assignee.id)}
+                              onCheckedChange={(checked) => {
+                                const isChecked = !!checked;
+                                return isChecked
+                                  ? setSelectedAssigneeIds([...selectedAssigneeIds, assignee.id])
+                                  : setSelectedAssigneeIds(selectedAssigneeIds.filter(id => id !== assignee.id));
+                              }}
+                            />
+                            {assignee.name}
+                          </label>
                         </DropdownMenuItem>
                       ))}
                       {assignees.length === 0 && (
