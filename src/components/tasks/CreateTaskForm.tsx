@@ -54,6 +54,8 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
     defaultValues: {
       title: '',
       assignedTo: lastSelectedAssigneeId, 
@@ -122,24 +124,23 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
       status: 'todo' as const, 
     };
 
-    // Immediately reset the form for an optimistic UI feel
-    form.reset({
-      title: '',
-      assignedTo: lastSelectedAssigneeId,
-      deadline: format(new Date(), 'yyyy-MM-dd'),
-    });
-
     createTask(taskDataForApi, {
       onError: (error) => {
-        // Form is already reset, but we can restore the values on error if needed.
-        // For now, just show the error.
-        form.reset(values); // Optional: restore form values on error
         toast({
           variant: 'destructive',
           title: 'Failed to Create Task',
           description: error.message || 'An unexpected error occurred.',
         });
+        // On error, restore the form values so the user can try again
+        form.reset(values);
       }
+    });
+    
+    // Immediately reset the form for an optimistic UI feel
+    form.reset({
+      title: '',
+      assignedTo: lastSelectedAssigneeId,
+      deadline: format(new Date(), 'yyyy-MM-dd'),
     });
   }
 
@@ -258,10 +259,8 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
             )}
           />
 
-          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmittingAi || isSubmitting || !currentUserId}>
-            {isSubmitting ? (
-                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : "Create Task"}
+          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmittingAi || !currentUserId}>
+            Create Task
           </Button>
         </form>
       </Form>
