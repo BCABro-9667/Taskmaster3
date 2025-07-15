@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasks, createTask, updateTask, deleteTask, getAssignees, deleteCompletedTasks } from '@/lib/tasks';
 import type { Task, Assignee } from '@/types';
-import { getCurrentUser } from '@/lib/client-auth';
 
 // --- Query Keys ---
 const taskKeys = {
@@ -53,7 +52,7 @@ export function useCreateTask(userId: string | null | undefined) {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     createdBy: userId!,
-                    assignedTo: undefined, // Assignee info isn't available without a server roundtrip
+                    assignedTo: undefined, // Assignee info isn't available on client yet
                 };
                 return [optimisticTask, ...old];
             });
@@ -67,6 +66,7 @@ export function useCreateTask(userId: string | null | undefined) {
         onSettled: () => {
             // Refetch after error or success to get the final server state
             queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
+            queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
         },
     });
 }
@@ -88,7 +88,7 @@ export function useUpdateTask(userId: string | null | undefined) {
       // Optimistically update the specific task
       queryClient.setQueryData<Task[]>(taskKeys.list(userId!), (old = []) => 
         old.map(task =>
-          task.id === id ? { ...task, ...updates, assignedTo: task.assignedTo } : task
+          task.id === id ? { ...task, ...updates } : task
         )
       );
 
@@ -99,6 +99,7 @@ export function useUpdateTask(userId: string | null | undefined) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
     },
   });
 }
@@ -127,6 +128,7 @@ export function useDeleteTask(userId: string | null | undefined) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
     },
   });
 }
@@ -156,6 +158,7 @@ export function useDeleteCompletedTasks(userId: string | null | undefined) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
     },
   });
 }

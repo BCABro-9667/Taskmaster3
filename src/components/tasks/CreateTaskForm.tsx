@@ -122,21 +122,24 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
       status: 'todo' as const, 
     };
 
+    // Immediately reset the form for an optimistic UI feel
+    form.reset({
+      title: '',
+      assignedTo: lastSelectedAssigneeId,
+      deadline: format(new Date(), 'yyyy-MM-dd'),
+    });
+
     createTask(taskDataForApi, {
       onError: (error) => {
+        // Form is already reset, but we can restore the values on error if needed.
+        // For now, just show the error.
+        form.reset(values); // Optional: restore form values on error
         toast({
           variant: 'destructive',
           title: 'Failed to Create Task',
           description: error.message || 'An unexpected error occurred.',
         });
       }
-    });
-
-    // Reset the form immediately for an optimistic UI feel
-    form.reset({
-      title: '',
-      assignedTo: lastSelectedAssigneeId,
-      deadline: format(new Date(), 'yyyy-MM-dd'),
     });
   }
 
