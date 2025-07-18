@@ -6,7 +6,7 @@ import type { User } from '@/types';
 import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
-import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter, Trash2, Sigma, Hourglass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 
 export default function DashboardPage() {
@@ -158,7 +164,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
+    <TooltipProvider>
       <div className="space-y-8">
         <Card className="shadow-lg no-print bg-card/60">
           <CardHeader>
@@ -185,10 +191,16 @@ export default function DashboardPage() {
                 <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                 <Button variant="outline" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={handleDataRefresh} disabled={isFetchingTasks} aria-label="Refresh tasks">
+                      <RefreshCw className={`h-4 w-4 ${isFetchingTasks ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Refresh</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="relative flex-grow sm:flex-grow-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -200,13 +212,19 @@ export default function DashboardPage() {
                     />
                 </div>
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline">
-                        <Filter className="mr-2 h-4 w-4" />
-                        Assignee
-                        {selectedAssigneeIds.length > 0 && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">{selectedAssigneeIds.length}</span>}
-                      </Button>
-                    </DropdownMenuTrigger>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Filter className="h-4 w-4" />
+                          {selectedAssigneeIds.length > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{selectedAssigneeIds.length}</span>}
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Filter by Assignee</p>
+                    </TooltipContent>
+                  </Tooltip>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Filter by Assignee</DropdownMenuLabel>
                       <DropdownMenuSeparator />
@@ -231,12 +249,18 @@ export default function DashboardPage() {
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <ArrowUpDown className="mr-2 h-4 w-4" />
-                      Sort
-                    </Button>
-                  </DropdownMenuTrigger>
+                   <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <ArrowUpDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Sort</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Sort by</DropdownMenuLabel>
                     <DropdownMenuSeparator />
@@ -246,10 +270,16 @@ export default function DashboardPage() {
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" onClick={handlePrint}>
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={handlePrint}>
+                      <Printer className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Print</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
             {currentUser?.id && (
@@ -317,6 +347,6 @@ export default function DashboardPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-    </>
+    </TooltipProvider>
   );
 }
