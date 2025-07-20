@@ -117,89 +117,83 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               )}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5">
-              <div className="hidden xs:block">
-                <TaskStatusBadge status={task.status} />
-              </div>
-              
-              <div className="flex items-center gap-2 sm:gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                {assignedAssignee ? (
-                  <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
-                    <UserCircle className="h-5 w-5 sm:h-6 sm-w-6" />
-                    <span className={cn("text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
-                  </Link>
-                ) : (
-                  <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
-                    <UserCircle className="h-5 w-5 sm:h-6 sm-w-6" />
-                    <span className="text-xs sm:text-sm">Unassigned</span>
-                  </div>
-                )}
-
-                <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
-                  <CalendarDays className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className={cn("text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
-                    {format(parseISO(task.deadline), 'MMM d')}
-                  </span>
+            <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {assignedAssignee ? (
+                <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
+                  <UserCircle className="h-5 w-5" />
+                  <span className={cn("text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
+                </Link>
+              ) : (
+                <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
+                  <UserCircle className="h-5 w-5" />
+                  <span className="text-xs sm:text-sm">Unassigned</span>
                 </div>
+              )}
 
-
-                {canModifyTask && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
-                        <StickyNote className="mr-2 h-4 w-4" />
-                        <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
-                      </DropdownMenuItem>
-                      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                        <DialogTrigger asChild>
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditTaskDetails}>
-                            <Edit3 className="mr-2 h-4 w-4" />
-                            <span>Edit Task Details</span>
-                          </DropdownMenuItem>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
-                          <DialogHeader>
-                            <DialogTitle>Edit Task</DialogTitle>
-                          </DialogHeader>
-                          <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} currentUserId={currentUserId}/>
-                        </DialogContent>
-                      </Dialog>
-                      <DropdownMenuSeparator />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()} disabled={!canModifyTask}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the task
-                              "{task.title}".
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onDeleteTask(task.id)}
-                              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+              <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
+                <CalendarDays className="mr-1 h-4 w-4" />
+                <span className={cn("text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
+                  {format(parseISO(task.deadline), 'MMM d')}
+                </span>
               </div>
+
+
+              {canModifyTask && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
+                      <StickyNote className="mr-2 h-4 w-4" />
+                      <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
+                    </DropdownMenuItem>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditTaskDetails}>
+                          <Edit3 className="mr-2 h-4 w-4" />
+                          <span>Edit Task Details</span>
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle>Edit Task</DialogTitle>
+                        </DialogHeader>
+                        <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} currentUserId={currentUserId}/>
+                      </DialogContent>
+                    </Dialog>
+                    <DropdownMenuSeparator />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()} disabled={!canModifyTask}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the task
+                            "{task.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onDeleteTask(task.id)}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </CardContent>
