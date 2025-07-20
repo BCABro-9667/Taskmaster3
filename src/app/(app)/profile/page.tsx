@@ -15,6 +15,8 @@ import { updateCurrentUser } from '@/lib/auth'; // Server Action
 import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
 import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const profileFormSchema = z.object({
   name: z.string().min(1, 'Name is required.').max(50, 'Name must be 50 characters or less.'),
@@ -30,8 +32,6 @@ export default function ProfilePage() {
   const [currentUserForForm, setCurrentUserForForm] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -51,7 +51,6 @@ export default function ProfilePage() {
         profileImageUrl: user.profileImageUrl || '',
         backgroundImageUrl: user.backgroundImageUrl || '',
       });
-      setPreviewImageUrl(user.profileImageUrl || null);
     } else {
       router.replace('/login'); 
     }
@@ -60,21 +59,12 @@ export default function ProfilePage() {
   
   const watchedImageUrl = form.watch('profileImageUrl');
 
-  useEffect(() => {
-    if (watchedImageUrl && form.getFieldState('profileImageUrl').isDirty) {
-      try {
-        new URL(watchedImageUrl); // Basic validation
-        setPreviewImageUrl(watchedImageUrl);
-      } catch (_) {
-        setPreviewImageUrl(null); 
-      }
-    } else if (!watchedImageUrl && currentUserForForm?.profileImageUrl) {
-      setPreviewImageUrl(currentUserForForm.profileImageUrl);
-    } else if (!watchedImageUrl) {
-      setPreviewImageUrl(null);
-    }
-  }, [watchedImageUrl, currentUserForForm, form]);
-
+  const getInitials = (name: string | undefined) => {
+    if (!name) return '??';
+    const names = name.split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
+  };
 
   const onSubmit = async (data: ProfileFormValues) => {
     if (!currentUserForForm) {
@@ -162,36 +152,16 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {previewImageUrl && (
-              <div className="space-y-2">
+             <div className="space-y-2">
                 <Label>Image Preview</Label>
-                <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary bg-muted flex items-center justify-center">
-                  <img 
-                    src={previewImageUrl} 
-                    alt="Profile Preview" 
-                    className="w-full h-full object-cover"
-                    onError={(e) => { 
-                      (e.target as HTMLImageElement).style.display='none'; 
-                      const nextSibling = (e.target as HTMLImageElement).nextElementSibling;
-                      if (nextSibling) nextSibling.classList.remove('hidden');
-                    }}
-                  />
-                  <div className="hidden w-full h-full items-center justify-center flex-col text-muted-foreground">
-                    <ImageIcon className="w-12 h-12"/>
-                    <span className="text-xs mt-1">Preview N/A</span>
-                  </div>
-                </div>
-              </div>
-            )}
-             {!previewImageUrl && (
-                <div className="space-y-2">
-                <Label>Image Preview</Label>
-                 <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center text-muted-foreground">
-                    <ImageIcon className="w-12 h-12"/>
-                </div>
-                <p className="text-xs text-muted-foreground">No image URL provided or URL is invalid.</p>
-              </div>
-            )}
+                <Avatar className="h-32 w-32 border-2 border-primary bg-muted">
+                    <AvatarImage src={watchedImageUrl || ''} alt="Profile Preview" className="object-cover" />
+                    <AvatarFallback className="text-4xl">
+                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                    </AvatarFallback>
+                </Avatar>
+                {!watchedImageUrl && <p className="text-xs text-muted-foreground">No image URL provided.</p>}
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="backgroundImageUrl">Background Image URL</Label>

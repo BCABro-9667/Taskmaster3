@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Building2, LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { User } from '@/types';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +61,7 @@ export function Navbar() {
     if (!name) return 'TM';
     const names = name.split(' ');
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
   };
 
   const navLinks = [
@@ -106,6 +106,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-9 w-9">
+                    {currentUser.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name} className="object-cover" />}
                     <AvatarFallback>{getUserInitials(currentUser.name)}</AvatarFallback>
                   </Avatar>
                 </Button>
