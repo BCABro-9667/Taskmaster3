@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle'; // Import the ThemeToggle component
+import { LiveInfo } from './LiveInfo';
 
 export function Navbar() {
   const router = useRouter();
@@ -74,10 +75,16 @@ export function Navbar() {
     <nav className="bg-card/50 border-b border-border/40 shadow-sm sticky top-0 z-50 navbar-component backdrop-blur-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/dashboard" className="flex items-center gap-2 text-xl font-semibold text-primary">
-            <Building2 className="h-7 w-7" />
-            <span className="font-headline">{navbarBrandName}</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2 text-xl font-semibold text-primary">
+                <Building2 className="h-7 w-7" />
+                <span className="font-headline">{navbarBrandName}</span>
+            </Link>
+             <div className="hidden lg:flex border-l border-border/60 ml-4 pl-4">
+                <LiveInfo />
+            </div>
+          </div>
+
 
           <div className="flex items-center gap-2">
             {currentUser && (
@@ -118,6 +125,12 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <div className="sm:hidden">
+                    <DropdownMenuItem className="lg:hidden focus:bg-transparent text-muted-foreground select-none">
+                        <LiveInfo />
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="lg:hidden" />
+                </div>
                 <div className="sm:hidden">
                   {navLinks.map((link) => (
                     <DropdownMenuItem key={link.href} asChild className={cn(pathname === link.href && "bg-accent")}>
