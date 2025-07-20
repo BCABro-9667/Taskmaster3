@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Building2, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import {
   Sheet,
@@ -21,6 +21,8 @@ import { useState } from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import logo from '@/components/shared/logo.png';
 
 const navLinks = [
   { href: '#hero', label: 'Home' },
@@ -47,7 +49,7 @@ export function LandingNavbar() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-primary">
-            <Building2 className="h-7 w-7" />
+            <Image src={logo} alt="TaskMaster Logo" width={28} height={28} />
             <span className="font-headline">TaskMaster</span>
           </Link>
 
@@ -80,7 +82,7 @@ export function LandingNavbar() {
                 <SheetContent side="right" className="w-[280px] sm:w-[320px]">
                   <div className="flex flex-col h-full p-6">
                     <Link href="/" className="mb-8 flex items-center gap-2 text-lg font-semibold text-primary" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Building2 className="h-6 w-6" />
+                      <Image src={logo} alt="TaskMaster Logo" width={24} height={24} />
                       <span className="font-headline">TaskMaster</span>
                     </Link>
                     <nav className="flex flex-col gap-4">

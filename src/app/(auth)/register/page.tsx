@@ -4,10 +4,12 @@
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
-import { useEffect, useState } from 'react'; // Added useState
+import { useEffect, useState } from 'react'; 
 import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/client-auth';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import logo from '@/components/shared/logo.png';
 
 export default function RegisterPage() {
   const router = useRouter();

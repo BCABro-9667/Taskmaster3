@@ -6,8 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { clearCurrentUser, getCurrentUser } from '@/lib/client-auth'; // Use client-auth utilities
 import { useToast } from '@/hooks/use-toast';
-import { Building2, LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard } from 'lucide-react';
+import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import logo from './logo.png'
 import type { User } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -77,7 +79,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <Link href="/dashboard" className="flex items-center gap-2 text-xl font-semibold text-primary">
-                <Building2 className="h-7 w-7" />
+                <Image src={logo} alt="TaskMaster Logo" width={28} height={28} />
                 <span className="font-headline">{navbarBrandName}</span>
             </Link>
              <div className="hidden lg:flex border-l border-border/60 ml-4 pl-4">

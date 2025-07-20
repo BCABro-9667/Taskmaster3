@@ -3,11 +3,12 @@
 
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2 } from 'lucide-react'; 
-import { useEffect, useState } from 'react'; // Added useState
+import { useEffect, useState } from 'react'; 
 import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/client-auth';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import logo from '@/components/shared/logo.png';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
-            <Building2 className="h-12 w-12 text-primary" />
+            <Image src={logo} alt="TaskMaster Logo" width={48} height={48} />
           </div>
           <CardTitle className="text-3xl font-headline">Welcome to TaskMaster</CardTitle>
           <CardDescription>Log in to manage your tasks efficiently.</CardDescription>
