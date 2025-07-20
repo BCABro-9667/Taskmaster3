@@ -7,7 +7,7 @@ import { TaskList, PrintOnlyBlankTasks } from '@/components/tasks/TaskList';
 import { CreateTaskForm } from '@/components/tasks/CreateTaskForm';
 import { Button } from '@/components/ui/button';
 import { Loader2, PlusCircle, RefreshCw, ListTodo, CheckCircle2, Search, Printer, ArrowUpDown, Filter, Trash2, Sigma, Hourglass } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { Input } from '@/components/ui/input';
 import {
@@ -108,6 +108,12 @@ export default function DashboardPage() {
       onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not mark the task as complete.' }),
     });
   };
+
+  const handleMarkTaskAsPending = (taskId: string) => {
+    updateTask({ id: taskId, updates: { status: 'todo' } }, {
+      onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not move the task to pending.' }),
+    });
+  };
   
   const handleDeleteAllCompleted = () => {
     deleteCompletedTasks(undefined, {
@@ -172,6 +178,15 @@ export default function DashboardPage() {
   return (
     <TooltipProvider>
       <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div>
+            <h1 className="text-3xl font-bold font-headline text-primary">Welcome back, {currentUser.name}!</h1>
+            <p className="text-muted-foreground mt-1">
+              You have {pendingTasks.length} pending task(s) and {completedTasks.length} completed task(s).
+            </p>
+          </div>
+        </div>
+
         <Card className="shadow-lg no-print bg-card/60">
           <CardHeader>
             <CardTitle className="text-xl font-headline flex items-center">
@@ -297,6 +312,7 @@ export default function DashboardPage() {
                   onDeleteTask={handleDeleteTask}
                   onUpdateTask={handleDataRefresh}
                   onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                  onMarkTaskAsPending={handleMarkTaskAsPending}
                   emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
                 />
                 <PrintOnlyBlankTasks count={25 - filteredAndSortedTasks.length} />
@@ -338,6 +354,7 @@ export default function DashboardPage() {
                       onDeleteTask={handleDeleteTask}
                       onUpdateTask={handleDataRefresh}
                       onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                      onMarkTaskAsPending={handleMarkTaskAsPending}
                       emptyStateMessage="Completed tasks will appear here once they are marked as 'Done'."
                       emptyStateTitle="No Completed Tasks"
                     />

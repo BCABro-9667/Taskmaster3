@@ -8,10 +8,11 @@ import { ClipboardList } from 'lucide-react';
 interface TaskListProps {
   tasks: Task[];
   assignableUsers: Assignee[]; 
-  currentUserId: string; // Added currentUserId
+  currentUserId: string; 
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
   onMarkTaskAsComplete: (taskId: string) => void;
+  onMarkTaskAsPending: (taskId: string) => void;
   emptyStateMessage?: string;
   emptyStateTitle?: string;
 }
@@ -32,10 +33,11 @@ export function PrintOnlyBlankTasks({ count }: { count: number }) {
 export function TaskList({ 
   tasks, 
   assignableUsers, 
-  currentUserId, // Destructure currentUserId
+  currentUserId,
   onDeleteTask, 
   onUpdateTask,
   onMarkTaskAsComplete,
+  onMarkTaskAsPending,
   emptyStateMessage = "Looks like your task list is empty. Click \"Add New Task\" to get started.",
   emptyStateTitle = "No Tasks Yet!" 
 }: TaskListProps) {
@@ -56,10 +58,11 @@ export function TaskList({
           key={task.id} 
           task={task} 
           assignableUsers={assignableUsers} 
-          currentUserId={currentUserId} // Pass currentUserId
+          currentUserId={currentUserId}
           onDeleteTask={onDeleteTask}
           onUpdateTask={onUpdateTask}
           onMarkTaskAsComplete={onMarkTaskAsComplete}
+          onMarkTaskAsPending={onMarkTaskAsPending}
         />
       ))}
     </div>

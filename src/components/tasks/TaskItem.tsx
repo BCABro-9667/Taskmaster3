@@ -37,7 +37,6 @@ import { EditTaskForm } from './EditTaskForm';
 import { EditNoteDialog } from './EditNoteDialog';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface TaskItemProps {
   task: Task;
@@ -45,22 +44,15 @@ interface TaskItemProps {
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: () => void;
   onMarkTaskAsComplete: (taskId: string) => void;
-  currentUserId: string; // Added currentUserId
+  onMarkTaskAsPending: (taskId: string) => void;
+  currentUserId: string;
 }
 
-export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete, currentUserId }: TaskItemProps) {
+export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, onMarkTaskAsComplete, onMarkTaskAsPending, currentUserId }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditNoteDialogOpen, setIsEditNoteDialogOpen] = useState(false);
 
-  // With the new type, task.assignedTo is either the Assignee object or undefined.
   const assignedAssignee = task.assignedTo;
-
-  const getAssigneeInitials = (name: string | undefined) => {
-    if (!name) return '??';
-    const names = name.split(' ');
-    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
-  };
 
   const handleTaskUpdatedInEditForm = () => {
     onUpdateTask();
@@ -73,7 +65,9 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   }
 
   const handleCircleClick = async () => {
-    if (task.status === 'todo' || task.status === 'inprogress') {
+    if (task.status === 'done') {
+      onMarkTaskAsPending(task.id);
+    } else {
       onMarkTaskAsComplete(task.id);
     }
   };
@@ -94,12 +88,16 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               variant="ghost"
               size="icon"
               className={cn(
-                "h-7 w-7 rounded-full p-0 shrink-0 mt-1",
-                isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
+                "h-7 w-7 rounded-full p-0 shrink-0 mt-1 cursor-pointer",
+                isCompletable ? "text-primary hover:bg-primary/10" : "text-green-500 hover:bg-green-500/10"
               )}
               onClick={handleCircleClick}
-              disabled={!isCompletable}
-              aria-label={isCompletable ? "Mark task as complete" : (task.status === 'done' ? "Task completed" : "Task archived")}
+              disabled={task.status === 'archived'}
+              aria-label={
+                task.status === 'done' 
+                  ? "Mark task as pending" 
+                  : "Mark task as complete"
+              }
             >
               {task.status === 'done' || task.status === 'archived' ? (
                 <CheckCircle2 className={cn("h-5 w-5", task.status === 'done' ? "text-green-500" : "text-muted-foreground")} />

@@ -115,6 +115,23 @@ export default function AssigneeDetailPage() {
       complete();
     }
   };
+
+  const handleMarkTaskAsPending = async (taskId: string) => {
+    if (!currentUser?.id) return;
+    start();
+    try {
+      await updateTask(currentUser.id, taskId, { status: 'todo' });
+      handleDataRefresh();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Updating Task',
+        description: 'Could not move the task to pending. Please try again.',
+      });
+    } finally {
+      complete();
+    }
+  };
   
   const getAssigneeInitials = (name: string | undefined) => {
     if (!name) return '??';
@@ -245,6 +262,7 @@ export default function AssigneeDetailPage() {
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleDataRefresh}
             onMarkTaskAsComplete={handleMarkTaskAsComplete}
+            onMarkTaskAsPending={handleMarkTaskAsPending}
             emptyStateMessage={`${assignee.name} has no pending tasks.`}
             emptyStateTitle="All Caught Up!"
           />
@@ -265,6 +283,7 @@ export default function AssigneeDetailPage() {
           onDeleteTask={handleDeleteTask}
           onUpdateTask={handleDataRefresh}
           onMarkTaskAsComplete={handleMarkTaskAsComplete}
+          onMarkTaskAsPending={handleMarkTaskAsPending}
           emptyStateMessage={`${assignee.name} has not completed any tasks yet.`}
           emptyStateTitle="No Completed Tasks"
         />
