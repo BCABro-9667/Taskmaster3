@@ -113,7 +113,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-9 w-9">
-                    {currentUser.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name} className="object-cover" />}
+                    {currentUser.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name || ''} className="object-cover" />}
                     <AvatarFallback>{getUserInitials(currentUser.name)}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -122,6 +122,7 @@ export function Navbar() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{currentUser.name || 'User'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{currentUser.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -161,6 +162,27 @@ export function Navbar() {
           )}
           </div>
         </div>
+        {/* Mobile Nav Links */}
+        {currentUser && (
+          <div className="sm:hidden flex items-center justify-around border-t border-border/40 -mx-4 sm:-mx-6 lg:-mx-8">
+            {navLinks.map((link) => (
+              <Button
+                key={link.href}
+                variant="ghost"
+                asChild
+                className={cn(
+                  "flex-1 rounded-none text-muted-foreground h-12", 
+                  pathname === link.href && "text-primary border-b-2 border-primary"
+                )}
+              >
+                <Link href={link.href} className="flex flex-col items-center justify-center gap-1 h-full">
+                  <link.icon className="mr-0 h-5 w-5" />
+                  <span className="text-xs">{link.label}</span>
+                </Link>
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
     </nav>
   );

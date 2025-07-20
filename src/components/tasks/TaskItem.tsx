@@ -107,15 +107,35 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
             </Button>
 
             <div className="flex-grow min-w-0">
-              <p className={cn("font-medium text-card-foreground break-words truncate", task.status === 'done' && 'line-through')} title={task.title}>{task.title}</p>
+              <p className={cn("font-medium text-card-foreground break-words", task.status === 'done' && 'line-through')} title={task.title}>{task.title}</p>
               {task.description && (
                 <p className={cn("text-xs sm:text-sm text-muted-foreground mt-1 break-words whitespace-pre-wrap", task.status === 'done' && 'line-through')}>
                   {task.description}
                 </p>
               )}
+              {/* --- Mobile View Details --- */}
+              <div className="sm:hidden flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
+                 {assignedAssignee ? (
+                  <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-1 text-muted-foreground hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
+                    <UserCircle className="h-4 w-4" />
+                    <span>{assignedAssignee.name}</span>
+                  </Link>
+                ) : (
+                  <div className="flex items-center text-muted-foreground/70 gap-1" title="Unassigned">
+                    <UserCircle className="h-4 w-4" />
+                    <span>Unassigned</span>
+                  </div>
+                )}
+                 <div className={cn("flex items-center text-muted-foreground", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
+                  <CalendarDays className="mr-1 h-4 w-4" />
+                  <span className={cn(isOverdue ? 'font-medium' : '')}>
+                    {format(parseISO(task.deadline), 'MMM d, yyyy')}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="hidden sm:flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {assignedAssignee ? (
                 <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
                   <UserCircle className="h-5 w-5" />
@@ -193,6 +213,65 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
                 </DropdownMenu>
               )}
             </div>
+             {/* --- Mobile Actions --- */}
+            {canModifyTask && (
+              <div className="sm:hidden ml-auto">
+                 <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setIsEditNoteDialogOpen(true)} disabled={!canEditOrAddNote}>
+                      <StickyNote className="mr-2 h-4 w-4" />
+                      <span>{task.description ? 'Edit Note' : 'Add Note'}</span>
+                    </DropdownMenuItem>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!canEditTaskDetails}>
+                          <Edit3 className="mr-2 h-4 w-4" />
+                          <span>Edit Task Details</span>
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                       <DialogContent className="sm:max-w-[425px] md:sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle>Edit Task</DialogTitle>
+                        </DialogHeader>
+                        <EditTaskForm task={task} onTaskUpdated={handleTaskUpdatedInEditForm} closeDialog={() => setIsEditDialogOpen(false)} currentUserId={currentUserId}/>
+                      </DialogContent>
+                    </Dialog>
+                    <DropdownMenuSeparator />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()} disabled={!canModifyTask}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the task
+                            "{task.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onDeleteTask(task.id)}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

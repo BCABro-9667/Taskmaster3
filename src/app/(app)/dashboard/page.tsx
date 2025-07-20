@@ -199,7 +199,7 @@ export default function DashboardPage() {
         <div className="space-y-8">
           <section className="dashboard-printable-area">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 no-print">
-              <div className="flex items-center">
+              <div className="flex items-center self-start sm:self-center">
                 <ListTodo className="mr-3 h-6 w-6 text-primary" />
                 <h2 className="text-2xl font-semibold font-headline">Pending Tasks ({filteredAndSortedTasks.length})</h2>
               </div>
