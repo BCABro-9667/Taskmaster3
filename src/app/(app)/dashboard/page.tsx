@@ -178,14 +178,6 @@ export default function DashboardPage() {
   return (
     <TooltipProvider>
       <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-          <div>
-            <h1 className="text-3xl font-bold font-headline text-primary">Welcome back, {currentUser.name}!</h1>
-            <p className="text-muted-foreground mt-1">
-              You have {pendingTasks.length} pending task(s) and {completedTasks.length} completed task(s).
-            </p>
-          </div>
-        </div>
 
         <Card className="shadow-lg no-print bg-card/60">
           <CardHeader>
