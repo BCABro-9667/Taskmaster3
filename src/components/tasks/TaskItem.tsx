@@ -98,7 +98,7 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
                 isCompletable ? "cursor-pointer text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground"
               )}
               onClick={handleCircleClick}
-              disabled={!isCompletable || !canModifyTask}
+              disabled={!isCompletable}
               aria-label={isCompletable ? "Mark task as complete" : (task.status === 'done' ? "Task completed" : "Task archived")}
             >
               {task.status === 'done' || task.status === 'archived' ? (
