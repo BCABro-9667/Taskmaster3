@@ -21,6 +21,7 @@ export default {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         code: ['monospace', 'monospace'],
+        showcard: ['"Passion One"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

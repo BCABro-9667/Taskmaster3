@@ -80,7 +80,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <Link href="/dashboard" className="flex items-center gap-2 text-xl font-semibold text-primary">
                 <Image src={logo} alt="TaskMaster Logo" width={28} height={28} />
-                <span className="font-headline">{navbarBrandName}</span>
+                <span className="font-showcard text-2xl tracking-wider">{navbarBrandName}</span>
             </Link>
              <div className="hidden lg:flex border-l border-border/60 ml-4 pl-4">
                 <LiveInfo />
