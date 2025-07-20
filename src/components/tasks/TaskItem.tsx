@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Task, Assignee } from '@/types'; 
@@ -126,21 +125,19 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
               <div className="flex items-center gap-2 sm:gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 {assignedAssignee ? (
                   <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback>{getAssigneeInitials(assignedAssignee.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className={cn("hidden md:inline text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
+                    <UserCircle className="h-5 w-5 sm:h-6 sm-w-6" />
+                    <span className={cn("text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
                   </Link>
                 ) : (
                   <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
                     <UserCircle className="h-5 w-5 sm:h-6 sm-w-6" />
-                    <span className="hidden md:inline text-xs sm:text-sm">Unassigned</span>
+                    <span className="text-xs sm:text-sm">Unassigned</span>
                   </div>
                 )}
 
                 <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
                   <CalendarDays className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className={cn("hidden sm:inline text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
+                  <span className={cn("text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
                     {format(parseISO(task.deadline), 'MMM d')}
                   </span>
                 </div>
