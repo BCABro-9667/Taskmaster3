@@ -39,6 +39,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 
 export default function DashboardPage() {
@@ -299,30 +305,46 @@ export default function DashboardPage() {
           </section>
 
           <section className="no-print">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                    <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
-                    <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
-                </div>
-                {completedTasks.length > 0 && (
-                  <Button variant="destructive" size="sm" onClick={() => setIsDeleteAllConfirmOpen(true)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete All
-                  </Button>
-                )}
-            </div>
-            {currentUser?.id && (
-              <TaskList
-                tasks={completedTasks}
-                assignableUsers={assignees}
-                currentUserId={currentUser.id}
-                onDeleteTask={handleDeleteTask}
-                onUpdateTask={handleDataRefresh}
-                onMarkTaskAsComplete={handleMarkTaskAsComplete}
-                emptyStateMessage="Completed tasks will appear here once they are marked as 'Done'."
-                emptyStateTitle="No Completed Tasks"
-              />
-            )}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="completed-tasks" className="border-none">
+                <AccordionTrigger className="hover:no-underline">
+                   <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                          <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
+                          <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
+                      </div>
+                      {completedTasks.length > 0 && (
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent accordion from toggling
+                            setIsDeleteAllConfirmOpen(true)
+                          }}
+                          className="mr-4"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete All
+                        </Button>
+                      )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {currentUser?.id && (
+                    <TaskList
+                      tasks={completedTasks}
+                      assignableUsers={assignees}
+                      currentUserId={currentUser.id}
+                      onDeleteTask={handleDeleteTask}
+                      onUpdateTask={handleDataRefresh}
+                      onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                      emptyStateMessage="Completed tasks will appear here once they are marked as 'Done'."
+                      emptyStateTitle="No Completed Tasks"
+                    />
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </section>
         </div>
       </div>
