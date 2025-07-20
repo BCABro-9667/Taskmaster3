@@ -25,7 +25,7 @@ export function LiveInfo() {
     };
 
     updateDateTime(); // Initial call
-    const timerId = setInterval(updateDateTime, 1000 * 60); // Update every minute
+    const timerId = setInterval(updateDateTime, 1000); // Update every second for a live clock
 
     return () => clearInterval(timerId);
   }, []);
@@ -94,4 +94,3 @@ export function LiveInfo() {
     </div>
   );
 }
-
