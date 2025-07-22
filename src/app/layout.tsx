@@ -7,6 +7,7 @@ import { ReactQueryProvider } from '@/lib/react-query-provider';
 export const metadata: Metadata = {
   title: 'TaskMaster',
   description: 'Manage your tasks, assignments, and deadlines efficiently.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
