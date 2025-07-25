@@ -5,6 +5,7 @@ import dbConnect from './db';
 import TaskModel, { type ITaskDocument } from '@/models/Task';
 import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
+import { queueSyncAction } from './offline-sync';
 
 // Helper to reliably convert Mongoose docs to plain objects respecting virtuals
 // This is no longer necessary with .lean(), but good to have if we ever need hydrated docs.
@@ -84,7 +85,10 @@ export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'cr
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error('User ID is invalid or missing for task creation.');
   }
+
+  // await queueSyncAction({ type: 'create-task', payload: taskData, userId });
   await dbConnect();
+  
   const newTaskData: Partial<ITaskDocument> = {
     title: taskData.title,
     description: taskData.description || '',
@@ -114,6 +118,7 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
     if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(id)) {
         return null;
     }
+    // await queueSyncAction({ type: 'update-task', payload: { id, updates }, userId });
     await dbConnect();
 
     // With lean(), we fetch a plain object first to check existence
@@ -147,6 +152,7 @@ export async function deleteTask(userId: string, id: string): Promise<{ deletedT
     throw new Error('Invalid task ID provided for deletion.');
   }
 
+  // await queueSyncAction({ type: 'delete-task', payload: { taskId: id }, userId });
   await dbConnect();
   const result = await TaskModel.findOneAndDelete({
     _id: new mongoose.Types.ObjectId(id),
@@ -202,7 +208,9 @@ export async function createAssignee(userId: string, name: string, designation?:
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error('User ID is invalid or missing for assignee creation.');
   }
+  // await queueSyncAction({ type: 'create-assignee', payload: { name, designation }, userId });
   await dbConnect();
+  
   const newAssigneeDoc = new AssigneeModel({
     name,
     designation: designation || '',
@@ -216,6 +224,7 @@ export async function updateAssignee(userId: string, assigneeId: string, updates
   if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(assigneeId)) {
     return null;
   }
+  // await queueSyncAction({ type: 'update-assignee', payload: { id: assigneeId, updates }, userId });
   await dbConnect();
   const assigneeDoc = await AssigneeModel.findOneAndUpdate(
     { _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) },
@@ -229,6 +238,8 @@ export async function deleteAssignee(userId: string, assigneeId: string): Promis
   if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(assigneeId)) {
     return false;
   }
+  
+  // await queueSyncAction({ type: 'delete-assignee', payload: { assigneeId }, userId });
   await dbConnect();
 
   const result = await AssigneeModel.findOneAndDelete({ _id: assigneeId, createdBy: new mongoose.Types.ObjectId(userId) });

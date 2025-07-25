@@ -3,10 +3,10 @@
   "name": "TaskMaster",
   "short_name": "TaskMaster",
   "description": "Manage your tasks, assignments, and deadlines efficiently.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "background_color": "#F0F0F5",
+  "theme_color": "#3F51B5",
   "icons": [
     {
       "src": "/logo.png",
