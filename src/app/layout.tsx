@@ -26,6 +26,15 @@ export default function RootLayout({
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {
           console.log('Service Worker registered with scope:', registration.scope);
+          
+          // Listen for messages from the service worker.
+          navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'SYNC_OFFLINE_DATA') {
+              console.log('Received sync message from service worker. Triggering sync.');
+              syncOfflineChanges();
+            }
+          });
+
         }).catch(error => {
           console.error('Service Worker registration failed:', error);
         });
@@ -38,8 +47,17 @@ export default function RootLayout({
     // Add an event listener to sync when the app comes back online
     window.addEventListener('online', syncOfflineChanges);
     
+    // Listen for custom event to refetch data after sync
+    const handleDataChange = () => {
+      // You could use this to trigger a global refetch if needed,
+      // but react-query's invalidation handles this more granularly.
+      console.log('Data changed event received.');
+    };
+    window.addEventListener('datachanged', handleDataChange);
+    
     return () => {
       window.removeEventListener('online', syncOfflineChanges);
+      window.removeEventListener('datachanged', handleDataChange);
     }
   }, []);
 

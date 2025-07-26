@@ -4,6 +4,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasks, createTask, updateTask, deleteTask, getAssignees, deleteCompletedTasks } from '@/lib/tasks';
 import type { Task, Assignee } from '@/types';
+import { useEffect } from 'react';
+
+// --- Local Storage Cache Helpers ---
+function getFromCache<T>(key: string): T | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const cachedData = localStorage.getItem(key);
+  return cachedData ? JSON.parse(cachedData) : undefined;
+}
+
+function setToCache<T>(key: string, data: T) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
 
 // --- Query Keys ---
 const taskKeys = {
@@ -20,10 +34,18 @@ const assigneeKeys = {
 // --- Hooks for Tasks ---
 
 export function useTasks(userId: string | null | undefined) {
+  const queryKey = taskKeys.list(userId!);
+
   return useQuery({
-    queryKey: taskKeys.list(userId!),
-    queryFn: () => getTasks(userId!),
-    enabled: !!userId, // Only run the query if userId is available
+    queryKey,
+    queryFn: async () => {
+      const data = await getTasks(userId!);
+      setToCache(JSON.stringify(queryKey), data);
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60, // 1 minute
+    placeholderData: () => getFromCache(JSON.stringify(queryKey)), // Load initial data from cache
   });
 }
 
@@ -168,9 +190,17 @@ export function useDeleteCompletedTasks(userId: string | null | undefined) {
 // --- Hooks for Assignees ---
 
 export function useAssignees(userId: string | null | undefined) {
+  const queryKey = assigneeKeys.list(userId!);
+  
   return useQuery({
     queryKey: assigneeKeys.list(userId!),
-    queryFn: () => getAssignees(userId!),
+    queryFn: async () => {
+      const data = await getAssignees(userId!);
+      setToCache(JSON.stringify(queryKey), data);
+      return data;
+    },
     enabled: !!userId,
+    staleTime: 1000 * 60, // 1 minute
+    placeholderData: () => getFromCache(JSON.stringify(queryKey)),
   });
 }
