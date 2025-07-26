@@ -1,103 +1,111 @@
+// A robust, production-ready service worker for a Next.js PWA.
 
-const CACHE_NAME = 'taskmaster-cache-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/manifest.json',
-  '/logo.png',
-  '/favicon.ico',
-  // Next.js build files will be added dynamically if using a build tool plugin,
-  // but for a simple SW, we rely on caching them as they are requested.
+const CACHE_NAME = 'taskmaster-cache-v2'; // Updated version
+const PRECACHE_ASSETS = [
+    '/',
+    '/manifest.json',
+    '/logo.png',
+    '/logo192.png',
+    '/logo512.png',
+    '/favicon.ico'
 ];
 
-// Install event: cache the app shell
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        // We don't cache all assets initially to avoid including build-specific hashes.
-        // Instead, we cache them on the fly.
-        // return cache.addAll(ASSETS_TO_CACHE);
-        return Promise.resolve();
-      })
-  );
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then((cache) => {
+                console.log('Service Worker: Caching pre-cache assets');
+                return cache.addAll(PRECACHE_ASSETS);
+            })
+            .then(() => {
+                // Force the new service worker to become active immediately.
+                return self.skipWaiting();
+            })
+    );
 });
 
-// Activate event: clean up old caches
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+    // This event is fired when the service worker is activated.
+    // It's a good place to clean up old caches.
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Service Worker: Clearing old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => {
+            // Tell the active service worker to take control of the page immediately.
+            return self.clients.claim();
         })
-      );
-    })
-  );
+    );
 });
 
-
-// Fetch event: serve assets from cache or network
 self.addEventListener('fetch', (event) => {
-  // We only want to cache GET requests.
-  if (event.request.method !== 'GET') {
-    return;
-  }
-  
-  // For API calls, use a network-first strategy to always get fresh data if online.
-  // The stale-while-revalidate logic is handled in the client with react-query.
-  // The offline mutations are handled by the background sync logic.
-  if (event.request.url.includes('/api/')) {
-    // For now, let API requests pass through. Offline handling is in libs.
-    return; 
-  }
+    const { request } = event;
 
-  // For all other requests (static assets), use a cache-first strategy.
-  event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request)
-        .then((response) => {
-          // If the resource is in the cache, return it.
-          if (response) {
-            return response;
-          }
-          
-          // Otherwise, fetch it from the network.
-          return fetch(event.request).then((networkResponse) => {
-            // Cache the new resource for future use.
-            // We clone the response because it's a one-time-use stream.
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
+    // Don't intercept API calls or Next.js internal requests for hot-reloading.
+    if (request.url.includes('/api/') || request.url.includes('/_next/')) {
+        return;
+    }
+
+    // For navigation requests (e.g., loading a page), use a network-first strategy.
+    // This ensures users always get the latest HTML page.
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    // If the network request is successful, cache it for offline use.
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(request, responseToCache);
+                    });
+                    return response;
+                })
+                .catch(() => {
+                    // If the network fails, serve the cached version of the root page.
+                    return caches.match('/');
+                })
+        );
+        return;
+    }
+    
+    // For all other requests (CSS, JS, images), use a cache-first strategy.
+    event.respondWith(
+        caches.match(request).then((cachedResponse) => {
+            // If the resource is in the cache, return it.
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+
+            // If it's not in the cache, fetch it from the network.
+            return fetch(request).then((networkResponse) => {
+                // Cache the newly fetched resource for future use.
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(request, responseToCache);
+                });
+                return networkResponse;
+            }).catch(() => {
+                // If both cache and network fail, you can provide a generic fallback.
+                // This is optional and depends on your app's needs.
+            });
         })
-        .catch(() => {
-          // If both cache and network fail (e.g., offline and not cached),
-          // you could return a fallback page, but for assets, failing is often okay.
-        });
-    })
-  );
+    );
 });
 
-
-// Background sync event
+// Listen for the 'sync' event to handle background synchronization.
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-offline-changes') {
-    console.log('Background sync event triggered!');
-    // The syncOfflineChanges function needs to be imported and called here.
-    // However, since service workers cannot directly import ES modules from the app,
-    // the offline-sync logic will be triggered from the app when it comes online.
-    // This 'sync' event serves as a more robust trigger for browsers that support it.
-    
-    // The client-side code in `offline-sync.ts` already handles the sync logic
-    // when the app is loaded or comes back online. This event provides an additional
-    // trigger for that process. We can notify the client.
+    console.log('Service Worker: Received sync event');
+    // Notify the client (the open app window) to start the sync process.
+    // This is a reliable way to trigger the sync logic in your main app code.
     event.waitUntil(
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
           client.postMessage({ type: 'SYNC_OFFLINE_DATA' });
         });
       })
