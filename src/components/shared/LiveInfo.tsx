@@ -44,7 +44,7 @@ export function LiveInfo() {
           const weatherData = await weatherRes.json();
           const geoData = await geoRes.json();
           
-          const city = geoData.address.city || geoData.address.town || geoData.address.village || 'Unknown Location';
+          const city = geoData.address.city || geoData.address.town || geoData.address.village || 'New Delhi';
           
           setWeather({
             city,
@@ -63,10 +63,14 @@ export function LiveInfo() {
         },
         () => {
           setError('Location access denied.');
+          // Fallback to New Delhi weather if location is denied
+          fetchWeather(28.6139, 77.2090);
         }
       );
     } else {
       setError('Geolocation not supported.');
+       // Fallback to New Delhi weather if geolocation is not supported
+      fetchWeather(28.6139, 77.2090);
     }
   }, []);
 
