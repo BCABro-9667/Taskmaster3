@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const currentUser: User | null = clientAuthGetCurrentUser();
   const { toast } = useToast();
 
-  const { data: tasks = [], isLoading: isLoadingTasks, isFetching: isFetchingTasks, refetch: refetchTasks } = useTasks(currentUser?.id);
+  const { data: tasks = [], isLoading: isLoadingTasks, isFetching: isFetchingTasks, refetch: refetchTasks } = useTasks(currentUser?.id, currentUser);
   const { data: assignees = [], isLoading: isLoadingAssignees } = useAssignees(currentUser?.id);
   const { mutate: updateTask } = useUpdateTask(currentUser?.id);
   const { mutate: deleteTask } = useDeleteTask(currentUser?.id);

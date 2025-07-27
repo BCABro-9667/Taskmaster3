@@ -3,8 +3,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasks, createTask, updateTask, deleteTask, getAssignees, deleteCompletedTasks } from '@/lib/tasks';
-import type { Task, Assignee } from '@/types';
+import type { Task, Assignee, User } from '@/types';
 import { useEffect } from 'react';
+import { io, type Socket } from "socket.io-client";
 
 // --- Local Storage Cache Helpers ---
 function getFromCache<T>(key: string): T | undefined {
@@ -31,10 +32,54 @@ const assigneeKeys = {
 };
 
 
+// --- Realtime Sync Hook ---
+function useRealtimeSync(currentUser: User | null) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let socket: Socket;
+
+    const connectSocket = async () => {
+      // This fetch call initializes the socket server on the backend
+      await fetch("/api/socket");
+
+      socket = io({ path: "/api/socket_io" });
+
+      socket.on("connect", () => {
+        console.log("Socket connected");
+        // Optionally join a room specific to the user
+        socket.emit("join_room", `user_${currentUser.id}`);
+      });
+
+      // Listen for data change events
+      socket.on("data_changed", (source) => {
+        console.log(`Data changed event received from ${source}, invalidating queries.`);
+        queryClient.invalidateQueries(); // Invalidate all queries
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
+    };
+
+    connectSocket();
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [currentUser, queryClient]);
+}
+
+
 // --- Hooks for Tasks ---
 
-export function useTasks(userId: string | null | undefined) {
+export function useTasks(userId: string | null | undefined, currentUser: User | null) {
   const queryKey = taskKeys.list(userId!);
+  useRealtimeSync(currentUser); // Initialize realtime sync
 
   return useQuery({
     queryKey,

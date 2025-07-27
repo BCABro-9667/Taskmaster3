@@ -6,6 +6,7 @@ import TaskModel, { type ITaskDocument } from '@/models/Task';
 import AssigneeModel, { type IAssigneeDocument } from '@/models/Assignee';
 import mongoose from 'mongoose';
 import { queueSyncAction } from './offline-sync';
+import { broadcastDataChange } from './socket-client';
 
 // Helper to reliably convert Mongoose docs to plain objects respecting virtuals
 // This is no longer necessary with .lean(), but good to have if we ever need hydrated docs.
@@ -110,6 +111,8 @@ export async function createTask(userId: string, taskData: Omit<Task, 'id' | 'cr
   if(!createdTask) {
     throw new Error('Failed to retrieve newly created task.');
   }
+
+  await broadcastDataChange(`user_${userId}`);
   
   return createdTask;
 }
@@ -141,6 +144,10 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
         { new: true }
     ).populate('assignedTo').lean();
 
+    if (updatedTaskDoc) {
+      await broadcastDataChange(`user_${userId}`);
+    }
+
     return updatedTaskDoc ? processLeanTask(updatedTaskDoc) : null;
 }
 
@@ -162,6 +169,8 @@ export async function deleteTask(userId: string, id: string): Promise<{ deletedT
   if (!result) {
     throw new Error("Task not found, or you don't have permission to delete it.");
   }
+
+  await broadcastDataChange(`user_${userId}`);
   return { deletedTaskId: id };
 }
 
@@ -175,9 +184,8 @@ export async function deleteCompletedTasks(userId: string): Promise<{ deletedCou
     status: 'done',
   });
   
-  if (result.deletedCount === 0) {
-    // This isn't an error, but could be useful information.
-    // We don't throw an error to prevent issues if the button is clicked with no completed tasks.
+  if (result.deletedCount > 0) {
+    await broadcastDataChange(`user_${userId}`);
   }
   return { deletedCount: result.deletedCount };
 }
@@ -217,6 +225,7 @@ export async function createAssignee(userId: string, name: string, designation?:
     createdBy: new mongoose.Types.ObjectId(userId),
   });
   await newAssigneeDoc.save();
+  await broadcastDataChange(`user_${userId}`);
   return toPlainObject<Assignee>(newAssigneeDoc);
 }
 
@@ -231,6 +240,10 @@ export async function updateAssignee(userId: string, assigneeId: string, updates
     updates,
     { new: true }
   ).lean();
+
+  if (assigneeDoc) {
+    await broadcastDataChange(`user_${userId}`);
+  }
   return leanToPlain(assigneeDoc) as unknown as Assignee | null;
 }
 
@@ -248,6 +261,7 @@ export async function deleteAssignee(userId: string, assigneeId: string): Promis
       { assignedTo: new mongoose.Types.ObjectId(assigneeId), createdBy: new mongoose.Types.ObjectId(userId) },
       { $unset: { assignedTo: "" } } 
     );
+    await broadcastDataChange(`user_${userId}`);
     return true;
   }
   return false;
