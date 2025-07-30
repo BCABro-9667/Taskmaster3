@@ -266,12 +266,12 @@ export default function AssigneeDetailPage() {
             emptyStateMessage={`${assignee.name} has no pending tasks.`}
             emptyStateTitle="All Caught Up!"
           />
-          <PrintOnlyBlankTasks count={Math.max(0, 30 - pendingTasks.length)} />
+          <PrintOnlyBlankTasks count={Math.max(0, 40 - pendingTasks.length)} />
         </section>
       </div>
 
       <div className="print-only-extra-page">
-        <PrintOnlyBlankTasks count={30} />
+        <PrintOnlyBlankTasks count={40} />
       </div>
 
       <section className="no-print">

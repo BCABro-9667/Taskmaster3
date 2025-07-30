@@ -218,10 +218,10 @@
   .print-task-item, .print-blank-item {
     display: flex !important;
     align-items: center;
-    padding: 4px 0 !important; /* Reduced padding to fit more items */
+    padding: 2px 0 !important; /* Reduced padding to fit more items */
     border-bottom: 1px solid black !important;
     page-break-inside: avoid;
-    min-height: 28px; /* Reduced height */
+    min-height: 22px; /* Reduced height for 40 items */
   }
 
   .print-task-item-circle, .print-blank-item-circle {
