@@ -32,7 +32,7 @@ export async function getNotes(userId: string): Promise<Note[]> {
   return noteDocs.map(processLeanNote);
 }
 
-export async function createNote(userId: string, noteData: Pick<Note, 'title' | 'description' | 'category'>): Promise<Note> {
+export async function createNote(userId: string, noteData: Pick<Note, 'title' | 'description'>): Promise<Note> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error('User ID is invalid or missing for note creation.');
   }
@@ -52,7 +52,7 @@ export async function createNote(userId: string, noteData: Pick<Note, 'title' | 
   return processLeanNote(createdNote);
 }
 
-export async function updateNote(userId: string, noteId: string, updates: Partial<Pick<Note, 'title' | 'description' | 'category'>>): Promise<Note | null> {
+export async function updateNote(userId: string, noteId: string, updates: Partial<Pick<Note, 'title' | 'description'>>): Promise<Note | null> {
     if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(noteId)) {
         return null;
     }

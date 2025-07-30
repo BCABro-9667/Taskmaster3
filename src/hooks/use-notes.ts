@@ -38,7 +38,6 @@ export function useCreateNote(userId: string | null | undefined) {
         id: `temp-${Date.now()}`,
         ...newNoteData,
         description: newNoteData.description || '',
-        category: newNoteData.category || 'General',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: userId!,

@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import type { Note, User } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Tag, Clock, MoreVertical } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Clock, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -24,7 +24,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
@@ -39,7 +38,6 @@ import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/u
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
   description: z.string().max(2000, 'Description is too long').optional(),
-  category: z.string().max(30, 'Category is too long').optional(),
 });
 
 type NoteFormValues = z.infer<typeof noteFormSchema>;
@@ -63,13 +61,12 @@ export default function NotesPage() {
     defaultValues: {
       title: '',
       description: '',
-      category: 'General',
     }
   });
   
   const openCreateDialog = () => {
     setEditingNote(null);
-    form.reset({ title: '', description: '', category: 'General' });
+    form.reset({ title: '', description: '' });
     setIsFormDialogOpen(true);
   };
 
@@ -78,7 +75,6 @@ export default function NotesPage() {
     form.reset({
       title: note.title,
       description: note.description,
-      category: note.category,
     });
     setIsFormDialogOpen(true);
   };
@@ -129,8 +125,7 @@ export default function NotesPage() {
     
     return sortedNotes.filter(note =>
       note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (note.description && note.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (note.category && note.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      (note.description && note.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [notes, searchTerm]);
   
@@ -166,7 +161,7 @@ export default function NotesPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search notes by title, content, or category..."
+          placeholder="Search notes by title or content..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 w-full"
@@ -203,10 +198,6 @@ export default function NotesPage() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-                   <Tag className="h-3 w-3" /> 
-                   <Badge variant="outline">{note.category || 'Uncategorized'}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="flex-grow">
@@ -255,19 +246,6 @@ export default function NotesPage() {
                     <FormLabel>Title</FormLabel>
                     <FormControl>
                       <Input placeholder="Note title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Work, Personal, Ideas" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
