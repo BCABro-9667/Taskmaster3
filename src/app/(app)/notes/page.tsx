@@ -26,7 +26,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/client-auth';
-import { useLoadingBar } from '@/hooks/use-loading-bar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -225,7 +224,7 @@ export default function NotesPage() {
         className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center"
         aria-label="Create new note"
       >
-        <Plus className="h-8 w-8 text-white" />
+        <Plus className="h-8 w-8" />
       </Button>
 
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
