@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Note, User } from '@/types';
 import { getNotes, createNote, updateNote, deleteNote } from '@/lib/notes';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Search, Edit, Trash2, StickyNote as NotesIcon, Tag, Clock } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Tag, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -183,10 +183,6 @@ export default function NotesPage() {
           <NotesIcon className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold font-headline text-primary">My Notes</h1>
         </div>
-        <Button onClick={openCreateDialog}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create Note
-        </Button>
       </div>
 
       <div className="relative">
@@ -237,9 +233,19 @@ export default function NotesPage() {
         <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg bg-card/60">
           <NotesIcon className="mx-auto h-12 w-12 mb-4" />
           <h3 className="text-xl font-semibold">No notes found</h3>
-          <p>{searchTerm ? 'Try adjusting your search term.' : 'Click "Create Note" to get started.'}</p>
+          <p>{searchTerm ? 'Try adjusting your search term.' : 'Click the "+" button to get started.'}</p>
         </div>
       )}
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={openCreateDialog}
+        className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center"
+        aria-label="Create new note"
+      >
+        <Plus className="h-8 w-8 text-white" />
+      </Button>
+
 
       {/* Note Create/Edit Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
