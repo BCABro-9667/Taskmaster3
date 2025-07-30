@@ -24,7 +24,6 @@ interface EditTaskFormProps {
 export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }: EditTaskFormProps) {
   const { toast } = useToast();
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
-  const [isSubmittingAi, setIsSubmittingAi] = useState(false);
 
   const { data: assigneesForDropdown = [], refetch: refetchAssignees } = useAssignees(currentUserId);
   const { mutate: updateTask, isPending: isSubmitting } = useUpdateTask(currentUserId);
@@ -81,16 +80,13 @@ export function EditTaskForm({ task, onTaskUpdated, closeDialog, currentUserId }
             setValue={form.setValue}
             assignableUsers={assigneesForDropdown} 
             onOpenCreateAssigneeDialog={() => setIsCreateAssigneeDialogOpen(true)}
-            isSubmittingAi={isSubmittingAi}
-            setIsSubmittingAi={setIsSubmittingAi}
-            currentTaskTitle={form.watch('title')}
             currentUserId={currentUserId} 
           />
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting || isSubmittingAi}>
+            <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
                 Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || isSubmittingAi || !currentUserId}>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || !currentUserId}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>

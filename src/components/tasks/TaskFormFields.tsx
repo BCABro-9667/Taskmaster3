@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Sparkles, UserPlus } from 'lucide-react';
+import { CalendarIcon, UserPlus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
@@ -25,8 +25,6 @@ import { cn } from '@/lib/utils';
 import type { Assignee } from '@/types'; 
 import type { TaskFormValues } from './TaskFormSchema';
 import { format, parseISO } from 'date-fns';
-import { suggestDeadline } from '@/ai/flows/suggest-deadline';
-import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
@@ -36,10 +34,7 @@ interface TaskFormFieldsProps {
   setValue: UseFormSetValue<TaskFormValues>;
   assignableUsers: Assignee[]; 
   onOpenCreateAssigneeDialog: () => void;
-  isSubmittingAi?: boolean;
-  setIsSubmittingAi?: (isSubmitting: boolean) => void;
-  currentTaskTitle?: string;
-  currentUserId: string; // Added currentUserId
+  currentUserId: string; 
 }
 
 export function TaskFormFields({
@@ -47,57 +42,10 @@ export function TaskFormFields({
   setValue,
   assignableUsers, 
   onOpenCreateAssigneeDialog,
-  isSubmittingAi,
-  setIsSubmittingAi,
-  currentTaskTitle,
-  currentUserId // Destructure currentUserId
+  currentUserId 
 }: TaskFormFieldsProps) {
-  const { toast } = useToast();
+
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
-  const handleSuggestDeadline = async () => {
-    if (setIsSubmittingAi) setIsSubmittingAi(true);
-    const taskTitle = currentTaskTitle || control._getWatch('title');
-    if (!taskTitle) {
-      toast({
-        variant: 'destructive',
-        title: 'Cannot Suggest Deadline',
-        description: 'Please enter a task title first.',
-      });
-      if (setIsSubmittingAi) setIsSubmittingAi(false);
-      return;
-    }
-
-    try {
-      const workload = "moderate workload, several other small tasks pending";
-      const result = await suggestDeadline({ taskDetails: taskTitle, currentWorkload: workload });
-
-      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-      if (result.suggestedDeadline && datePattern.test(result.suggestedDeadline)) {
-        setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
-        toast({
-          title: 'Deadline Suggested',
-          description: (
-            <div>
-              <p>Suggested: {format(parseISO(result.suggestedDeadline), 'MMMM d, yyyy')}</p>
-              <p className="text-xs text-muted-foreground mt-1">Reasoning: {result.reasoning}</p>
-            </div>
-          ),
-        });
-      } else {
-        throw new Error('AI returned an invalid date format.');
-      }
-    } catch (error) {
-      console.error('Error suggesting deadline:', error);
-      toast({
-        variant: 'destructive',
-        title: 'AI Suggestion Failed',
-        description: (error as Error).message || 'Could not get deadline suggestion.',
-      });
-    } finally {
-      if (setIsSubmittingAi) setIsSubmittingAi(false);
-    }
-  };
 
   return (
     <>
@@ -192,20 +140,6 @@ export function TaskFormFields({
                     />
                   </PopoverContent>
                 </Popover>
-                {setIsSubmittingAi && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleSuggestDeadline}
-                    disabled={isSubmittingAi || !control._getWatch('title')}
-                    aria-label="Suggest Deadline with AI"
-                    title={!control._getWatch('title') ? "Enter task title to suggest deadline" : "Suggest Deadline with AI"}
-                    className="shrink-0"
-                  >
-                    {isSubmittingAi ? <Sparkles className="h-4 w-4 animate-ping" /> : <Sparkles className="h-4 w-4 text-accent" />}
-                  </Button>
-                )}
               </div>
               <FormMessage />
             </FormItem>

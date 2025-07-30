@@ -31,7 +31,6 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { suggestDeadline } from '@/ai/flows/suggest-deadline';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
 import { useAssignees, useCreateTask } from '@/hooks/use-tasks';
 
@@ -45,7 +44,6 @@ interface CreateTaskFormProps {
 
 export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssigneeChange }: CreateTaskFormProps) {
   const { toast } = useToast();
-  const [isSubmittingAi, setIsSubmittingAi] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCreateAssigneeDialogOpen, setIsCreateAssigneeDialogOpen] = useState(false);
 
@@ -73,41 +71,6 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
       form.setValue('assignedTo', newAssignee.id, { shouldValidate: true });
     });
     setIsCreateAssigneeDialogOpen(false);
-  };
-
-  const handleSuggestDeadline = async () => {
-    setIsSubmittingAi(true);
-    const taskTitle = form.getValues('title');
-    if (!taskTitle) {
-      toast({
-        variant: 'destructive',
-        title: 'Cannot Suggest Deadline',
-        description: 'Please enter a task title first.',
-      });
-      setIsSubmittingAi(false);
-      return;
-    }
-
-    try {
-      const workload = "moderate workload, several other small tasks pending";
-      const result = await suggestDeadline({ taskDetails: taskTitle, currentWorkload: workload });
-
-      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-      if (result.suggestedDeadline && datePattern.test(result.suggestedDeadline)) {
-        form.setValue('deadline', result.suggestedDeadline, { shouldValidate: true });
-      } else {
-        throw new Error('AI returned an invalid date format.');
-      }
-    } catch (error) {
-      console.error('Error suggesting deadline:', error);
-      toast({
-        variant: 'destructive',
-        title: 'AI Suggestion Failed',
-        description: (error as Error).message || 'Could not get deadline suggestion.',
-      });
-    } finally {
-      setIsSubmittingAi(false);
-    }
   };
 
   function onSubmit(values: TaskFormValues) {
@@ -241,25 +204,14 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
                       />
                     </PopoverContent>
                   </Popover>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleSuggestDeadline}
-                    disabled={isSubmittingAi || !form.getValues('title')}
-                    title={!form.getValues('title') ? "Enter task title to suggest deadline" : "Suggest Deadline with AI"}
-                    aria-label="Suggest Deadline with AI"
-                    className="shrink-0"
-                  >
-                    {isSubmittingAi ? <Sparkles className="h-4 w-4 animate-ping" /> : <Sparkles className="h-4 w-4 text-accent" />}
-                  </Button>
                 </div>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmittingAi || !currentUserId}>
+          <Button type="submit" className="shrink-0 w-full sm:w-auto" disabled={isSubmitting || !currentUserId}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Task
           </Button>
         </form>
