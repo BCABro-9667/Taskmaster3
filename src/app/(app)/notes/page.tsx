@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Note, User } from '@/types';
 import { getNotes, createNote, updateNote, deleteNote } from '@/lib/notes';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Tag, Clock } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Tag, Clock, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -29,6 +29,13 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
@@ -154,8 +161,8 @@ export default function NotesPage() {
   const filteredNotes = useMemo(() => {
     return notes.filter(note =>
       note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.category.toLowerCase().includes(searchTerm.toLowerCase())
+      (note.description && note.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (note.category && note.category.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [notes, searchTerm]);
   
@@ -201,17 +208,32 @@ export default function NotesPage() {
           {filteredNotes.map(note => (
             <Card key={note.id} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow">
               <CardHeader>
-                <CardTitle className="flex justify-between items-start">
-                  <span className="break-words">{note.title}</span>
-                   <div className="flex-shrink-0 ml-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(note)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/80 hover:text-destructive" onClick={() => setDeletingNote(note)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardTitle>
+                <div className="flex justify-between items-start gap-4">
+                  <CardTitle className="break-words flex-1">
+                    {note.title}
+                  </CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                        <MoreVertical className="h-4 w-4" />
+                        <span className="sr-only">Note options</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => openEditDialog(note)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive focus:text-destructive" 
+                        onSelect={() => setDeletingNote(note)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
                    <Tag className="h-3 w-3" /> 
                    <Badge variant="outline">{note.category || 'Uncategorized'}</Badge>
@@ -237,7 +259,6 @@ export default function NotesPage() {
         </div>
       )}
 
-      {/* Floating Action Button */}
       <Button
         onClick={openCreateDialog}
         className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center"
@@ -246,8 +267,6 @@ export default function NotesPage() {
         <Plus className="h-8 w-8 text-white" />
       </Button>
 
-
-      {/* Note Create/Edit Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -309,7 +328,6 @@ export default function NotesPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       {deletingNote && (
          <AlertDialog open={!!deletingNote} onOpenChange={(isOpen) => !isOpen && setDeletingNote(null)}>
           <AlertDialogContent>
