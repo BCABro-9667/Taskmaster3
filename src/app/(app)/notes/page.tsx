@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Note, User } from '@/types';
-import { getNotes, createNote, updateNote, deleteNote } from '@/lib/notes';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Tag, Clock, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/use-notes';
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
@@ -46,18 +45,19 @@ const noteFormSchema = z.object({
 type NoteFormValues = z.infer<typeof noteFormSchema>;
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const currentUser: User | null = getCurrentUser();
+  const { toast } = useToast();
+  
+  const { data: notes = [], isLoading } = useNotes(currentUser?.id);
+  const { mutate: createNote, isPending: isCreating } = useCreateNote(currentUser?.id);
+  const { mutate: updateNote, isPending: isUpdating } = useUpdateNote(currentUser?.id);
+  const { mutate: deleteNote } = useDeleteNote(currentUser?.id);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [deletingNote, setDeletingNote] = useState<Note | null>(null);
   
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  const { toast } = useToast();
-  const { start, complete } = useLoadingBar();
-
   const form = useForm<NoteFormValues>({
     resolver: zodResolver(noteFormSchema),
     defaultValues: {
@@ -66,34 +66,7 @@ export default function NotesPage() {
       category: 'General',
     }
   });
-
-  const fetchData = useCallback(async (userId: string) => {
-    setIsLoading(true);
-    try {
-      const fetchedNotes = await getNotes(userId);
-      setNotes(fetchedNotes);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error fetching notes',
-        description: 'Could not load your notes. Please try refreshing.',
-      });
-      setNotes([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (user && user.id) {
-      setCurrentUser(user);
-      fetchData(user.id);
-    } else {
-      setIsLoading(false);
-    }
-  }, [fetchData]);
-
+  
   const openCreateDialog = () => {
     setEditingNote(null);
     form.reset({ title: '', description: '', category: 'General' });
@@ -111,55 +84,50 @@ export default function NotesPage() {
   };
 
   const handleFormSubmit: SubmitHandler<NoteFormValues> = async (data) => {
-    if (!currentUser?.id) return;
-    start();
-    try {
-      if (editingNote) {
-        // Update existing note
-        const updatedNote = await updateNote(currentUser.id, editingNote.id, data);
-        if (updatedNote) {
-          setNotes(notes.map(n => n.id === updatedNote.id ? updatedNote : n));
-          toast({ title: 'Note updated successfully' });
-        }
-      } else {
-        // Create new note
-        const newNote = await createNote(currentUser.id, data);
-        setNotes([newNote, ...notes]);
-        toast({ title: 'Note created successfully' });
-      }
-      setIsFormDialogOpen(false);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: `Error ${editingNote ? 'updating' : 'creating'} note`,
-        description: (error as Error).message,
-      });
-    } finally {
-      complete();
+    const callback = {
+      onSuccess: () => {
+        setIsFormDialogOpen(false);
+        toast({ title: `Note ${editingNote ? 'updated' : 'created'} successfully` });
+      },
+      onError: (error: Error) => {
+        toast({
+          variant: 'destructive',
+          title: `Error ${editingNote ? 'updating' : 'creating'} note`,
+          description: error.message,
+        });
+      },
+    };
+
+    if (editingNote) {
+      updateNote({ id: editingNote.id, updates: data }, callback);
+    } else {
+      createNote(data, callback);
     }
   };
 
   const confirmDeleteNote = async () => {
-    if (!deletingNote || !currentUser?.id) return;
-    start();
-    try {
-      await deleteNote(currentUser.id, deletingNote.id);
-      setNotes(notes.filter(n => n.id !== deletingNote.id));
-      toast({ title: 'Note Deleted', description: `"${deletingNote.title}" has been removed.` });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error Deleting Note',
-        description: (error as Error).message,
-      });
-    } finally {
-      setDeletingNote(null);
-      complete();
-    }
+    if (!deletingNote) return;
+    deleteNote(deletingNote.id, {
+      onSuccess: () => {
+        toast({ title: 'Note Deleted', description: `"${deletingNote.title}" has been removed.` });
+        setDeletingNote(null);
+      },
+      onError: (error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Error Deleting Note',
+          description: error.message,
+        });
+        setDeletingNote(null);
+      }
+    });
   };
 
   const filteredNotes = useMemo(() => {
-    return notes.filter(note =>
+    const sortedNotes = [...notes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    if (!searchTerm) return sortedNotes;
+    
+    return sortedNotes.filter(note =>
       note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (note.description && note.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (note.category && note.category.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -182,6 +150,8 @@ export default function NotesPage() {
       </div>
     );
   }
+  
+  const isSubmitting = isCreating || isUpdating;
 
   return (
     <div className="space-y-8">
@@ -318,8 +288,8 @@ export default function NotesPage() {
               />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsFormDialogOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {editingNote ? 'Save Changes' : 'Create Note'}
                 </Button>
               </DialogFooter>

@@ -6,16 +6,6 @@ import dbConnect from './db';
 import NoteModel from '@/models/Note';
 import mongoose from 'mongoose';
 
-// Helper to convert lean object ID to string 'id'
-function leanToPlain<T extends { _id: mongoose.Types.ObjectId }>(doc: T | null): Omit<T, '_id'> & { id: string } | null {
-  if (!doc) return null;
-  const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest } as Omit<T, '_id'> & { id: string };
-}
-
-function leanArrayToPlain<T extends { _id: mongoose.Types.ObjectId }>(docs: T[]): (Omit<T, '_id'> & { id: string })[] {
-  return docs.map(doc => leanToPlain(doc)!)
-}
 
 // Helper to process lean query result
 function processLeanNote(note: any): Note {
@@ -54,7 +44,12 @@ export async function createNote(userId: string, noteData: Pick<Note, 'title' | 
   });
   await newNoteDoc.save();
   
-  return processLeanNote(newNoteDoc.toObject());
+  const createdNote = await NoteModel.findById(newNoteDoc._id).lean();
+   if(!createdNote) {
+    throw new Error('Failed to retrieve newly created note.');
+  }
+  
+  return processLeanNote(createdNote);
 }
 
 export async function updateNote(userId: string, noteId: string, updates: Partial<Pick<Note, 'title' | 'description' | 'category'>>): Promise<Note | null> {
