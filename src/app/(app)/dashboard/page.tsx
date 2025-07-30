@@ -307,7 +307,7 @@ export default function DashboardPage() {
                   onMarkTaskAsPending={handleMarkTaskAsPending}
                   emptyStateMessage={searchTerm ? 'No tasks match your search.' : 'No pending tasks. Way to go!'}
                 />
-                <PrintOnlyBlankTasks count={25 - filteredAndSortedTasks.length} />
+                <PrintOnlyBlankTasks count={Math.max(0, 30 - filteredAndSortedTasks.length)} />
               </>
             )}
           </section>
@@ -358,6 +358,10 @@ export default function DashboardPage() {
         </div>
       </div>
       
+      <div className="print-only-extra-page">
+        <PrintOnlyBlankTasks count={30} />
+      </div>
+
       <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
