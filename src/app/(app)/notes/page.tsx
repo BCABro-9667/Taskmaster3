@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import type { Note, User } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Clock, MoreVertical } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Clock, MoreVertical, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -30,6 +30,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/use-notes';
@@ -127,6 +128,24 @@ export default function NotesPage() {
       (note.description && note.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [notes, searchTerm]);
+
+  const handlePrintNote = (noteId: string) => {
+    const noteElement = document.getElementById(`note-${noteId}`);
+    if (noteElement) {
+      const onAfterPrint = () => {
+        document.body.classList.remove('printing-note');
+        noteElement.classList.remove('note-to-print');
+        window.removeEventListener('afterprint', onAfterPrint);
+      };
+
+      window.addEventListener('afterprint', onAfterPrint);
+      
+      document.body.classList.add('printing-note');
+      noteElement.classList.add('note-to-print');
+      
+      window.print();
+    }
+  };
   
   if (isLoading) {
     return (
@@ -156,7 +175,7 @@ export default function NotesPage() {
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative no-print">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="search"
@@ -168,41 +187,48 @@ export default function NotesPage() {
       </div>
       
       {filteredNotes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 note-list-container">
           {filteredNotes.map(note => (
-            <Card key={note.id} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader>
+            <Card key={note.id} id={`note-${note.id}`} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow printable-note-card">
+              <CardHeader className="printable-note-header">
                 <div className="flex justify-between items-start gap-4">
-                  <CardTitle className="break-words flex-1">
+                  <CardTitle className="break-words flex-1 printable-note-title">
                     {note.title}
                   </CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Note options</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => openEditDialog(note)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        <span>Edit</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive focus:text-destructive" 
-                        onSelect={() => setDeletingNote(note)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Delete</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="no-print">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                          <span className="sr-only">Note options</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => openEditDialog(note)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handlePrintNote(note.id)}>
+                          <Printer className="mr-2 h-4 w-4" />
+                          <span>Print</span>
+                        </DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-destructive focus:text-destructive" 
+                          onSelect={() => setDeletingNote(note)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow printable-note-content">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{note.description}</p>
               </CardContent>
-              <CardFooter className="text-xs text-muted-foreground/80 mt-auto">
+              <CardFooter className="text-xs text-muted-foreground/80 mt-auto printable-note-footer">
                 <div className="flex items-center gap-1">
                    <Clock className="h-3 w-3"/> 
                   <span>Last updated: {format(new Date(note.updatedAt), "MMM d, yyyy 'at' p")}</span>
@@ -212,7 +238,7 @@ export default function NotesPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg bg-card/60">
+        <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg bg-card/60 no-print">
           <NotesIcon className="mx-auto h-12 w-12 mb-4" />
           <h3 className="text-xl font-semibold">No notes found</h3>
           <p>{searchTerm ? 'Try adjusting your search term.' : 'Click the "+" button to get started.'}</p>
@@ -221,7 +247,7 @@ export default function NotesPage() {
 
       <Button
         onClick={openCreateDialog}
-        className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center"
+        className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center no-print"
         aria-label="Create new note"
       >
         <Plus className="h-8 w-8" />
