@@ -158,7 +158,7 @@ export default function ProfilePage() {
         </div>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="personal_info" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="personal_info">
                 <UserCircle className="mr-2 h-4 w-4" /> Personal Info
                 </TabsTrigger>
@@ -179,6 +179,16 @@ export default function ProfilePage() {
                     <CardTitle>Personal Information</CardTitle>
                     <CardDescription>Update your name and profile picture.</CardDescription>
                   </CardHeader>
+                   <div className="space-y-2">
+                      <Label>Image Preview</Label>
+                      <Avatar className="h-32 w-32 border-2 border-primary bg-muted">
+                          <AvatarImage src={watchedImageUrl || ''} alt="Profile Preview" className="object-cover" />
+                          <AvatarFallback className="text-4xl">
+                              <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                          </AvatarFallback>
+                      </Avatar>
+                      {!watchedImageUrl && <p className="text-xs text-muted-foreground">No image URL provided.</p>}
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
                     <Input
@@ -202,16 +212,6 @@ export default function ProfilePage() {
                     {form.formState.errors.profileImageUrl && (
                       <p className="text-sm text-destructive">{form.formState.errors.profileImageUrl.message}</p>
                     )}
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Image Preview</Label>
-                      <Avatar className="h-32 w-32 border-2 border-primary bg-muted">
-                          <AvatarImage src={watchedImageUrl || ''} alt="Profile Preview" className="object-cover" />
-                          <AvatarFallback className="text-4xl">
-                              <ImageIcon className="h-16 w-16 text-muted-foreground" />
-                          </AvatarFallback>
-                      </Avatar>
-                      {!watchedImageUrl && <p className="text-xs text-muted-foreground">No image URL provided.</p>}
                   </div>
                 </TabsContent>
 
