@@ -45,6 +45,8 @@ const noteFormSchema = z.object({
 
 type NoteFormValues = z.infer<typeof noteFormSchema>;
 
+type UnlockAction = 'view' | 'remove_lock';
+
 export default function NotesPage() {
   const currentUser: User | null = getCurrentUser();
   const { toast } = useToast();
@@ -62,7 +64,29 @@ export default function NotesPage() {
   // State for locked notes
   const [unlockedNoteIds, setUnlockedNoteIds] = useState<Set<string>>(new Set());
   const [unlockingNote, setUnlockingNote] = useState<Note | null>(null);
+  const [unlockAction, setUnlockAction] = useState<UnlockAction>('view');
   
+  const handleUnlockRequest = (note: Note, action: UnlockAction) => {
+    setUnlockAction(action);
+    setUnlockingNote(note);
+  };
+  
+  const handlePinSuccess = (noteId: string) => {
+    if (unlockAction === 'view') {
+        setUnlockedNoteIds(prev => new Set(prev).add(noteId));
+        toast({ title: "Note Unlocked", description: "You can now view the note content." });
+    } else if (unlockAction === 'remove_lock') {
+        updateNote({ id: noteId, updates: { isLocked: false } }, {
+            onSuccess: () => {
+                setUnlockedNoteIds(prev => new Set(prev).add(noteId));
+                toast({ title: "Lock Removed", description: "The note is now permanently unlocked." });
+            },
+            onError: (error) => toast({ variant: 'destructive', title: 'Error', description: error.message }),
+        });
+    }
+    setUnlockingNote(null);
+  };
+
 
   const form = useForm<NoteFormValues>({
     resolver: zodResolver(noteFormSchema),
@@ -71,12 +95,6 @@ export default function NotesPage() {
       description: '',
     }
   });
-
-  const handlePinSuccess = (noteId: string) => {
-    setUnlockedNoteIds(prev => new Set(prev).add(noteId));
-    setUnlockingNote(null);
-    toast({ title: "Note Unlocked", description: "You can now view the note content." });
-  };
   
   const openCreateDialog = () => {
     setEditingNote(null);
@@ -148,7 +166,7 @@ export default function NotesPage() {
             return newSet;
           });
         }
-        toast({ title: newLockState ? "Note Locked" : "Note Unlocked" });
+        toast({ title: newLockState ? "Note Locked" : "Note Unlocked Permanently" });
       },
       onError: (error) => toast({ variant: 'destructive', title: 'Error', description: error.message }),
     });
@@ -253,7 +271,7 @@ export default function NotesPage() {
                           <DropdownMenuSeparator />
                            <DropdownMenuItem onSelect={() => {
                               if (isNoteLocked) {
-                                setUnlockingNote(note);
+                                handleUnlockRequest(note, 'view');
                               } else {
                                 toggleLock(note);
                               }
@@ -265,6 +283,12 @@ export default function NotesPage() {
                               )}
                               <span>{isNoteLocked ? 'Unlock Note' : 'Lock Note'}</span>
                             </DropdownMenuItem>
+                            {isNoteLocked && (
+                                <DropdownMenuItem onSelect={() => handleUnlockRequest(note, 'remove_lock')}>
+                                    <UnlockIcon className="mr-2 h-4 w-4" />
+                                    <span>Remove Lock</span>
+                                </DropdownMenuItem>
+                            )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-destructive focus:text-destructive" 
