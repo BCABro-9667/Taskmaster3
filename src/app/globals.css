@@ -44,38 +44,38 @@
   }
 
   .dark {
-    --background: 231 15% 18%; /* Dark cool gray */
-    --foreground: 231 15% 88%; /* Light cool gray */
-    --card: 231 15% 22%;
-    --card-foreground: 231 15% 88%;
-    --popover: 231 15% 18%;
-    --popover-foreground: 231 15% 88%;
-    --primary: 231 48% 68%; /* Lighter Indigo for dark mode */
-    --primary-foreground: 231 15% 10%; /* Darker for contrast */
-    --secondary: 231 15% 25%;
-    --secondary-foreground: 231 15% 88%;
-    --muted: 231 15% 25%;
-    --muted-foreground: 231 15% 60%;
-    --accent: 262 44% 73%; /* Lighter Muted Violet */
-    --accent-foreground: 231 15% 10%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 231 15% 30%;
-    --input: 231 15% 30%;
-    --ring: 231 48% 68%;
+    --background: 222 47% 11%; /* Dark Slate Blue */
+    --foreground: 210 40% 98%; /* Almost White */
+    --card: 222 47% 14%; /* Slightly lighter slate */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%; /* Brighter Blue for accents */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%; /* Muted Blue for secondary elements */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 25%; /* Softer borders */
+    --input: 217 33% 25%;
+    --ring: 217 91% 60%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 217 91% 60%;
     --success-toast-background: 140 30% 15%;
     --success-toast-foreground: 140 70% 80%;
     --success-toast-border: 140 30% 25%;
