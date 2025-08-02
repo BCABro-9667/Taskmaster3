@@ -158,7 +158,7 @@ export default function ProfilePage() {
         </div>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="personal_info" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
               <TabsTrigger value="personal_info">
                 <UserCircle className="mr-2 h-4 w-4" /> Personal Info
                 </TabsTrigger>
