@@ -158,17 +158,17 @@ export default function ProfilePage() {
         </div>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="personal_info" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="personal_info">
+            <TabsList className="w-full flex-wrap">
+              <TabsTrigger value="personal_info" className="flex-1">
                 <UserCircle className="mr-2 h-4 w-4" /> Personal Info
                 </TabsTrigger>
-              <TabsTrigger value="personalization">
+              <TabsTrigger value="personalization" className="flex-1">
                 <Palette className="mr-2 h-4 w-4" /> Personalization
                 </TabsTrigger>
-              <TabsTrigger value="privacy">
+              <TabsTrigger value="privacy" className="flex-1">
                 <ShieldCheck className="mr-2 h-4 w-4" /> Privacy
                 </TabsTrigger>
-              <TabsTrigger value="settings">
+              <TabsTrigger value="settings" className="flex-1">
                 <Settings className="mr-2 h-4 w-4" /> Settings
                 </TabsTrigger>
             </TabsList>
