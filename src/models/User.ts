@@ -71,7 +71,7 @@ UserSchema.pre<IUserDocument>('save', async function (next) {
 
 
 UserSchema.pre('findOne', function(next) {
-  this.select('+password');
+  this.select('+password +pin');
   next();
 });
 
