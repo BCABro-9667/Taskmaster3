@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateCurrentUser, verifyPin } from '@/lib/auth'; // Server Action
 import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
-import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper, ShieldCheck, KeyRound } from 'lucide-react';
+import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper, ShieldCheck, KeyRound, Lock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 
@@ -24,6 +24,16 @@ const profileFormSchema = z.object({
   backgroundImageUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
   pin: z.string().regex(/^\d{4}$/, "PIN must be 4 digits.").optional().or(z.literal('')),
   currentPin: z.string().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters.').optional().or(z.literal('')),
+}).refine(data => {
+    if (data.newPassword && !data.currentPassword) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Current password is required to set a new password.',
+    path: ['currentPassword'],
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -43,6 +53,8 @@ export default function ProfilePage() {
       backgroundImageUrl: '',
       pin: '',
       currentPin: '',
+      currentPassword: '',
+      newPassword: '',
     },
   });
 
@@ -56,6 +68,8 @@ export default function ProfilePage() {
         backgroundImageUrl: user.backgroundImageUrl || '',
         pin: '',
         currentPin: '',
+        currentPassword: '',
+        newPassword: '',
       });
     } else {
       router.replace('/login'); 
@@ -96,6 +110,8 @@ export default function ProfilePage() {
         backgroundImageUrl: data.backgroundImageUrl || '',
         pin: data.pin,
         currentPin: data.currentPin,
+        newPassword: data.newPassword,
+        currentPassword: data.currentPassword,
       });
 
       if (updatedUserFromDb) {
@@ -104,7 +120,9 @@ export default function ProfilePage() {
         form.reset({
             ...form.getValues(),
             pin: '',
-            currentPin: ''
+            currentPin: '',
+            currentPassword: '',
+            newPassword: '',
         });
         toast({
           title: 'Profile Updated',
@@ -211,6 +229,42 @@ export default function ProfilePage() {
                   <h3 className="text-xl font-semibold font-headline">Security</h3>
               </div>
               
+              <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <div className="flex items-center gap-2">
+                      <Lock className="h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        {...form.register('currentPassword')}
+                        placeholder="Enter current password to change it"
+                        className={form.formState.errors.currentPassword ? 'border-destructive' : ''}
+                      />
+                  </div>
+                  {form.formState.errors.currentPassword && (
+                    <p className="text-sm text-destructive pl-7">{form.formState.errors.currentPassword.message}</p>
+                  )}
+                </div>
+
+                 <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="flex items-center gap-2">
+                      <Lock className="h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        {...form.register('newPassword')}
+                        placeholder="Enter new password (min. 6 characters)"
+                        className={form.formState.errors.newPassword ? 'border-destructive' : ''}
+                      />
+                  </div>
+                  {form.formState.errors.newPassword && (
+                    <p className="text-sm text-destructive pl-7">{form.formState.errors.newPassword.message}</p>
+                  )}
+                </div>
+
+              <Separator />
+
               {currentUserForForm.hasPin && (
                 <div className="space-y-2">
                   <Label htmlFor="currentPin">Current 4-Digit PIN</Label>

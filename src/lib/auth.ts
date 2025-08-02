@@ -54,6 +54,8 @@ export async function register(name: string, email: string, password?: string): 
 interface UpdatePayload extends Partial<Omit<User, 'id' | 'email'>> {
     pin?: string;
     currentPin?: string;
+    newPassword?: string;
+    currentPassword?: string;
 }
 
 export async function updateCurrentUser(userId: string, updates: UpdatePayload): Promise<User | null> {
@@ -66,6 +68,18 @@ export async function updateCurrentUser(userId: string, updates: UpdatePayload):
 
   if (!userDoc) {
     throw new Error('User not found in database.');
+  }
+
+  // Handle Password Change
+  if (updates.newPassword) {
+    if (!updates.currentPassword) {
+      throw new Error("Your current password is required to set a new one.");
+    }
+    const isPasswordMatch = await userDoc.comparePassword(updates.currentPassword, 'password');
+    if (!isPasswordMatch) {
+      throw new Error("The current password you entered is incorrect.");
+    }
+    userDoc.password = updates.newPassword; // The pre-save hook will hash this
   }
 
   // Handle PIN update

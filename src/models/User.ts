@@ -75,6 +75,11 @@ UserSchema.pre('findOne', function(next) {
   next();
 });
 
+UserSchema.pre('findById', function(next) {
+  this.select('+password +pin');
+  next();
+});
+
 const UserModel = mongoose.models.User || mongoose.model<IUserDocument>('User', UserSchema);
 
 export default UserModel as Model<IUserDocument>;
