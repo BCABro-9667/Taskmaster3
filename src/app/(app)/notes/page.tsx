@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Note, User } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Clock, MoreVertical, Printer } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, Trash2, StickyNote as NotesIcon, Clock, MoreVertical, Printer, Lock, Unlock as UnlockIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -34,6 +34,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/use-notes';
+import { cn } from '@/lib/utils';
+import { UnlockDialog } from '@/components/notes/UnlockDialog';
+
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
@@ -56,6 +59,11 @@ export default function NotesPage() {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [deletingNote, setDeletingNote] = useState<Note | null>(null);
   
+  // State for locked notes
+  const [unlockedNoteIds, setUnlockedNoteIds] = useState<Set<string>>(new Set());
+  const [unlockingNote, setUnlockingNote] = useState<Note | null>(null);
+  
+
   const form = useForm<NoteFormValues>({
     resolver: zodResolver(noteFormSchema),
     defaultValues: {
@@ -63,6 +71,12 @@ export default function NotesPage() {
       description: '',
     }
   });
+
+  const handlePinSuccess = (noteId: string) => {
+    setUnlockedNoteIds(prev => new Set(prev).add(noteId));
+    setUnlockingNote(null);
+    toast({ title: "Note Unlocked", description: "You can now view the note content." });
+  };
   
   const openCreateDialog = () => {
     setEditingNote(null);
@@ -118,6 +132,28 @@ export default function NotesPage() {
       }
     });
   };
+
+  const toggleLock = (note: Note) => {
+    const newLockState = !note.isLocked;
+    updateNote({ id: note.id, updates: { isLocked: newLockState } }, {
+      onSuccess: () => {
+        if (!newLockState) {
+          // If we are unlocking, add to the set of unlocked notes
+          setUnlockedNoteIds(prev => new Set(prev).add(note.id));
+        } else {
+          // If we are locking, remove from the set
+          setUnlockedNoteIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(note.id);
+            return newSet;
+          });
+        }
+        toast({ title: newLockState ? "Note Locked" : "Note Unlocked" });
+      },
+      onError: (error) => toast({ variant: 'destructive', title: 'Error', description: error.message }),
+    });
+  };
+
 
   const filteredNotes = useMemo(() => {
     const sortedNotes = [...notes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
@@ -188,54 +224,78 @@ export default function NotesPage() {
       
       {filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 note-list-container">
-          {filteredNotes.map(note => (
-            <Card key={note.id} id={`note-${note.id}`} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow printable-note-card">
-              <CardHeader className="printable-note-header">
-                <div className="flex justify-between items-start gap-4">
-                  <CardTitle className="break-words flex-1 printable-note-title">
-                    {note.title}
-                  </CardTitle>
-                  <div className="no-print">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                          <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Note options</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => openEditDialog(note)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handlePrintNote(note.id)}>
-                          <Printer className="mr-2 h-4 w-4" />
-                          <span>Print</span>
-                        </DropdownMenuItem>
-                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          className="text-destructive focus:text-destructive" 
-                          onSelect={() => setDeletingNote(note)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+          {filteredNotes.map(note => {
+            const isNoteLocked = note.isLocked && !unlockedNoteIds.has(note.id);
+            return (
+              <Card key={note.id} id={`note-${note.id}`} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow printable-note-card">
+                <CardHeader className="printable-note-header">
+                  <div className="flex justify-between items-start gap-4">
+                    <CardTitle className="break-words flex-1 printable-note-title">
+                      {note.title}
+                    </CardTitle>
+                    <div className="no-print">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Note options</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => openEditDialog(note)} disabled={isNoteLocked}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Edit</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handlePrintNote(note.id)} disabled={isNoteLocked}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            <span>Print</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                           <DropdownMenuItem onSelect={() => {
+                              if (isNoteLocked) {
+                                setUnlockingNote(note);
+                              } else {
+                                toggleLock(note);
+                              }
+                            }}>
+                              {isNoteLocked ? (
+                                <UnlockIcon className="mr-2 h-4 w-4" />
+                              ) : (
+                                <Lock className="mr-2 h-4 w-4" />
+                              )}
+                              <span>{isNoteLocked ? 'Unlock Note' : 'Lock Note'}</span>
+                            </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-destructive focus:text-destructive" 
+                            onSelect={() => setDeletingNote(note)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow printable-note-content">
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{note.description}</p>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground/80 mt-auto printable-note-footer">
-                <div className="flex items-center gap-1">
-                   <Clock className="h-3 w-3"/> 
-                  <span>Last updated: {format(new Date(note.updatedAt), "MMM d, yyyy 'at' p")}</span>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="flex-grow printable-note-content">
+                  {isNoteLocked ? (
+                      <div className="flex items-center justify-center h-full min-h-[80px] text-muted-foreground/50">
+                        <Lock className="h-12 w-12" />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{note.description}</p>
+                  )}
+                </CardContent>
+                <CardFooter className="text-xs text-muted-foreground/80 mt-auto printable-note-footer">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3"/> 
+                    <span>Last updated: {format(new Date(note.updatedAt), "MMM d, yyyy 'at' p")}</span>
+                  </div>
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
       ) : (
         <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg bg-card/60 no-print">
@@ -321,6 +381,16 @@ export default function NotesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {unlockingNote && currentUser && (
+        <UnlockDialog
+          isOpen={!!unlockingNote}
+          onOpenChange={() => setUnlockingNote(null)}
+          noteTitle={unlockingNote.title}
+          userId={currentUser.id}
+          onPinVerified={() => handlePinSuccess(unlockingNote.id)}
+        />
       )}
     </div>
   );

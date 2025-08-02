@@ -11,6 +11,7 @@ export interface INoteDocument extends Omit<NoteType, 'id' | 'createdBy'>, Docum
 const NoteSchema = new Schema<INoteDocument>({
   title: { type: String, required: true, trim: true },
   description: { type: String, trim: true, default: '' },
+  isLocked: { type: Boolean, default: false },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, {
   timestamps: true,

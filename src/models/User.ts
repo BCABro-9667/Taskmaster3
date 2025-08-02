@@ -1,63 +1,78 @@
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import type { User as UserType } from '@/types';
+import bcrypt from 'bcryptjs';
 
 export interface IUserDocument extends Omit<UserType, 'id'>, Document {
-  password?: string; // Password for authentication users
-  comparePassword(candidatePassword: string): Promise<boolean>;
+  password?: string;
+  pin?: string;
+  comparePassword(candidate: string, type: 'password' | 'pin'): Promise<boolean>;
 }
 
-// UserSchema will be used for authenticated users
-const UserSchemaFields = {
+const UserSchema = new Schema<IUserDocument>({
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-  password: { type: String, required: true }, // Password is required for login users
+  password: { type: String, required: true, select: false },
   name: { type: String, required: true, trim: true },
   profileImageUrl: { type: String, trim: true, default: '' },
   backgroundImageUrl: { type: String, trim: true, default: '' },
-};
-
-const UserSchema = new Schema<IUserDocument>(UserSchemaFields, {
+  pin: { type: String, select: false },
+}, {
   timestamps: true,
   toJSON: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id.toString(); // Ensure id is a string
+      ret.id = ret._id.toString();
       delete ret._id;
       delete ret.__v;
-      delete ret.password; // Ensure password hash is not sent
+      delete ret.password;
+      delete ret.pin;
     },
   },
   toObject: {
     virtuals: true,
     transform: function (_doc, ret) {
-      ret.id = ret._id.toString(); // Ensure id is a string
+      ret.id = ret._id.toString();
       delete ret._id;
       delete ret.__v;
       delete ret.password;
+      delete ret.pin;
     },
   },
 });
 
-// Method to compare password for login
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  if (!this.password) return false; 
-  const bcrypt = await import('bcryptjs');
-  return bcrypt.compare(candidatePassword, this.password);
+UserSchema.methods.comparePassword = async function (candidate: string, type: 'password' | 'pin'): Promise<boolean> {
+  const hash = this[type];
+  if (!hash) return false;
+  return bcrypt.compare(candidate, hash);
 };
 
-// Pre-save hook to hash password if it's modified (e.g., on registration or password change)
+const hashField = async function (this: IUserDocument, field: 'password' | 'pin') {
+    if (this.isModified(field) && this[field]) {
+        try {
+            const salt = await bcrypt.genSalt(10);
+            this[field] = await bcrypt.hash(this[field] as string, salt);
+        } catch (error: any) {
+            throw error;
+        }
+    }
+};
+
 UserSchema.pre<IUserDocument>('save', async function (next) {
-  if (!this.isModified('password') || !this.password) {
-    return next();
-  }
-  try {
-    const bcrypt = await import('bcryptjs');
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
+    try {
+        await Promise.all([
+            hashField.call(this, 'password'),
+            hashField.call(this, 'pin')
+        ]);
+        next();
+    } catch (error: any) {
+        next(error);
+    }
+});
+
+
+UserSchema.pre('findOne', function(next) {
+  this.select('+password');
+  next();
 });
 
 const UserModel = mongoose.models.User || mongoose.model<IUserDocument>('User', UserSchema);

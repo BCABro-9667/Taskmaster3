@@ -5,6 +5,7 @@ export interface User {
   name: string;
   profileImageUrl?: string; 
   backgroundImageUrl?: string;
+  hasPin?: boolean;
 }
 
 export interface Assignee {
@@ -34,6 +35,7 @@ export interface Note {
   id: string;
   title: string;
   description: string;
+  isLocked: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   createdBy: string;

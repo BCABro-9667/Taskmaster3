@@ -41,6 +41,7 @@ export async function createNote(userId: string, noteData: Pick<Note, 'title' | 
   const newNoteDoc = new NoteModel({
     ...noteData,
     createdBy: new mongoose.Types.ObjectId(userId),
+    isLocked: false, // Default to unlocked
   });
   await newNoteDoc.save();
   
@@ -52,7 +53,9 @@ export async function createNote(userId: string, noteData: Pick<Note, 'title' | 
   return processLeanNote(createdNote);
 }
 
-export async function updateNote(userId: string, noteId: string, updates: Partial<Pick<Note, 'title' | 'description'>>): Promise<Note | null> {
+type NoteUpdatePayload = Partial<Pick<Note, 'title' | 'description' | 'isLocked'>>;
+
+export async function updateNote(userId: string, noteId: string, updates: NoteUpdatePayload): Promise<Note | null> {
     if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(noteId)) {
         return null;
     }
