@@ -338,7 +338,7 @@ export default function NotesPage() {
       </Button>
 
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="w-[80vw] max-w-4xl">
           <DialogHeader>
             <DialogTitle>{editingNote ? 'Edit Note' : 'Create a New Note'}</DialogTitle>
             <DialogDescription>
