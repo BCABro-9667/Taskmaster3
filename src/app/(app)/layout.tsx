@@ -15,8 +15,8 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getCurrentUser()); // Initialize from localStorage
+  const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
 
   useEffect(() => {
     const user = getCurrentUser(); // From client-auth, synchronous
@@ -24,7 +24,7 @@ export default function AppLayout({
       router.replace('/login');
     } else {
       setCurrentUser(user);
-      setIsAuthenticated(true);
+      setIsAuthCheckComplete(true);
     }
   }, [router]);
   
@@ -32,19 +32,26 @@ export default function AppLayout({
     const handleStorageChange = () => {
       const user = getCurrentUser();
       setCurrentUser(user);
+      if (!user) {
+        router.replace('/login');
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [router]);
 
-  if (isAuthenticated === null) {
+  if (!isAuthCheckComplete && !currentUser) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
+  }
+  
+  if (!currentUser) {
+    return null; // or a minimal loader, as the redirect is in progress
   }
   
   const backgroundStyle = currentUser?.backgroundImageUrl
