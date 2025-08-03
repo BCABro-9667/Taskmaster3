@@ -212,16 +212,21 @@ export async function getAssigneeById(userId: string, assigneeId: string): Promi
   return leanToPlain(assigneeDoc) as unknown as Assignee | null;
 }
 
-export async function createAssignee(userId: string, name: string, designation?: string): Promise<Assignee> {
+interface CreateAssigneePayload {
+  name: string;
+  designation?: string;
+  profileImageUrl?: string;
+}
+
+export async function createAssignee(userId: string, payload: CreateAssigneePayload): Promise<Assignee> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error('User ID is invalid or missing for assignee creation.');
   }
-  // await queueSyncAction({ type: 'create-assignee', payload: { name, designation }, userId });
+  // await queueSyncAction({ type: 'create-assignee', payload, userId });
   await dbConnect();
   
   const newAssigneeDoc = new AssigneeModel({
-    name,
-    designation: designation || '',
+    ...payload,
     createdBy: new mongoose.Types.ObjectId(userId),
   });
   await newAssigneeDoc.save();
@@ -229,7 +234,7 @@ export async function createAssignee(userId: string, name: string, designation?:
   return toPlainObject<Assignee>(newAssigneeDoc);
 }
 
-export async function updateAssignee(userId: string, assigneeId: string, updates: { name?: string; designation?: string }): Promise<Assignee | null> {
+export async function updateAssignee(userId: string, assigneeId: string, updates: { name?: string; designation?: string; profileImageUrl?: string }): Promise<Assignee | null> {
   if (!userId || !mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(assigneeId)) {
     return null;
   }

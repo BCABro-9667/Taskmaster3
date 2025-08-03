@@ -24,6 +24,7 @@ import { useLoadingBar } from '@/hooks/use-loading-bar';
 const editAssigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
   designation: z.string().max(50, 'Designation must be 50 characters or less.').optional(),
+  profileImageUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
 });
 
 type EditAssigneeFormValues = z.infer<typeof editAssigneeFormSchema>;
@@ -45,6 +46,7 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog, cur
     defaultValues: {
       name: assignee.name || '',
       designation: assignee.designation || '',
+      profileImageUrl: assignee.profileImageUrl || '',
     },
   });
 
@@ -103,6 +105,19 @@ export function EditAssigneeForm({ assignee, onAssigneeUpdated, closeDialog, cur
               <FormLabel>Designation (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., Designer" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="profileImageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Profile Image URL (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="https://example.com/image.png" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -24,6 +24,7 @@ import { useLoadingBar } from '@/hooks/use-loading-bar';
 const assigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
   designation: z.string().max(50, 'Designation must be 50 characters or less.').optional(),
+  profileImageUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
 });
 
 type AssigneeFormValues = z.infer<typeof assigneeFormSchema>;
@@ -44,6 +45,7 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUser
     defaultValues: {
       name: '',
       designation: '',
+      profileImageUrl: '',
     },
   });
 
@@ -55,7 +57,11 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUser
     setIsSubmitting(true);
     start();
     try {
-      const newAssignee = await createAssignee(currentUserId, values.name, values.designation); 
+      const newAssignee = await createAssignee(currentUserId, {
+        name: values.name,
+        designation: values.designation,
+        profileImageUrl: values.profileImageUrl,
+      }); 
       toast({
         title: 'Assignee Created',
         description: `${newAssignee.name} has been added.`,
@@ -98,6 +104,19 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUser
               <FormLabel>Designation (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., Designer" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="profileImageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Profile Image URL (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="https://example.com/image.png" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
