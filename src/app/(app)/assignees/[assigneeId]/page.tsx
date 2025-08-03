@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
 
 export default function AssigneeDetailPage() {
   const params = useParams();
@@ -275,21 +277,29 @@ export default function AssigneeDetailPage() {
       </div>
 
       <section className="no-print">
-        <div className="flex items-center mb-4">
-          <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
-          <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
-        </div>
-        <TaskList
-          tasks={completedTasks}
-          assignableUsers={allAssigneesForTaskDropdowns}
-          currentUserId={currentUser.id}
-          onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleDataRefresh}
-          onMarkTaskAsComplete={handleMarkTaskAsComplete}
-          onMarkTaskAsPending={handleMarkTaskAsPending}
-          emptyStateMessage={`${assignee.name} has not completed any tasks yet.`}
-          emptyStateTitle="No Completed Tasks"
-        />
+        <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="completed-tasks" className="border-none">
+                <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center">
+                        <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
+                        <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <TaskList
+                      tasks={completedTasks}
+                      assignableUsers={allAssigneesForTaskDropdowns}
+                      currentUserId={currentUser.id}
+                      onDeleteTask={handleDeleteTask}
+                      onUpdateTask={handleDataRefresh}
+                      onMarkTaskAsComplete={handleMarkTaskAsComplete}
+                      onMarkTaskAsPending={handleMarkTaskAsPending}
+                      emptyStateMessage={`${assignee.name} has not completed any tasks yet.`}
+                      emptyStateTitle="No Completed Tasks"
+                    />
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
       </section>
     </div>
   );
