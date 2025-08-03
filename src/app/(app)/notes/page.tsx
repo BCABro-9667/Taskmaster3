@@ -229,7 +229,7 @@ export default function NotesPage() {
         </div>
       </div>
 
-      <div className="relative no-print">
+      <div className="relative no-print" style={{ position: 'relative', zIndex: '1' }}>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="search"
@@ -331,7 +331,8 @@ export default function NotesPage() {
 
       <Button
         onClick={openCreateDialog}
-        className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center no-print"
+        style={{position: 'sticky', bottom: '30px', right: '0px', left: '1200px', zIndex: '9999', }}
+        className=" h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center no-print"
         aria-label="Create new note"
       >
         <Plus className="h-8 w-8" />

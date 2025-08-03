@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle'; // Import the ThemeToggle component
-import { LiveInfo } from './LiveInfo';
 
 export function Navbar() {
   const router = useRouter();
@@ -83,9 +82,6 @@ export function Navbar() {
                 <Image src={logo} alt="TaskMaster Logo" width={28} height={28} />
                 <span className="font-showcard text-2xl tracking-wider">{navbarBrandName}</span>
             </Link>
-             <div className="hidden lg:flex border-l border-border/60 ml-4 pl-4">
-                <LiveInfo />
-            </div>
           </div>
 
 
@@ -129,12 +125,6 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <div className="sm:hidden">
-                    <DropdownMenuItem className="lg:hidden focus:bg-transparent text-muted-foreground select-none">
-                        <LiveInfo />
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="lg:hidden" />
-                </div>
                 <div className="sm:hidden">
                   {navLinks.map((link) => (
                     <DropdownMenuItem key={link.href} asChild className={cn(pathname === link.href && "bg-accent")}>
