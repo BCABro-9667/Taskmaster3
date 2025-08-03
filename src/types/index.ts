@@ -12,6 +12,7 @@ export interface Assignee {
   id: string;
   name: string;
   designation?: string;
+  profileImageUrl?: string;
   createdAt: string; 
   updatedAt: string; 
   createdBy: string; // Added createdBy

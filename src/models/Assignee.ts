@@ -11,6 +11,7 @@ export interface IAssigneeDocument extends Omit<AssigneeType, 'id' | 'createdBy'
 const AssigneeSchemaFields = {
   name: { type: String, required: true, trim: true },
   designation: { type: String, trim: true, default: '' },
+  profileImageUrl: { type: String, trim: true, default: '' },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Added createdBy field
 };
 

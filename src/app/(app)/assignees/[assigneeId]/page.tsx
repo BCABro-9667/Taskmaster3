@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
@@ -193,15 +193,10 @@ export default function AssigneeDetailPage() {
       </div>
       
       <div className="printable-content">
-        <div className="print-page-header">
-          <span className="underline">
-            {assignee.name} {assignee.designation && `(${assignee.designation})`}
-          </span>
-        </div>
-        
         <Card className="shadow-lg screen-view bg-card/60">
           <CardHeader className="flex flex-col md:flex-row items-center gap-4">
             <Avatar className="h-24 w-24 border-4 border-primary/20">
+               {assignee.profileImageUrl && <AvatarImage src={assignee.profileImageUrl} alt={assignee.name || ''} />}
                <AvatarFallback className="text-3xl bg-muted">{getAssigneeInitials(assignee.name)}</AvatarFallback>
             </Avatar>
             <div className="text-center md:text-left">
