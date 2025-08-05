@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { clearCurrentUser, getCurrentUser } from '@/lib/client-auth'; // Use client-auth utilities
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard, StickyNote } from 'lucide-react';
+import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard, StickyNote, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import logo from './logo.png'
@@ -71,6 +71,7 @@ export function Navbar() {
     { href: "/assignees", label: "Assignees", icon: Users },
     { href: "/task-progress", label: "Progress", icon: TrendingUp },
     { href: "/notes", label: "Notes", icon: StickyNote },
+    { href: "/feedback", label: "Feedback", icon: MessageSquare },
   ];
 
   return (
