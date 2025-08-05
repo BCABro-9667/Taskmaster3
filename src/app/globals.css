@@ -218,10 +218,18 @@
   .print-task-item, .print-blank-item {
     display: flex !important;
     align-items: center;
+    justify-content: space-between; /* Added for alignment */
     padding: 2px 0 !important; /* Reduced padding to fit more items */
     border-bottom: 1px solid black !important;
     page-break-inside: avoid;
     min-height: 22px; /* Reduced height for 40 items */
+  }
+
+  .print-task-item-left {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
   }
 
   .print-task-item-circle, .print-blank-item-circle {
@@ -239,11 +247,12 @@
     word-break: break-word;
   }
 
-  .print-task-item-assignee {
+  .print-task-item-details { /* New class for assignee and date */
     flex-shrink: 0;
     margin-left: 16px;
     font-size: 9pt;
     color: #555 !important;
+    text-align: right;
   }
   
   a[href]:after { 

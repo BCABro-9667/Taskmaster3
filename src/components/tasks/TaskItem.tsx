@@ -91,6 +91,11 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
   const mobileDetailsVisible = isMobile && isExpanded;
 
+  const printDetails = [
+    assignedAssignee ? assignedAssignee.name : 'Unassigned',
+    format(parseISO(task.deadline), 'dd MMM, yyyy')
+  ].join(', ');
+
   return (
     <>
       <Card 
@@ -255,8 +260,13 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
       
       {/* Print View */}
       <div className="print-task-item print-only">
-        <div className="print-task-item-circle" />
-        <span className="print-task-item-title">{task.title}</span>
+        <div className="print-task-item-left">
+          <div className="print-task-item-circle" />
+          <span className="print-task-item-title">{task.title}</span>
+        </div>
+        <div className="print-task-item-details">
+          {printDetails}
+        </div>
       </div>
 
       {isEditNoteDialogOpen && canModifyTask && (
