@@ -14,11 +14,12 @@ import { useToast } from '@/hooks/use-toast';
 import { updateCurrentUser } from '@/lib/auth'; // Server Action
 import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
-import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper, ShieldCheck, KeyRound, Lock, Palette, Settings } from 'lucide-react';
+import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper, ShieldCheck, KeyRound, Lock, Palette, Settings, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { FeedbackForm } from '@/components/profile/FeedbackForm';
 
 
 const profileFormSchema = z.object({
@@ -156,7 +157,7 @@ export default function ProfilePage() {
             <UserCircle className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-headline">Profile Settings</h1>
         </div>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      
         <Tabs defaultValue="personal_info" className="w-full">
             <TabsList className="w-full flex-wrap h-auto">
               <TabsTrigger value="personal_info" className="flex-1">
@@ -168,186 +169,227 @@ export default function ProfilePage() {
               <TabsTrigger value="privacy" className="flex-1">
                 <ShieldCheck className="mr-2 h-4 w-4" /> Privacy
                 </TabsTrigger>
-              <TabsTrigger value="settings" className="flex-1">
-                <Settings className="mr-2 h-4 w-4" /> Settings
-                </TabsTrigger>
+              <TabsTrigger value="feedback" className="flex-1">
+                <MessageSquare className="mr-2 h-4 w-4" /> Feedback
+              </TabsTrigger>
             </TabsList>
-            <Card className="mt-6 shadow-lg bg-card/60">
-              <CardContent className="pt-6">
-                <TabsContent value="personal_info" className="space-y-6">
-                   <CardHeader className="p-0 mb-4">
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Update your name and profile picture.</CardDescription>
-                  </CardHeader>
-                   <div className="space-y-2">
-                      <Label>Image Preview</Label>
-                      <Avatar className="h-32 w-32 border-2 border-primary bg-muted">
-                          <AvatarImage src={watchedImageUrl || ''} alt="Profile Preview" className="object-cover" />
-                          <AvatarFallback className="text-4xl">
-                              <ImageIcon className="h-16 w-16 text-muted-foreground" />
-                          </AvatarFallback>
-                      </Avatar>
-                      {!watchedImageUrl && <p className="text-xs text-muted-foreground">No image URL provided.</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      {...form.register('name')}
-                      placeholder="Your full name"
-                      className={form.formState.errors.name ? 'border-destructive' : ''}
-                    />
-                    {form.formState.errors.name && (
-                      <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="profileImageUrl">Profile Image URL</Label>
-                    <Input
-                      id="profileImageUrl"
-                      {...form.register('profileImageUrl')}
-                      placeholder="https://example.com/your-image.png"
-                      className={form.formState.errors.profileImageUrl ? 'border-destructive' : ''}
-                    />
-                    {form.formState.errors.profileImageUrl && (
-                      <p className="text-sm text-destructive">{form.formState.errors.profileImageUrl.message}</p>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="personalization" className="space-y-6">
-                  <CardHeader className="p-0 mb-4">
-                    <CardTitle>Personalization</CardTitle>
-                    <CardDescription>Customize the look and feel of your application.</CardDescription>
-                  </CardHeader>
-                  <div className="space-y-2">
-                    <Label htmlFor="backgroundImageUrl">Dashboard Background Image URL</Label>
-                    <div className="flex items-center gap-2">
-                      <Wallpaper className="h-5 w-5 text-muted-foreground" />
-                      <Input
-                          id="backgroundImageUrl"
-                          {...form.register('backgroundImageUrl')}
-                          placeholder="https://example.com/your-background.png"
-                          className={form.formState.errors.backgroundImageUrl ? 'border-destructive' : ''}
-                      />
-                    </div>
-                    {form.formState.errors.backgroundImageUrl && (
-                      <p className="text-sm text-destructive pl-7">{form.formState.errors.backgroundImageUrl.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Theme</Label>
-                    <div className="flex items-center gap-4">
-                      <p className="text-sm text-muted-foreground">Select your preferred color scheme.</p>
-                      <ThemeToggle />
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="privacy" className="space-y-6">
-                    <CardHeader className="p-0 mb-4">
-                      <CardTitle>Privacy & Security</CardTitle>
-                      <CardDescription>Manage your password and note-locking PIN.</CardDescription>
-                    </CardHeader>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Current Password</Label>
-                      <div className="flex items-center gap-2">
-                          <Lock className="h-5 w-5 text-muted-foreground" />
-                          <Input
-                            id="currentPassword"
-                            type="password"
-                            {...form.register('currentPassword')}
-                            placeholder="Enter current password to change it"
-                            className={form.formState.errors.currentPassword ? 'border-destructive' : ''}
-                          />
-                      </div>
-                      {form.formState.errors.currentPassword && (
-                        <p className="text-sm text-destructive pl-7">{form.formState.errors.currentPassword.message}</p>
-                      )}
-                    </div>
-
-                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
-                      <div className="flex items-center gap-2">
-                          <Lock className="h-5 w-5 text-muted-foreground" />
-                          <Input
-                            id="newPassword"
-                            type="password"
-                            {...form.register('newPassword')}
-                            placeholder="Enter new password (min. 6 characters)"
-                            className={form.formState.errors.newPassword ? 'border-destructive' : ''}
-                          />
-                      </div>
-                      {form.formState.errors.newPassword && (
-                        <p className="text-sm text-destructive pl-7">{form.formState.errors.newPassword.message}</p>
-                      )}
-                    </div>
-                    <Separator />
-
-                    {currentUserForForm.hasPin && (
-                      <div className="space-y-2">
-                        <Label htmlFor="currentPin">Current 4-Digit PIN</Label>
-                        <div className="flex items-center gap-2">
-                            <KeyRound className="h-5 w-5 text-muted-foreground" />
-                            <Input
-                              id="currentPin"
-                              type="password"
-                              maxLength={4}
-                              {...form.register('currentPin')}
-                              placeholder="Enter current PIN to change"
-                              className={form.formState.errors.currentPin ? 'border-destructive' : ''}
-                            />
+            
+            <TabsContent value="personal_info">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <Card className="mt-6 shadow-lg bg-card/60">
+                    <CardContent className="pt-6">
+                        <CardHeader className="p-0 mb-4">
+                            <CardTitle>Personal Information</CardTitle>
+                            <CardDescription>Update your name and profile picture.</CardDescription>
+                        </CardHeader>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <Label>Image Preview</Label>
+                                <Avatar className="h-32 w-32 border-2 border-primary bg-muted">
+                                    <AvatarImage src={watchedImageUrl || ''} alt="Profile Preview" className="object-cover" />
+                                    <AvatarFallback className="text-4xl">
+                                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                                    </AvatarFallback>
+                                </Avatar>
+                                {!watchedImageUrl && <p className="text-xs text-muted-foreground">No image URL provided.</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Name</Label>
+                                <Input
+                                id="name"
+                                {...form.register('name')}
+                                placeholder="Your full name"
+                                className={form.formState.errors.name ? 'border-destructive' : ''}
+                                />
+                                {form.formState.errors.name && (
+                                <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="profileImageUrl">Profile Image URL</Label>
+                                <Input
+                                id="profileImageUrl"
+                                {...form.register('profileImageUrl')}
+                                placeholder="https://example.com/your-image.png"
+                                className={form.formState.errors.profileImageUrl ? 'border-destructive' : ''}
+                                />
+                                {form.formState.errors.profileImageUrl && (
+                                <p className="text-sm text-destructive">{form.formState.errors.profileImageUrl.message}</p>
+                                )}
+                            </div>
                         </div>
-                        {form.formState.errors.currentPin && (
-                          <p className="text-sm text-destructive pl-7">{form.formState.errors.currentPin.message}</p>
+                    </CardContent>
+                    </Card>
+                    <div className="mt-6 flex justify-end">
+                    <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
+                        {isSaving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                        <Save className="mr-2 h-4 w-4" />
                         )}
-                      </div>
-                    )}
+                        Save Changes
+                    </Button>
+                    </div>
+                </form>
+            </TabsContent>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="pin">{currentUserForForm.hasPin ? 'New 4-Digit PIN' : 'Set 4-Digit PIN'}</Label>
-                      <div className="flex items-center gap-2">
-                          <KeyRound className="h-5 w-5 text-muted-foreground" />
-                          <Input
-                            id="pin"
-                            type="password"
-                            maxLength={4}
-                            {...form.register('pin')}
-                            placeholder={currentUserForForm.hasPin ? "Enter new 4-digit PIN" : "Enter 4-digit PIN"}
-                            className={form.formState.errors.pin ? 'border-destructive' : ''}
-                          />
-                      </div>
-                      {form.formState.errors.pin && (
-                        <p className="text-sm text-destructive pl-7">{form.formState.errors.pin.message}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground pl-7">This PIN will be used to unlock your private notes.</p>
+            <TabsContent value="personalization">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <Card className="mt-6 shadow-lg bg-card/60">
+                        <CardContent className="pt-6 space-y-6">
+                            <CardHeader className="p-0 mb-4">
+                                <CardTitle>Personalization</CardTitle>
+                                <CardDescription>Customize the look and feel of your application.</CardDescription>
+                            </CardHeader>
+                            <div className="space-y-2">
+                                <Label htmlFor="backgroundImageUrl">Dashboard Background Image URL</Label>
+                                <div className="flex items-center gap-2">
+                                <Wallpaper className="h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    id="backgroundImageUrl"
+                                    {...form.register('backgroundImageUrl')}
+                                    placeholder="https://example.com/your-background.png"
+                                    className={form.formState.errors.backgroundImageUrl ? 'border-destructive' : ''}
+                                />
+                                </div>
+                                {form.formState.errors.backgroundImageUrl && (
+                                <p className="text-sm text-destructive pl-7">{form.formState.errors.backgroundImageUrl.message}</p>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Theme</Label>
+                                <div className="flex items-center gap-4">
+                                <p className="text-sm text-muted-foreground">Select your preferred color scheme.</p>
+                                <ThemeToggle />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <div className="mt-6 flex justify-end">
+                    <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
+                        {isSaving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                        )}
+                        Save Changes
+                    </Button>
                     </div>
-                </TabsContent>
-                
-                <TabsContent value="settings" className="space-y-6">
-                   <CardHeader className="p-0 mb-4">
-                      <CardTitle>Application Settings</CardTitle>
-                      <CardDescription>Configure application-wide settings and preferences.</CardDescription>
+                </form>
+            </TabsContent>
+            
+            <TabsContent value="privacy">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <Card className="mt-6 shadow-lg bg-card/60">
+                        <CardContent className="pt-6 space-y-6">
+                            <CardHeader className="p-0 mb-4">
+                                <CardTitle>Privacy & Security</CardTitle>
+                                <CardDescription>Manage your password and note-locking PIN.</CardDescription>
+                            </CardHeader>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="currentPassword">Current Password</Label>
+                                <div className="flex items-center gap-2">
+                                    <Lock className="h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        id="currentPassword"
+                                        type="password"
+                                        {...form.register('currentPassword')}
+                                        placeholder="Enter current password to change it"
+                                        className={form.formState.errors.currentPassword ? 'border-destructive' : ''}
+                                    />
+                                </div>
+                                {form.formState.errors.currentPassword && (
+                                    <p className="text-sm text-destructive pl-7">{form.formState.errors.currentPassword.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="newPassword">New Password</Label>
+                                <div className="flex items-center gap-2">
+                                    <Lock className="h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        id="newPassword"
+                                        type="password"
+                                        {...form.register('newPassword')}
+                                        placeholder="Enter new password (min. 6 characters)"
+                                        className={form.formState.errors.newPassword ? 'border-destructive' : ''}
+                                    />
+                                </div>
+                                {form.formState.errors.newPassword && (
+                                    <p className="text-sm text-destructive pl-7">{form.formState.errors.newPassword.message}</p>
+                                )}
+                            </div>
+                            <Separator />
+
+                            {currentUserForForm.hasPin && (
+                            <div className="space-y-2">
+                                <Label htmlFor="currentPin">Current 4-Digit PIN</Label>
+                                <div className="flex items-center gap-2">
+                                    <KeyRound className="h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                    id="currentPin"
+                                    type="password"
+                                    maxLength={4}
+                                    {...form.register('currentPin')}
+                                    placeholder="Enter current PIN to change"
+                                    className={form.formState.errors.currentPin ? 'border-destructive' : ''}
+                                    />
+                                </div>
+                                {form.formState.errors.currentPin && (
+                                <p className="text-sm text-destructive pl-7">{form.formState.errors.currentPin.message}</p>
+                                )}
+                            </div>
+                            )}
+
+                            <div className="space-y-2">
+                            <Label htmlFor="pin">{currentUserForForm.hasPin ? 'New 4-Digit PIN' : 'Set 4-Digit PIN'}</Label>
+                            <div className="flex items-center gap-2">
+                                <KeyRound className="h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    id="pin"
+                                    type="password"
+                                    maxLength={4}
+                                    {...form.register('pin')}
+                                    placeholder={currentUserForForm.hasPin ? "Enter new 4-digit PIN" : "Enter 4-digit PIN"}
+                                    className={form.formState.errors.pin ? 'border-destructive' : ''}
+                                />
+                            </div>
+                            {form.formState.errors.pin && (
+                                <p className="text-sm text-destructive pl-7">{form.formState.errors.pin.message}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground pl-7">This PIN will be used to unlock your private notes.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <div className="mt-6 flex justify-end">
+                        <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
+                            {isSaving ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                            <Save className="mr-2 h-4 w-4" />
+                            )}
+                            Save Changes
+                        </Button>
+                    </div>
+                </form>
+            </TabsContent>
+            
+            <TabsContent value="feedback">
+                 <Card className="mt-6 shadow-lg bg-card/60">
+                    <CardHeader>
+                        <CardTitle>Share Your Thoughts</CardTitle>
+                        <CardDescription>
+                            We appreciate your feedback! Let us know how we can improve TaskMaster.
+                        </CardDescription>
                     </CardHeader>
-                    <div className="text-center text-muted-foreground py-8">
-                      <p>More settings will be available here in the future.</p>
-                    </div>
-                </TabsContent>
-              </CardContent>
-            </Card>
-            <div className="mt-6 flex justify-end">
-              <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
-                {isSaving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="mr-2 h-4 w-4" />
-                )}
-                Save Changes
-              </Button>
-            </div>
+                    <CardContent>
+                        <FeedbackForm />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
         </Tabs>
-      </form>
     </div>
   );
 }
