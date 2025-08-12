@@ -92,8 +92,8 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
   const mobileDetailsVisible = isMobile && isExpanded;
 
   const printDetails = [
-    assignedAssignee ? assignedAssignee.name : 'Unassigned',
-    format(parseISO(task.deadline), 'dd MMM, yyyy')
+    assignedAssignee ? assignedAssignee.name.substring(0, 3) : 'Unassigned',
+    format(parseISO(task.deadline), 'dd MMM')
   ].join(', ');
 
   return (
