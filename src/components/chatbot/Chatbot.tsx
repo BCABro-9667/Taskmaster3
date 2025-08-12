@@ -29,7 +29,7 @@ export function Chatbot() {
 
       <div
         className={cn(
-          'fixed bottom-0 right-0 z-50 m-0 sm:m-6 w-full h-[90vh] sm:h-auto sm:w-[440px] sm:max-h-[calc(100dvh-3rem)] rounded-lg bg-card shadow-xl border border-border transition-all duration-300 ease-in-out origin-bottom-right',
+          'fixed bottom-0 right-0 z-50 m-0 sm:m-6 w-full h-[90vh] sm:h-[800px] sm:max-h-[calc(100dvh-3rem)] sm:w-[440px] rounded-lg bg-card shadow-xl border border-border transition-all duration-300 ease-in-out origin-bottom-right',
           isOpen
             ? 'scale-100 opacity-100'
             : 'scale-0 opacity-0 pointer-events-none'
