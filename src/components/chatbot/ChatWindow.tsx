@@ -52,7 +52,7 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
   });
 
   const handleSend = () => {
-    if (input.trim() === '') return;
+    if (input.trim() === '' || isLoading) return;
     const userMessage: MessageData = {
       role: 'user',
       content: [{ text: input }],
@@ -133,7 +133,7 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
               </div>
               {message.role === 'user' && (
                  <Avatar className="w-8 h-8 flex-shrink-0">
-                  {currentUser?.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name} />}
+                  {currentUser?.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name || ''} />}
                   <AvatarFallback className="bg-muted text-muted-foreground">
                     {currentUser ? getUserInitials(currentUser.name) : <User className="w-4 h-4" />}
                   </AvatarFallback>
