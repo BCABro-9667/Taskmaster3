@@ -111,7 +111,7 @@ export function Navbar() {
             {currentUser ? (
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full border-2 border-[#4D66D6] p-0">
                   <Avatar className="h-9 w-9">
                     {currentUser.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name || ''} className="object-cover" />}
                     <AvatarFallback>{getUserInitials(currentUser.name)}</AvatarFallback>
