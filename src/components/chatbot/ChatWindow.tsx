@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -10,6 +11,9 @@ import type { MessageData } from 'genkit';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/client-auth';
+import type { User as UserType } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
 
 interface ChatWindowProps {
   closeChat: () => void;
@@ -18,13 +22,15 @@ interface ChatWindowProps {
 export function ChatWindow({ closeChat }: ChatWindowProps) {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState('');
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-
+  
   useEffect(() => {
-    const currentUser = getCurrentUser();
+    const user = getCurrentUser();
+    setCurrentUser(user);
     const welcomeMessage: MessageData = {
         role: 'model',
-        content: [{ text: `Hi ${currentUser?.name || 'there'}, how have you been today?` }],
+        content: [{ text: `Hi ${user?.name || 'there'}, how have you been today?` }],
     };
     setMessages([welcomeMessage]);
   }, []);
@@ -65,6 +71,13 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
       });
     }
   }, [messages]);
+  
+  const getUserInitials = (name: string | undefined) => {
+    if (!name) return '??';
+    const names = name.split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + (names[names.length - 1][0] || '')).toUpperCase();
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -119,9 +132,12 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
                 })}
               </div>
               {message.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5" />
-                </div>
+                 <Avatar className="w-8 h-8 flex-shrink-0">
+                  {currentUser?.profileImageUrl && <AvatarImage src={currentUser.profileImageUrl} alt={currentUser.name} />}
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    {currentUser ? getUserInitials(currentUser.name) : <User className="w-4 h-4" />}
+                  </AvatarFallback>
+                </Avatar>
               )}
             </div>
           ))}
