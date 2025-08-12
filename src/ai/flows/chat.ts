@@ -184,22 +184,20 @@ const allTools = [
   getAssignees,
 ];
 
-const chatPrompt = ai.definePrompt(
-  {
-    name: 'chatbotPrompt',
-    system: `You are a helpful assistant for the TaskMaster application.
+const chatPrompt = ai.definePrompt({
+  name: 'chatbotPrompt',
+  system: `You are a helpful assistant for the TaskMaster application.
 - Your primary job is to help the user manage their tasks and notes by calling the provided tools.
 - Before you can use any tool that requires a 'userId', you MUST call the 'getUserId' tool first to identify the current user. Do not ask the user for their ID.
 - When creating a task, if the user doesn't provide a deadline, use a sensible default (e.g., tomorrow's date in YYYY-MM-DD format).
 - When a user asks to assign a task, first call getAssignees to show them the available options and get the correct ID. Do not guess assignee IDs.
 - Be conversational and friendly.
 - Do not make up information. If a tool fails or returns no data, inform the user gracefully.`,
-    tools: allTools,
-  },
-  async (history) => ({
-    history,
-  })
-);
+  tools: allTools,
+  // The input to this prompt is the message history.
+  input: { schema: z.array(MessageData) },
+});
+
 
 export const sendChatMessage = ai.defineFlow(
   {
@@ -208,6 +206,7 @@ export const sendChatMessage = ai.defineFlow(
     outputSchema: MessageData,
   },
   async (history) => {
+    // We pass the history directly to the prompt.
     const { output } = await chatPrompt(history);
     return output!;
   }

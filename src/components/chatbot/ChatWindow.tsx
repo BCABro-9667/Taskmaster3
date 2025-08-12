@@ -85,10 +85,10 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
               )}
               <div
                 className={cn(
-                  'p-3 rounded-lg max-w-sm',
+                  'p-3 max-w-sm',
                   message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                    ? 'bg-primary text-primary-foreground rounded-3xl rounded-br-lg'
+                    : 'bg-muted rounded-3xl rounded-bl-lg'
                 )}
               >
                 {message.content.map((part, partIndex) => {
@@ -129,15 +129,16 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
       </ScrollArea>
 
       <footer className="p-4 border-t">
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask me anything..."
             disabled={isLoading}
+            className="rounded-full h-12 pr-14"
           />
-          <Button onClick={handleSend} disabled={isLoading}>
+          <Button onClick={handleSend} disabled={isLoading} size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-9 w-9">
             <Send className="w-5 h-5" />
           </Button>
         </div>
