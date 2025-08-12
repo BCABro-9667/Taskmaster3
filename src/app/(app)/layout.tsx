@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { LoadingBarProvider } from '@/hooks/use-loading-bar';
 import type { User } from '@/types';
+import { Chatbot } from '@/components/chatbot/Chatbot';
 
 export default function AppLayout({
   children,
@@ -74,6 +75,7 @@ export default function AppLayout({
             </footer>
         </div>
       </div>
+      <Chatbot />
     </LoadingBarProvider>
   );
 }
