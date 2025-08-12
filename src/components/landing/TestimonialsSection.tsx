@@ -1,8 +1,5 @@
 
 'use client';
-import img1 from './p1.jpg'
-import img2 from './p2.jpg'
-
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,7 +28,7 @@ const testimonials = [
   {
     name: 'Avdhesh Kumar.',
     role: 'Web Developer',
-    avatar: {img2},
+    avatar: 'https://placehold.co/100x100.png',
     avatarFallback: 'AK',
     avatarHint: 'profile photo',
     stars: 5,
@@ -40,8 +37,8 @@ const testimonials = [
   {
     name: 'Ayush Saini.',
     role: 'Startup Founder',
-    avatar: {img1},
-    avatarFallback: 'AK',
+    avatar: 'https://placehold.co/100x100.png',
+    avatarFallback: 'AS',
     avatarHint: 'profile photo',
     stars: 4,
     text: "We adopted TaskMaster early on, and it's scaled perfectly with our growing team. The assignee management is simple yet powerful.",
