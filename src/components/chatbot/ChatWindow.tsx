@@ -9,6 +9,7 @@ import { sendChatMessage } from '@/ai/flows/chat';
 import type { MessageData } from 'genkit';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/client-auth';
 
 interface ChatWindowProps {
   closeChat: () => void;
@@ -19,9 +20,18 @@ export function ChatWindow({ closeChat }: ChatWindowProps) {
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    const welcomeMessage: MessageData = {
+        role: 'model',
+        content: [{ text: `Hi ${currentUser?.name || 'there'}, how have you been today?` }],
+    };
+    setMessages([welcomeMessage]);
+  }, []);
+
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
     mutationFn: async (newMessages: MessageData[]) => {
-      return sendChatMessage(newMessages);
+      return await sendChatMessage(newMessages);
     },
     onSuccess: (response) => {
       setMessages((prev) => [...prev, response]);
