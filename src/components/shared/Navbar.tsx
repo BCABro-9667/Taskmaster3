@@ -71,7 +71,6 @@ export function Navbar() {
     { href: "/assignees", label: "Assignees", icon: Users },
     { href: "/task-progress", label: "Progress", icon: TrendingUp },
     { href: "/notes", label: "Notes", icon: StickyNote },
-    { href: "/feedback", label: "Feedback", icon: MessageSquare },
   ];
 
   return (
