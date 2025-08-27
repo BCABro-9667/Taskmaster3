@@ -178,23 +178,13 @@ export default function DashboardPage() {
   return (
     <TooltipProvider>
       <div className="space-y-8">
-
-        <Card className="shadow-lg no-print bg-card/60">
-          <CardHeader>
-            <CardTitle className="text-xl font-headline flex items-center">
-              <PlusCircle className="mr-2 h-5 w-5 text-accent" />
-              Add New Task
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {currentUser?.id && <CreateTaskForm 
-              currentUserId={currentUser.id} 
-              lastSelectedAssigneeId={lastSelectedAssigneeId}
-              onAssigneeChange={handleAssigneeChange}
-            />}
-          </CardContent>
-        </Card>
-
+        <div className="no-print">
+          {currentUser?.id && <CreateTaskForm 
+            currentUserId={currentUser.id} 
+            lastSelectedAssigneeId={lastSelectedAssigneeId}
+            onAssigneeChange={handleAssigneeChange}
+          />}
+        </div>
 
         <div className="space-y-8">
           <section className="dashboard-printable-area">
