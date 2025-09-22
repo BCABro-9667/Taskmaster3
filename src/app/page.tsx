@@ -24,7 +24,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <CustomCursor />
       <LandingNavbar />
-      <main className="flex-grow">
+      <main className="flex-grow pb-10">
         <AnimatedSection>
           <HeroSection />
         </AnimatedSection>
