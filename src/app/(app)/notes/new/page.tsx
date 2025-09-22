@@ -73,7 +73,7 @@ export default function NewNotePage() {
   }
   
   return (
-    <div className="max-w-4xl mx-auto h-full flex flex-col">
+    <div className="max-w-4xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
       <div className="flex items-center gap-4 mb-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/notes">
@@ -111,7 +111,7 @@ export default function NewNotePage() {
                 <FormControl>
                   <Textarea
                     placeholder="Type your note here..."
-                    className="flex-grow w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent shadow-none"
+                    className="w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent shadow-none"
                     {...field}
                   />
                 </FormControl>
