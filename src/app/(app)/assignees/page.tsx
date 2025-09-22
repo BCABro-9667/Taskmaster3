@@ -38,6 +38,8 @@ import {
 import Link from 'next/link';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
+import { useRouter } from 'next/navigation';
+
 
 export default function AssigneesPage() {
   const [assignees, setAssignees] = useState<Assignee[]>([]);
@@ -50,6 +52,8 @@ export default function AssigneesPage() {
 
   const { toast } = useToast();
   const { start, complete } = useLoadingBar();
+  const router = useRouter();
+
 
   const fetchData = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -167,13 +171,13 @@ export default function AssigneesPage() {
         />
       </div>
       {filteredAssignees.length > 0 ? (
-        <div className="border rounded-lg shadow-sm bg-card/60">
+        <div className="border rounded-lg shadow-sm bg-card/60 overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Designation</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+            <TableHeader className="bg-primary">
+              <TableRow className="hover:bg-primary border-primary">
+                <TableHead className="text-primary-foreground">Name</TableHead>
+                <TableHead className="text-primary-foreground">Designation</TableHead>
+                <TableHead className="text-right text-primary-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
