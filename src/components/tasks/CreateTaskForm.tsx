@@ -70,8 +70,8 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
     });
     setIsCreateAssigneeDialogOpen(false);
   };
-
-  function onSubmit(values: TaskFormValues) {
+  
+  const onSubmit = useCallback((values: TaskFormValues) => {
     if (!currentUserId) {
       toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot create task.' });
       return;
@@ -106,7 +106,16 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
         });
       }
     });
-  }
+  }, [createTask, currentUserId, lastSelectedAssigneeId, toast, form]);
+
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      form.handleSubmit(onSubmit)();
+    }
+  };
+
 
   return (
     <>
@@ -124,6 +133,7 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
                     <Textarea 
                         placeholder="Write Your Task ...." 
                         {...field} 
+                        onKeyDown={handleKeyDown}
                         className="w-full border-none bg-transparent shadow-none focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[40px] text-base"
                     />
                 </FormControl>
