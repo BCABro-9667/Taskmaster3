@@ -1,7 +1,7 @@
 
 export function LandingFooter() {
   return (
-    <footer className="relative border-t border-border/40 bg-background pt-8 pb-4">
+    <footer className="relative border-t border-border/40 bg-background pt-5 pb-4">
       <div className="container flex flex-col items-center justify-center gap-2">
         <p className="text-sm text-muted-foreground text-center">
           &copy; {new Date().getFullYear()} TaskMaster. All rights reserved.
