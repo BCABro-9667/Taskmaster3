@@ -52,3 +52,5 @@ export function AnimatedSection({ children, className, delay = 0 }: AnimatedSect
     </div>
   );
 }
+
+    
