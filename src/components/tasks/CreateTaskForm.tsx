@@ -124,7 +124,7 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
                     <Textarea 
                         placeholder="Write Your Task ...." 
                         {...field} 
-                        className="w-full border-none bg-transparent focus:ring-0 focus:outline-none resize-none min-h-[40px] text-base"
+                        className="w-full border-none bg-transparent shadow-none focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[40px] text-base"
                     />
                 </FormControl>
                 <FormMessage className="pl-2 pb-1"/>
