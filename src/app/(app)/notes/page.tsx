@@ -33,9 +33,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/use-notes';
+import { useNotes, useUpdateNote, useDeleteNote } from '@/hooks/use-notes';
 import { cn } from '@/lib/utils';
 import { UnlockDialog } from '@/components/notes/UnlockDialog';
+import Link from 'next/link';
 
 
 const noteFormSchema = z.object({
@@ -52,7 +53,6 @@ export default function NotesPage() {
   const { toast } = useToast();
   
   const { data: notes = [], isLoading } = useNotes(currentUser?.id);
-  const { mutate: createNote, isPending: isCreating } = useCreateNote(currentUser?.id);
   const { mutate: updateNote, isPending: isUpdating } = useUpdateNote(currentUser?.id);
   const { mutate: deleteNote } = useDeleteNote(currentUser?.id);
   
@@ -95,12 +95,6 @@ export default function NotesPage() {
       description: '',
     }
   });
-  
-  const openCreateDialog = () => {
-    setEditingNote(null);
-    form.reset({ title: '', description: '' });
-    setIsFormDialogOpen(true);
-  };
 
   const openEditDialog = (note: Note) => {
     setEditingNote(note);
@@ -112,25 +106,21 @@ export default function NotesPage() {
   };
 
   const handleFormSubmit: SubmitHandler<NoteFormValues> = async (data) => {
-    const callback = {
+    if (!editingNote) return;
+
+    updateNote({ id: editingNote.id, updates: data }, {
       onSuccess: () => {
         setIsFormDialogOpen(false);
-        toast({ title: `Note ${editingNote ? 'updated' : 'created'} successfully` });
+        toast({ title: `Note updated successfully` });
       },
       onError: (error: Error) => {
         toast({
           variant: 'destructive',
-          title: `Error ${editingNote ? 'updating' : 'creating'} note`,
+          title: `Error updating note`,
           description: error.message,
         });
       },
-    };
-
-    if (editingNote) {
-      updateNote({ id: editingNote.id, updates: data }, callback);
-    } else {
-      createNote(data, callback);
-    }
+    });
   };
 
   const confirmDeleteNote = async () => {
@@ -218,7 +208,7 @@ export default function NotesPage() {
     );
   }
   
-  const isSubmitting = isCreating || isUpdating;
+  const isSubmitting = isUpdating;
 
   return (
     <div className="space-y-8">
@@ -329,62 +319,65 @@ export default function NotesPage() {
         </div>
       )}
 
-      <Button
-        onClick={openCreateDialog}
+      <Button asChild
         style={{position: 'sticky', bottom: '30px', right: '0px', left: '1200px', zIndex: '9999', }}
         className=" h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center no-print"
         aria-label="Create new note"
       >
-        <Plus className="h-8 w-8" />
+        <Link href="/notes/new">
+          <Plus className="h-8 w-8" />
+        </Link>
       </Button>
 
-      <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="w-[80vw] max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>{editingNote ? 'Edit Note' : 'Create a New Note'}</DialogTitle>
-            <DialogDescription>
-              {editingNote ? 'Update the details of your note.' : 'Fill in the details for your new note.'}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Note title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Type your note here..." className="min-h-[150px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsFormDialogOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingNote ? 'Save Changes' : 'Create Note'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      {editingNote && (
+        <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
+          <DialogContent className="w-[80vw] max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Edit Note</DialogTitle>
+              <DialogDescription>
+                Update the details of your note.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Note title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Type your note here..." className="min-h-[150px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsFormDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
       
       {deletingNote && (
          <AlertDialog open={!!deletingNote} onOpenChange={(isOpen) => !isOpen && setDeletingNote(null)}>
@@ -420,3 +413,5 @@ export default function NotesPage() {
     </div>
   );
 }
+
+    
