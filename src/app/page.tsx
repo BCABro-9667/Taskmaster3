@@ -10,6 +10,7 @@ import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CustomCursor } from '@/components/landing/CustomCursor';
 import { AnimatedSection } from '@/components/landing/AnimatedSection';
 import { useEffect } from 'react';
+import { ContactSection } from '@/components/landing/ContactSection';
 
 export default function LandingPage() {
   useEffect(() => {
@@ -35,6 +36,9 @@ export default function LandingPage() {
         </AnimatedSection>
         <AnimatedSection>
           <TestimonialsSection />
+        </AnimatedSection>
+        <AnimatedSection>
+          <ContactSection />
         </AnimatedSection>
       </main>
       <LandingFooter />
