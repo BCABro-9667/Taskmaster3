@@ -74,18 +74,17 @@ export default function NewNotePage() {
   
   return (
     <div className="max-w-4xl mx-auto h-full flex flex-col">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="icon" asChild>
+      <div className="flex items-center gap-4 mb-4">
+        <Button variant="ghost" size="icon" asChild>
           <Link href="/notes">
             <ArrowLeft />
             <span className="sr-only">Back to Notes</span>
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold font-headline text-primary">Create New Note</h1>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 flex-grow flex flex-col">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 flex-grow flex flex-col">
           <FormField
             control={form.control}
             name="title"
@@ -94,12 +93,12 @@ export default function NewNotePage() {
                 <FormLabel className="sr-only">Title</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Note Title"
+                    placeholder="Title"
                     {...field}
-                    className="text-2xl font-semibold border-0 border-b-2 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary p-2 h-auto"
+                    className="text-4xl font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-auto"
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="px-2" />
               </FormItem>
             )}
           />
@@ -112,16 +111,16 @@ export default function NewNotePage() {
                 <FormControl>
                   <Textarea
                     placeholder="Type your note here..."
-                    className="flex-grow w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent"
+                    className="flex-grow w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent shadow-none"
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="px-2" />
               </FormItem>
             )}
           />
-          <div className="flex justify-end sticky bottom-8">
-            <Button type="submit" size="lg" disabled={isCreating}>
+          <div className="sticky bottom-6 mt-auto py-4 bg-background/80 backdrop-blur-sm">
+            <Button type="submit" size="lg" disabled={isCreating} className="w-full">
               {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
               Create Note
             </Button>
@@ -131,5 +130,3 @@ export default function NewNotePage() {
     </div>
   );
 }
-
-    
