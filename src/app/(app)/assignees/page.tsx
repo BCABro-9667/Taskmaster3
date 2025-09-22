@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Assignee, User } from '@/types';
 import { getAssignees, deleteAssignee as deleteAssigneeApi } from '@/lib/tasks';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users as UsersIcon, PlusCircle, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Loader2, Users as UsersIcon, PlusCircle, Search, Edit, Trash2, Eye, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
@@ -28,6 +28,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from 'next/link';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
@@ -174,18 +181,33 @@ export default function AssigneesPage() {
                 <TableRow key={assigneeItem.id} className="bg-transparent hover:bg-muted/50">
                   <TableCell className="font-medium">{assigneeItem.name}</TableCell>
                   <TableCell>{assigneeItem.designation || 'N/A'}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="outline" size="icon" asChild>
-                      <Link href={`/assignees/${assigneeItem.id}`} title="View Details">
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setEditingAssignee(assigneeItem)} title="Edit Assignee">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="icon" onClick={() => setDeletingAssignee(assigneeItem)} title="Delete Assignee">
-                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-5 w-5" />
+                                <span className="sr-only">Assignee Actions</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => router.push(`/assignees/${assigneeItem.id}`)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>View Details</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setEditingAssignee(assigneeItem)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setDeletingAssignee(assigneeItem)}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
