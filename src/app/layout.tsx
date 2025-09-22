@@ -8,7 +8,7 @@ import { AppProviders } from '@/components/shared/AppProviders';
 export const metadata: Metadata = {
   title: 'TaskMaster - AI-Powered Task Management by Avdhesh Kumar',
   description: 'Manage your tasks, assignments, and deadlines efficiently with TaskMaster. Boost productivity with AI-powered suggestions and real-time collaboration. Developed by Avdhesh Kumar.',
-  keywords: ['task management', 'todo app', 'project management', 'productivity', 'Avdhesh Kumar', 'Next.js', 'AI task manager', 'collaboration tool'],
+  keywords: ['DPG Degree college, AI-powered task management', 'todo app', 'project management', 'productivity', 'Avdhesh Kumar', 'Next.js', 'AI task manager', 'collaboration tool'],
   authors: [{ name: 'Avdhesh Kumar' }],
   creator: 'Avdhesh Kumar',
 };
