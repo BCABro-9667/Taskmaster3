@@ -73,52 +73,57 @@ export default function NewNotePage() {
   }
   
   return (
-    <div className="max-w-4xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
-      <div className="flex items-center gap-4 mb-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/notes">
-            <ArrowLeft />
-            <span className="sr-only">Back to Notes</span>
-          </Link>
-        </Button>
-      </div>
-
+    <div className="max-w-4xl mx-auto flex flex-col h-full">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 flex-grow flex flex-col">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="sr-only">Title</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Title"
-                    {...field}
-                    className="text-4xl font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-auto"
-                  />
-                </FormControl>
-                <FormMessage className="px-2" />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="flex-grow flex flex-col">
-                <FormLabel className="sr-only">Note Content</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Type your note here..."
-                    className="w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent shadow-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage className="px-2" />
-              </FormItem>
-            )}
-          />
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col h-full">
+          <div className="sticky top-[65px] z-10 bg-background/80 backdrop-blur-sm pt-4 pb-2">
+              <div className="flex items-start gap-4 mb-4">
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/notes">
+                    <ArrowLeft />
+                    <span className="sr-only">Back to Notes</span>
+                  </Link>
+                </Button>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel className="sr-only">Title</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Title"
+                          {...field}
+                          className="text-4xl font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-auto"
+                        />
+                      </FormControl>
+                      <FormMessage className="px-2" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+          </div>
+          
+          <div className="flex-grow flex flex-col">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem className="flex-grow flex flex-col">
+                  <FormLabel className="sr-only">Note Content</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Type your note here..."
+                      className="w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent shadow-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="px-2" />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <div className="sticky bottom-6 mt-auto py-4 bg-background/80 backdrop-blur-sm">
             <Button type="submit" size="lg" disabled={isCreating} className="w-full">
               {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
