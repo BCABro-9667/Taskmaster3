@@ -77,7 +77,7 @@ export function FeaturesSection() {
                 alt={feature.imageAlt}
                 width={550}
                 height={310}
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full shadow-lg"
+                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full "
                 data-ai-hint={feature.imageHint}
               />
             </div>

@@ -8,6 +8,7 @@ import { AboutSection } from '@/components/landing/AboutSection';
 import { FeaturesSection } from '@/components/landing/FeaturesSection';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CustomCursor } from '@/components/landing/CustomCursor';
+import { AnimatedSection } from '@/components/landing/AnimatedSection';
 import { useEffect } from 'react';
 
 export default function LandingPage() {
@@ -23,10 +24,18 @@ export default function LandingPage() {
       <CustomCursor />
       <LandingNavbar />
       <main className="flex-grow">
-        <HeroSection />
-        <AboutSection />
-        <FeaturesSection />
-        <TestimonialsSection />
+        <AnimatedSection>
+          <HeroSection />
+        </AnimatedSection>
+        <AnimatedSection>
+          <AboutSection />
+        </AnimatedSection>
+        <AnimatedSection>
+          <FeaturesSection />
+        </AnimatedSection>
+        <AnimatedSection>
+          <TestimonialsSection />
+        </AnimatedSection>
       </main>
       <LandingFooter />
     </div>
