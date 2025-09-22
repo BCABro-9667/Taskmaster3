@@ -14,7 +14,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { Assignee } from '@/types';
 import { useState, useCallback, useEffect } from 'react';
-import { Loader2, CalendarIcon, UserPlus, ArrowUp } from 'lucide-react';
+import { Loader2, CalendarIcon, User, ArrowUp } from 'lucide-react';
 import { taskFormSchema, type TaskFormValues } from './TaskFormSchema';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -31,6 +31,7 @@ import { format, parseISO } from 'date-fns';
 import { CreateAssigneeDialog } from '@/components/assignees/CreateAssigneeDialog';
 import { useAssignees, useCreateTask } from '@/hooks/use-tasks';
 import { Textarea } from '../ui/textarea';
+import { UserPlus } from 'lucide-react';
 
 const CREATE_NEW_ASSIGNEE_VALUE = "__CREATE_NEW_ASSIGNEE__";
 
@@ -142,88 +143,93 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
             )}
           />
 
-          <div className="flex justify-end items-center gap-2 pt-1">
-             <FormField
-                control={form.control}
-                name="deadline"
-                render={({ field }) => (
-                <FormItem>
-                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <PopoverTrigger asChild>
+          <div className="flex justify-between items-center gap-2 pt-1">
+             <div className="flex items-center gap-1">
+                <FormField
+                    control={form.control}
+                    name="assignedTo"
+                    render={({ field }) => (
+                    <FormItem>
+                        <Select 
+                            onValueChange={(value) => {
+                                if (value === CREATE_NEW_ASSIGNEE_VALUE) {
+                                setIsCreateAssigneeDialogOpen(true);
+                                } else {
+                                field.onChange(value);
+                                onAssigneeChange(value);
+                                }
+                            }} 
+                            value={field.value || 'unassigned'}
+                            disabled={!currentUserId}
+                        >
                         <FormControl>
-                            <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 text-muted-foreground"
-                            >
-                            <CalendarIcon className="h-5 w-5" />
-                            <span className="sr-only">Pick date</span>
-                            </Button>
+                            <SelectTrigger className="h-9 border-none bg-transparent hover:bg-muted text-muted-foreground focus:ring-0 focus:ring-offset-0 gap-1 pl-2 pr-1">
+                                <SelectValue>
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      {assigneesForDropdown.find(a => a.id === field.value)?.name || 'Unassigned'}
+                                    </span>
+                                  </div>
+                                </SelectValue>
+                            </SelectTrigger>
                         </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                            mode="single"
-                            selected={field.value ? parseISO(field.value) : undefined}
-                            onSelect={(date) => {
-                                field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
-                                setIsCalendarOpen(false);
-                            }}
-                            disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="assignedTo"
-                render={({ field }) => (
-                <FormItem>
-                    <Select 
-                        onValueChange={(value) => {
-                            if (value === CREATE_NEW_ASSIGNEE_VALUE) {
-                            setIsCreateAssigneeDialogOpen(true);
-                            } else {
-                            field.onChange(value);
-                            onAssigneeChange(value);
-                            }
-                        }} 
-                        value={field.value || 'unassigned'}
-                        disabled={!currentUserId}
-                    >
-                    <FormControl>
-                        <SelectTrigger className="h-9 w-9 p-2 rounded-full border-none bg-transparent hover:bg-muted text-muted-foreground focus:ring-0 focus:ring-offset-0">
-                            <SelectValue>
-                                {assigneesForDropdown.find(a => a.id === field.value)?.name.charAt(0) || <UserPlus className='h-5 w-5'/>}
-                            </SelectValue>
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent align='end'>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        <SelectSeparator />
-                        {assigneesForDropdown.map((assignee) => (
-                        <SelectItem key={assignee.id} value={assignee.id}>
-                            {assignee.name}
-                        </SelectItem>
-                        ))}
-                        <SelectSeparator />
-                        <SelectItem value={CREATE_NEW_ASSIGNEE_VALUE} className="text-primary">
-                        <div className="flex items-center">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Create New Assignee...
-                        </div>
-                        </SelectItem>
-                    </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+                        <SelectContent align='end'>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            <SelectSeparator />
+                            {assigneesForDropdown.map((assignee) => (
+                            <SelectItem key={assignee.id} value={assignee.id}>
+                                {assignee.name}
+                            </SelectItem>
+                            ))}
+                            <SelectSeparator />
+                            <SelectItem value={CREATE_NEW_ASSIGNEE_VALUE} className="text-primary">
+                            <div className="flex items-center">
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Create New Assignee...
+                            </div>
+                            </SelectItem>
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="deadline"
+                    render={({ field }) => (
+                    <FormItem>
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant="ghost"
+                                className={cn("h-9 w-auto text-muted-foreground font-normal gap-2 px-2", !field.value && "text-muted-foreground")}
+                                >
+                                <CalendarIcon className="h-4 w-4" />
+                                {field.value ? format(parseISO(field.value), 'MMM d') : <span>Pick date</span>}
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                                mode="single"
+                                selected={field.value ? parseISO(field.value) : undefined}
+                                onSelect={(date) => {
+                                    field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
+                                    setIsCalendarOpen(false);
+                                }}
+                                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+             </div>
             
             <Button 
                 type="submit" 
