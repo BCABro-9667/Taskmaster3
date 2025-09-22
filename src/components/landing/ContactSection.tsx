@@ -1,5 +1,5 @@
 
-import { Phone, Mail, MapPin } from 'lucide-react';
+import { Phone, Mail, MapPin, Link as LinkIcon } from 'lucide-react';
 import { ContactForm } from './ContactForm';
 
 export function ContactSection() {
@@ -31,7 +31,7 @@ export function ContactSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold">Our Office</h4>
-                  <p className="text-muted-foreground">123 Innovation Drive, Tech City, 12345</p>
+                  <p className="text-muted-foreground">IMT Manesar, Gurgaon - 122 505 (Hr)</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -40,8 +40,8 @@ export function ContactSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold">Email Us</h4>
-                  <a href="mailto:support@taskmaster.com" className="text-muted-foreground hover:text-primary transition-colors">
-                    support@taskmaster.com
+                  <a href="mailto:avdhesh966734@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                    avdhesh966734@gmail.com
                   </a>
                 </div>
               </div>
@@ -51,8 +51,19 @@ export function ContactSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold">Call Us</h4>
-                  <a href="tel:+1234567890" className="text-muted-foreground hover:text-primary transition-colors">
-                    +1 (234) 567-890
+                  <a href="tel:+919667346203" className="text-muted-foreground hover:text-primary transition-colors">
+                    +91 96673 46203
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-full flex-shrink-0">
+                  <LinkIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Developer Portfolio</h4>
+                  <a href="https://avdheshh-portfolio.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                    avdheshh-portfolio.netlify.app
                   </a>
                 </div>
               </div>
