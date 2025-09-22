@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
@@ -73,7 +74,7 @@ export default function NewNotePage() {
   }
   
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-full">
+    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col h-full">
           <div className="sticky top-[65px] z-10 bg-background/80 backdrop-blur-sm pt-4 pb-2">
@@ -102,6 +103,7 @@ export default function NewNotePage() {
                   )}
                 />
               </div>
+              <Separator />
           </div>
           
           <div className="flex-grow flex flex-col">
