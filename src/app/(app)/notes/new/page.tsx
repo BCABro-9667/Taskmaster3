@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Separator } from '@/components/ui/separator';
 
 const noteFormSchema = z.object({
@@ -24,6 +24,8 @@ const noteFormSchema = z.object({
 });
 
 type NoteFormValues = z.infer<typeof noteFormSchema>;
+
+const LOCAL_STORAGE_KEY = 'newNoteDraft';
 
 export default function NewNotePage() {
   const router = useRouter();
@@ -49,10 +51,36 @@ export default function NewNotePage() {
     },
   });
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        form.reset(parsedDraft);
+      } catch (e) {
+        console.error("Failed to parse note draft from localStorage", e);
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
+    }
+  }, [form]);
+
+  // Save to localStorage on change
+  const watchedValues = form.watch();
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+
   const handleFormSubmit: SubmitHandler<NoteFormValues> = (data) => {
     createNote(data, {
       onSuccess: () => {
         toast({ title: "Note Created", description: "Your new note has been saved." });
+        localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear draft on success
+        form.reset({ title: '', description: '' }); // Reset form fields
         router.push('/notes');
       },
       onError: (error) => {
