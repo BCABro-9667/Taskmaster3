@@ -20,10 +20,10 @@ export function HeroSection() {
               </p>
             </div>
             <div className="flex flex-col gap-3 min-[400px]:flex-row">
-              <Button size="lg" asChild>
+              <Button size="lg" asChild className="rounded-full btn-landing-gradient">
                 <Link href="/register">Get Started for Free</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild className="rounded-full">
                 <Link href="#features">Learn More</Link>
               </Button>
             </div>

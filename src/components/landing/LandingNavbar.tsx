@@ -68,8 +68,8 @@ export function LandingNavbar() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <div className="hidden md:flex items-center gap-2">
-              <Button variant="outline" onClick={() => setIsLoginModalOpen(true)}>Login</Button>
-              <Button onClick={() => setIsRegisterModalOpen(true)}>Sign Up</Button>
+              <Button variant="outline" onClick={() => setIsLoginModalOpen(true)} className="rounded-full">Login</Button>
+              <Button onClick={() => setIsRegisterModalOpen(true)} className="rounded-full btn-landing-gradient">Sign Up</Button>
             </div>
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -98,8 +98,8 @@ export function LandingNavbar() {
                       ))}
                     </nav>
                     <div className="mt-auto flex flex-col gap-2">
-                      <Button variant="outline" className="w-full" onClick={() => { setIsMobileMenuOpen(false); setIsLoginModalOpen(true); }}>Login</Button>
-                      <Button className="w-full" onClick={() => { setIsMobileMenuOpen(false); setIsRegisterModalOpen(true); }}>Sign Up</Button>
+                      <Button variant="outline" className="w-full rounded-full" onClick={() => { setIsMobileMenuOpen(false); setIsLoginModalOpen(true); }}>Login</Button>
+                      <Button className="w-full rounded-full btn-landing-gradient" onClick={() => { setIsMobileMenuOpen(false); setIsRegisterModalOpen(true); }}>Sign Up</Button>
                     </div>
                   </div>
                 </SheetContent>
