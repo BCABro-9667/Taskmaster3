@@ -83,8 +83,8 @@ export function UrlList({ urls, categories }: UrlListProps) {
             <CardContent className="p-3 flex items-center justify-between">
               <div className="flex-grow min-w-0">
                 <div className="flex items-center gap-2">
-                  <a href={url.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline truncate">
-                    {url.url}
+                  <a href={url.url} target="_blank" rel="noopener noreferrer" title={url.url} className="text-sm font-medium text-primary hover:underline truncate">
+                    {url.url.length > 30 ? `${url.url.substring(0, 30)}...` : url.url}
                   </a>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(url.url)}>
                     <Copy className="h-4 w-4" />

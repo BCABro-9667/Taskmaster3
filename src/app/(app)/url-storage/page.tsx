@@ -42,7 +42,7 @@ export default function UrlStoragePage() {
         <h1 className="text-3xl font-bold font-headline text-primary">URL Storage</h1>
       </div>
 
-      <Card className="shadow-lg bg-card/60">
+      <Card className="shadow-lg bg-card/60 rounded-2xl">
         <CardContent className="p-4 md:p-6">
           <UrlForm categories={categories} />
         </CardContent>
