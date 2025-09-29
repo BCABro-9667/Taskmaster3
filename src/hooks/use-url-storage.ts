@@ -32,7 +32,7 @@ function getFromStorage(): StorageData {
       { id: 'google', name: 'Google', createdAt: new Date().toISOString() },
       { id: 'youtube', name: 'Youtube', createdAt: new Date().toISOString() },
       { id: 'instagram', name: 'Instagram', createdAt: new Date().toISOString() },
-      { id: 'facebook', name: 'Facebook', createdAt new Date().toISOString() },
+      { id: 'facebook', name: 'Facebook', createdAt: new Date().toISOString() },
     ],
   };
 }
