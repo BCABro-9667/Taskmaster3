@@ -23,6 +23,7 @@ import {
 import { CategoryActionMenu } from './CategoryActionMenu';
 import { CategoryModal } from './CategoryModal';
 import { getCurrentUser } from '@/lib/client-auth';
+import { shortenUrl as shortenUrlFlow } from '@/ai/flows/shorten-url';
 
 const urlFormSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -44,6 +45,7 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isShortening, setIsShortening] = useState(false);
 
   const { mutate: createUrl, isPending: isCreating } = useCreateUrl(currentUser?.id);
   const { mutate: updateUrl, isPending: isUpdating } = useUpdateUrl(currentUser?.id);
@@ -75,8 +77,28 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
     }
   };
 
-  const shortenUrl = () => {
-    toast({ title: 'Coming Soon!', description: 'URL shortener functionality will be implemented in a future update.' });
+  const shortenUrl = async () => {
+    const longUrl = form.getValues('url');
+    const validation = z.string().url().safeParse(longUrl);
+    if (!validation.success) {
+      form.setError('url', { type: 'manual', message: 'Please enter a valid URL to shorten.' });
+      return;
+    }
+
+    setIsShortening(true);
+    try {
+      const shortUrl = await shortenUrlFlow(longUrl);
+      form.setValue('url', shortUrl, { shouldValidate: true });
+      toast({ variant: 'success', title: 'URL Shortened!', description: 'The URL has been replaced with the shortened version.' });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to Shorten URL',
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsShortening(false);
+    }
   };
   
   const onSubmit = (data: UrlFormValues) => {
@@ -175,8 +197,8 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
                   </FormItem>
                 )}
               />
-               <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={shortenUrl}>
-                  <Link2 />
+               <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={shortenUrl} disabled={isShortening}>
+                  {isShortening ? <Loader2 className="animate-spin" /> : <Link2 />}
                </Button>
                <Button type="submit" size="icon" className="h-9 w-9 rounded-full" disabled={isPending}>
                  {isPending ? <Loader2 className="animate-spin" /> : <ArrowUp />}
