@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -74,7 +73,7 @@ export function LandingNavbar() {
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="ghost" size="icon">
                     <Menu className="h-5 w-5" />
                     <span className="sr-only">Toggle Menu</span>
                   </Button>
