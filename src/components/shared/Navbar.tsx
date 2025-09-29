@@ -69,13 +69,13 @@ export function Navbar() {
   const navLinks = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/assignees", label: "Assignees", icon: Users },
-    { href: "/task-progress", label: "Progress", icon: TrendingUp },
+    { href: "/url-storage", label: "URL Storage", icon: LinkIcon },
     { href: "/notes", label: "Notes", icon: StickyNote },
   ];
 
   const profileDropdownLinks = [
       { href: "/profile", label: "Profile", icon: ProfileIcon },
-      { href: "/url-storage", label: "URL Storage", icon: LinkIcon },
+      { href: "/task-progress", label: "Progress", icon: TrendingUp },
   ];
 
   return (
