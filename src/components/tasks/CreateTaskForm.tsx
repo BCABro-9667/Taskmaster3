@@ -55,14 +55,22 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
     reValidateMode: 'onChange',
     defaultValues: {
       title: '',
-      assignedTo: lastSelectedAssigneeId, 
+      assignedTo: 'unassigned', 
       deadline: format(new Date(), 'yyyy-MM-dd'),
     },
   });
 
   useEffect(() => {
-    form.setValue('assignedTo', lastSelectedAssigneeId);
-  }, [lastSelectedAssigneeId, form]);
+    // If a last selected ID exists, use it.
+    // Otherwise, if assignees exist, use the first one.
+    // Otherwise, it defaults to 'unassigned' from defaultValues.
+    if (lastSelectedAssigneeId) {
+      form.setValue('assignedTo', lastSelectedAssigneeId);
+    } else if (assigneesForDropdown.length > 0) {
+      form.setValue('assignedTo', assigneesForDropdown[0].id);
+    }
+  }, [lastSelectedAssigneeId, assigneesForDropdown, form]);
+
 
   const handleAssigneeCreated = (newAssignee: Assignee) => {
     refetchAssignees().then(() => {
@@ -102,12 +110,12 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
       onSuccess: () => {
          form.reset({
             title: '',
-            assignedTo: lastSelectedAssigneeId,
+            assignedTo: values.assignedTo, // Keep the last selected assignee
             deadline: format(new Date(), 'yyyy-MM-dd'),
         });
       }
     });
-  }, [createTask, currentUserId, lastSelectedAssigneeId, toast, form]);
+  }, [createTask, currentUserId, toast, form]);
 
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -159,7 +167,7 @@ export function CreateTaskForm({ currentUserId, lastSelectedAssigneeId, onAssign
                                 onAssigneeChange(value);
                                 }
                             }} 
-                            value={field.value || 'unassigned'}
+                            value={field.value}
                             disabled={!currentUserId}
                         >
                         <FormControl>

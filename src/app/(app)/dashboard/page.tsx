@@ -68,8 +68,13 @@ export default function DashboardPage() {
     const savedAssigneeId = localStorage.getItem('lastSelectedAssigneeId');
     if (savedAssigneeId) {
       setLastSelectedAssigneeId(savedAssigneeId);
+    } else if (assignees.length > 0) {
+      // If no saved ID, but assignees exist, default to the first one
+      const firstAssigneeId = assignees[0].id;
+      setLastSelectedAssigneeId(firstAssigneeId);
+      localStorage.setItem('lastSelectedAssigneeId', firstAssigneeId);
     }
-  }, []);
+  }, [assignees]);
   
   const handleAssigneeChange = (assigneeId: string) => {
     setLastSelectedAssigneeId(assigneeId);

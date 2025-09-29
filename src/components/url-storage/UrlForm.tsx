@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -58,6 +58,14 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
       categoryId: urlToEdit?.categoryId || 'uncategorized',
     },
   });
+
+  useEffect(() => {
+    // If not editing, and categories exist, default to the first category.
+    if (!urlToEdit && categories.length > 0) {
+      form.setValue('categoryId', categories[0].id);
+    }
+  }, [categories, urlToEdit, form]);
+
 
   const handleCategorySelect = (value: string) => {
     if (value === CREATE_NEW_CATEGORY_VALUE) {
