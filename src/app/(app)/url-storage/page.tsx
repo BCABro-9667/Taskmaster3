@@ -6,21 +6,34 @@ import { useUrls, useUrlCategories } from '@/hooks/use-url-storage';
 import { UrlForm } from '@/components/url-storage/UrlForm';
 import { UrlList } from '@/components/url-storage/UrlList';
 import { CategoryTabs } from '@/components/url-storage/CategoryTabs';
-import { Loader2, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Globe } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { getCurrentUser } from '@/lib/client-auth';
+import { Button } from '@/components/ui/button';
 
 export default function UrlStoragePage() {
   const [activeCategoryId, setActiveCategoryId] = useState('all');
+  const currentUser = getCurrentUser();
 
-  const { data: urls = [], isLoading: isLoadingUrls } = useUrls();
-  const { data: categories = [], isLoading: isLoadingCategories } = useUrlCategories();
+  const { data: urls = [], isLoading: isLoadingUrls } = useUrls(currentUser?.id);
+  const { data: categories = [], isLoading: isLoadingCategories } = useUrlCategories(currentUser?.id);
 
   const filteredUrls = urls.filter(url => {
     if (activeCategoryId === 'all') return true;
+    if (activeCategoryId === 'uncategorized') return url.categoryId === 'uncategorized' || !url.categoryId;
     return url.categoryId === activeCategoryId;
   });
 
   const isLoading = isLoadingUrls || isLoadingCategories;
+  
+  if (!currentUser) {
+     return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <p className="text-lg text-muted-foreground">Please log in to manage your URLs.</p>
+         <Button onClick={() => window.location.href = '/'} className="mt-4">Go to Homepage</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

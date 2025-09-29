@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getCurrentUser } from '@/lib/client-auth';
 
 interface DeleteCategoryAlertProps {
   isOpen: boolean;
@@ -23,7 +24,8 @@ interface DeleteCategoryAlertProps {
 
 export function DeleteCategoryAlert({ isOpen, onOpenChange, category }: DeleteCategoryAlertProps) {
   const { toast } = useToast();
-  const { mutate: deleteCategory, isPending } = useDeleteUrlCategory();
+  const currentUser = getCurrentUser();
+  const { mutate: deleteCategory, isPending } = useDeleteUrlCategory(currentUser?.id);
 
   const handleDelete = () => {
     deleteCategory(category.id, {

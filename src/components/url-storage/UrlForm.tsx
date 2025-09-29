@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCreateUrl, useUpdateUrl } from '@/hooks/use-url-storage';
 import { useToast } from '@/hooks/use-toast';
-import type { Url, UrlCategory } from '@/types';
+import type { Url, UrlCategory, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { CategoryActionMenu } from './CategoryActionMenu';
 import { CategoryModal } from './CategoryModal';
+import { getCurrentUser } from '@/lib/client-auth';
 
 const urlFormSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -41,10 +42,11 @@ const CREATE_NEW_CATEGORY_VALUE = '__CREATE_NEW__';
 
 export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
   const { toast } = useToast();
+  const currentUser = getCurrentUser();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
-  const { mutate: createUrl, isPending: isCreating } = useCreateUrl();
-  const { mutate: updateUrl, isPending: isUpdating } = useUpdateUrl();
+  const { mutate: createUrl, isPending: isCreating } = useCreateUrl(currentUser?.id);
+  const { mutate: updateUrl, isPending: isUpdating } = useUpdateUrl(currentUser?.id);
 
   const isPending = isCreating || isUpdating;
 
@@ -53,7 +55,7 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
     defaultValues: {
       title: urlToEdit?.title || '',
       url: urlToEdit?.url || '',
-      categoryId: urlToEdit?.categoryId || 'all',
+      categoryId: urlToEdit?.categoryId || 'uncategorized',
     },
   });
 
@@ -70,6 +72,10 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
   };
   
   const onSubmit = (data: UrlFormValues) => {
+    if (!currentUser) {
+        toast({ variant: 'destructive', title: 'Not authenticated', description: 'You must be logged in.' });
+        return;
+    }
     if (urlToEdit) {
       updateUrl({ id: urlToEdit.id, updates: data }, {
         onSuccess: () => {
@@ -139,7 +145,7 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="uncategorized">Uncategorized</SelectItem>
                         <SelectSeparator />
                         {categories.map(cat => (
                           <SelectItem key={cat.id} value={cat.id} className="group/item">
@@ -171,10 +177,12 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
           </div>
         </form>
       </Form>
-      <CategoryModal
-        isOpen={isCategoryModalOpen}
-        onOpenChange={setIsCategoryModalOpen}
-      />
+      {currentUser && (
+        <CategoryModal
+            isOpen={isCategoryModalOpen}
+            onOpenChange={setIsCategoryModalOpen}
+        />
+      )}
     </>
   );
 }

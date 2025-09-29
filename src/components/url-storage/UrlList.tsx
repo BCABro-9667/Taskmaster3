@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { MoreHorizontal, Edit, Trash2, Copy, Globe } from 'lucide-react';
 import { UrlForm } from './UrlForm';
+import { getCurrentUser } from '@/lib/client-auth';
 
 interface UrlListProps {
   urls: Url[];
@@ -40,7 +41,8 @@ interface UrlListProps {
 
 export function UrlList({ urls, categories }: UrlListProps) {
   const { toast } = useToast();
-  const { mutate: deleteUrl } = useDeleteUrl();
+  const currentUser = getCurrentUser();
+  const { mutate: deleteUrl } = useDeleteUrl(currentUser?.id);
   const [urlToDelete, setUrlToDelete] = useState<Url | null>(null);
   const [urlToEdit, setUrlToEdit] = useState<Url | null>(null);
 

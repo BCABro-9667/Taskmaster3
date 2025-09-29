@@ -3,189 +3,128 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Url, UrlCategory } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
-
-// --- Local Storage Cache Helpers ---
-const URL_STORAGE_KEY = 'url-storage-data';
-
-interface StorageData {
-  urls: Url[];
-  categories: UrlCategory[];
-}
-
-function getFromStorage(): StorageData {
-  if (typeof window === 'undefined') {
-    return { urls: [], categories: [] };
-  }
-  const cachedData = localStorage.getItem(URL_STORAGE_KEY);
-  if (cachedData) {
-    try {
-      return JSON.parse(cachedData);
-    } catch (e) {
-      console.error("Failed to parse URL storage from localStorage", e);
-    }
-  }
-  // Default data if nothing is in storage
-  return {
-    urls: [],
-    categories: [
-      { id: 'google', name: 'Google', createdAt: new Date().toISOString() },
-      { id: 'youtube', name: 'Youtube', createdAt: new Date().toISOString() },
-      { id: 'instagram', name: 'Instagram', createdAt: new Date().toISOString() },
-      { id: 'facebook', name: 'Facebook', createdAt: new Date().toISOString() },
-    ],
-  };
-}
-
-function setToStorage(data: StorageData) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(URL_STORAGE_KEY, JSON.stringify(data));
-  // Dispatch a custom event to notify other tabs/windows if needed
-  window.dispatchEvent(new Event('url-storage-updated'));
-}
+import { 
+    getUrls, 
+    createUrl, 
+    updateUrl, 
+    deleteUrl, 
+    getUrlCategories, 
+    createUrlCategory, 
+    updateUrlCategory, 
+    deleteUrlCategory 
+} from '@/lib/url-storage';
 
 // --- Query Keys ---
 const urlStorageKeys = {
-  all: ['urlStorage'] as const,
-  urls: () => [...urlStorageKeys.all, 'urls'] as const,
-  categories: () => [...urlStorageKeys.all, 'categories'] as const,
+  all: (userId: string) => ['urlStorage', userId] as const,
+  urls: (userId: string) => [...urlStorageKeys.all(userId), 'urls'] as const,
+  categories: (userId: string) => [...urlStorageKeys.all(userId), 'categories'] as const,
 };
-
-// This is a fake async function to simulate network latency for local storage operations
-const fakeApi = async <T>(data: T, delay = 100): Promise<T> =>
-  new Promise(resolve => setTimeout(() => resolve(data), delay));
-
 
 // --- Custom Hooks ---
 
 // URLs
-export function useUrls() {
+export function useUrls(userId: string | null | undefined) {
   return useQuery<Url[]>({
-    queryKey: urlStorageKeys.urls(),
-    queryFn: () => fakeApi(getFromStorage().urls),
+    queryKey: urlStorageKeys.urls(userId!),
+    queryFn: () => getUrls(userId!),
+    enabled: !!userId,
   });
 }
 
-type CreateUrlPayload = Omit<Url, 'id' | 'createdAt' | 'updatedAt'>;
+type CreateUrlPayload = Parameters<typeof createUrl>[1];
 
-export function useCreateUrl() {
+export function useCreateUrl(userId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (newUrlData: CreateUrlPayload) => {
-      const storage = getFromStorage();
-      const newUrl: Url = {
-        ...newUrlData,
-        id: uuidv4(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      const updatedData = { ...storage, urls: [newUrl, ...storage.urls] };
-      setToStorage(updatedData);
-      return fakeApi(newUrl);
+    mutationFn: (newUrlData: CreateUrlPayload) => {
+        if (!userId) throw new Error("User not authenticated");
+        return createUrl(userId, newUrlData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: urlStorageKeys.urls() });
+      queryClient.invalidateQueries({ queryKey: urlStorageKeys.urls(userId!) });
     },
   });
 }
 
 type UpdateUrlPayload = { id: string; updates: Partial<CreateUrlPayload> };
 
-export function useUpdateUrl() {
+export function useUpdateUrl(userId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, updates }: UpdateUrlPayload) => {
-      const storage = getFromStorage();
-      const updatedUrls = storage.urls.map(url =>
-        url.id === id ? { ...url, ...updates, updatedAt: new Date().toISOString() } : url
-      );
-      setToStorage({ ...storage, urls: updatedUrls });
-      const updatedUrl = updatedUrls.find(u => u.id === id);
-      return fakeApi(updatedUrl);
+    mutationFn: ({ id, updates }: UpdateUrlPayload) => {
+        if (!userId) throw new Error("User not authenticated");
+        return updateUrl(userId, id, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: urlStorageKeys.urls() });
+      queryClient.invalidateQueries({ queryKey: urlStorageKeys.urls(userId!) });
     },
   });
 }
 
 
-export function useDeleteUrl() {
+export function useDeleteUrl(userId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (urlId: string) => {
-      const storage = getFromStorage();
-      const updatedUrls = storage.urls.filter(url => url.id !== urlId);
-      setToStorage({ ...storage, urls: updatedUrls });
-      return fakeApi({ deletedUrlId: urlId });
+    mutationFn: (urlId: string) => {
+        if (!userId) throw new Error("User not authenticated");
+        return deleteUrl(userId, urlId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: urlStorageKeys.urls() });
+      queryClient.invalidateQueries({ queryKey: urlStorageKeys.urls(userId!) });
     },
   });
 }
 
 // Categories
-export function useUrlCategories() {
+export function useUrlCategories(userId: string | null | undefined) {
   return useQuery<UrlCategory[]>({
-    queryKey: urlStorageKeys.categories(),
-    queryFn: () => fakeApi(getFromStorage().categories),
+    queryKey: urlStorageKeys.categories(userId!),
+    queryFn: () => getUrlCategories(userId!),
+    enabled: !!userId,
   });
 }
 
-export function useCreateUrlCategory() {
+type CreateUrlCategoryPayload = Parameters<typeof createUrlCategory>[1];
+
+export function useCreateUrlCategory(userId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (name: string) => {
-      const storage = getFromStorage();
-      const newCategory: UrlCategory = {
-        id: uuidv4(),
-        name,
-        createdAt: new Date().toISOString(),
-      };
-      const updatedData = { ...storage, categories: [...storage.categories, newCategory] };
-      setToStorage(updatedData);
-      return fakeApi(newCategory);
+    mutationFn: (data: CreateUrlCategoryPayload) => {
+        if (!userId) throw new Error("User not authenticated");
+        return createUrlCategory(userId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: urlStorageKeys.categories() });
+      queryClient.invalidateQueries({ queryKey: urlStorageKeys.categories(userId!) });
     },
   });
 }
 
-export function useUpdateUrlCategory() {
+type UpdateUrlCategoryPayload = { id: string; name: string };
+
+export function useUpdateUrlCategory(userId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const storage = getFromStorage();
-      const updatedCategories = storage.categories.map(cat =>
-        cat.id === id ? { ...cat, name } : cat
-      );
-      setToStorage({ ...storage, categories: updatedCategories });
-      const updatedCategory = updatedCategories.find(c => c.id === id);
-      return fakeApi(updatedCategory);
+    mutationFn: async ({ id, name }: UpdateUrlCategoryPayload) => {
+      if (!userId) throw new Error("User not authenticated");
+      return updateUrlCategory(userId, id, { name });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: urlStorageKeys.categories() });
+      queryClient.invalidateQueries({ queryKey: urlStorageKeys.categories(userId!) });
     },
   });
 }
 
-export function useDeleteUrlCategory() {
+export function useDeleteUrlCategory(userId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (categoryId: string) => {
-      const storage = getFromStorage();
-      const updatedCategories = storage.categories.filter(cat => cat.id !== categoryId);
-      // Also reset categoryId for URLs that belonged to the deleted category
-      const updatedUrls = storage.urls.map(url =>
-        url.categoryId === categoryId ? { ...url, categoryId: 'all' } : url
-      );
-      setToStorage({ categories: updatedCategories, urls: updatedUrls });
-      return fakeApi({ deletedCategoryId: categoryId });
+    mutationFn: (categoryId: string) => {
+        if (!userId) throw new Error("User not authenticated");
+        return deleteUrlCategory(userId, categoryId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: urlStorageKeys.all });
+      // Invalidate both categories and URLs since URLs might have been updated
+      queryClient.invalidateQueries({ queryKey: urlStorageKeys.all(userId!) });
     },
   });
 }

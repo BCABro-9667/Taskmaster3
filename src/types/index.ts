@@ -47,13 +47,15 @@ export interface UrlCategory {
   id: string;
   name: string;
   createdAt: string;
+  createdBy: string;
 }
 
 export interface Url {
   id: string;
   title: string;
   url: string;
-  categoryId: string; // 'all' for uncategorized
+  categoryId: string; // 'uncategorized' for uncategorized
   createdAt: string;
   updatedAt: string;
+  createdBy: string;
 }

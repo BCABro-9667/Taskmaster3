@@ -25,6 +25,14 @@ export function CategoryTabs({ categories, activeCategoryId, onCategoryChange }:
             >
               All
             </Button>
+             <Button
+              variant={activeCategoryId === 'uncategorized' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onCategoryChange('uncategorized')}
+              className="rounded-full"
+            >
+              Uncategorized
+            </Button>
             {categories.map(cat => (
               <Button
                 key={cat.id}

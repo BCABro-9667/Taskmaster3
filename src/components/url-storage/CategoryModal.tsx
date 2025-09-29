@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
+import { getCurrentUser } from '@/lib/client-auth';
 
 const categoryFormSchema = z.object({
   name: z.string().min(2, 'Category name must be at least 2 characters.'),
@@ -35,8 +36,9 @@ interface CategoryModalProps {
 
 export function CategoryModal({ isOpen, onOpenChange, categoryToEdit }: CategoryModalProps) {
   const { toast } = useToast();
-  const { mutate: createCategory, isPending: isCreating } = useCreateUrlCategory();
-  const { mutate: updateCategory, isPending: isUpdating } = useUpdateUrlCategory();
+  const currentUser = getCurrentUser();
+  const { mutate: createCategory, isPending: isCreating } = useCreateUrlCategory(currentUser?.id);
+  const { mutate: updateCategory, isPending: isUpdating } = useUpdateUrlCategory(currentUser?.id);
 
   const isPending = isCreating || isUpdating;
   const isEditing = !!categoryToEdit;
@@ -47,14 +49,20 @@ export function CategoryModal({ isOpen, onOpenChange, categoryToEdit }: Category
   });
 
   useEffect(() => {
-    if (isEditing) {
-      form.setValue('name', categoryToEdit.name);
-    } else {
-      form.reset({ name: '' });
+    if (isOpen) {
+        if (isEditing) {
+          form.setValue('name', categoryToEdit.name);
+        } else {
+          form.reset({ name: '' });
+        }
     }
   }, [isOpen, isEditing, categoryToEdit, form]);
 
   const onSubmit = (data: CategoryFormValues) => {
+    if (!currentUser) {
+        toast({ variant: 'destructive', title: 'Not authenticated' });
+        return;
+    }
     if (isEditing) {
       updateCategory({ id: categoryToEdit.id, name: data.name }, {
         onSuccess: () => {
@@ -64,7 +72,7 @@ export function CategoryModal({ isOpen, onOpenChange, categoryToEdit }: Category
         onError: (err) => toast({ variant: 'destructive', title: 'Error', description: err.message }),
       });
     } else {
-      createCategory(data.name, {
+      createCategory({ name: data.name }, {
         onSuccess: () => {
           toast({ variant: 'success', title: 'Category Created' });
           onOpenChange(false);
