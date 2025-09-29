@@ -236,9 +236,9 @@ export default function NotesPage() {
             const isNoteLocked = note.isLocked && !unlockedNoteIds.has(note.id);
             return (
               <Card key={note.id} id={`note-${note.id}`} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow printable-note-card">
-                <CardHeader className="printable-note-header">
+                <CardHeader className="printable-note-header border-b pb-4">
                   <div className="flex justify-between items-start gap-4">
-                     <CardTitle className="break-words flex-1 printable-note-title">
+                     <CardTitle className="text-xl font-headline font-bold break-words flex-1 printable-note-title">
                       {note.title}
                     </CardTitle>
                     <div className="no-print">
@@ -292,21 +292,21 @@ export default function NotesPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardFooter className="text-xs text-muted-foreground/80 pt-2 printable-note-footer">
-                   <div className="flex items-center gap-1">
-                     <Clock className="h-3 w-3"/> 
-                     <span>Last updated: {format(new Date(note.updatedAt), "MMM d, yyyy 'at' p")}</span>
-                   </div>
-                 </CardFooter>
                 <CardContent className="flex-grow printable-note-content pt-4">
                   {isNoteLocked ? (
                       <div className="flex items-center justify-center h-full min-h-[80px] text-muted-foreground/50">
                         <Lock className="h-12 w-12" />
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{note.description}</p>
+                      <p className="text-base text-muted-foreground whitespace-pre-wrap break-words">{note.description}</p>
                   )}
                 </CardContent>
+                <CardFooter className="text-xs text-muted-foreground/80 pt-2 printable-note-footer mt-auto">
+                   <div className="flex items-center gap-1">
+                     <Clock className="h-3 w-3"/> 
+                     <span>Last updated: {format(new Date(note.updatedAt), "MMM d, yyyy 'at' p")}</span>
+                   </div>
+                 </CardFooter>
               </Card>
             )
           })}
@@ -413,5 +413,3 @@ export default function NotesPage() {
     </div>
   );
 }
-
-    
