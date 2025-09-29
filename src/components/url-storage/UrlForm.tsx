@@ -128,7 +128,7 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 rounded-xl border bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 p-2">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="relative flex flex-col justify-between w-full p-2 pr-4 rounded-2xl border bg-background shadow-lg focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all">
           <FormField
             control={form.control}
             name="title"
