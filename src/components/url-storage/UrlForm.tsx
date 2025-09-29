@@ -92,14 +92,18 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 rounded-xl border bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 p-2">
           <FormField
             control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Title" {...field} className="text-base" />
+                  <Input 
+                    placeholder="Title" 
+                    {...field} 
+                    className="text-base border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0" 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -112,7 +116,11 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
               render={({ field }) => (
                 <FormItem className="flex-grow">
                   <FormControl>
-                    <Input placeholder="https://example.com" {...field} className="text-base pl-4 pr-[180px]" />
+                    <Input 
+                      placeholder="https://example.com" 
+                      {...field} 
+                      className="text-sm pl-4 pr-[200px] border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -126,7 +134,7 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
                   <FormItem>
                     <Select onValueChange={handleCategorySelect} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="w-[100px] h-9">
+                        <SelectTrigger className="w-[120px] h-9 rounded-full">
                           <SelectValue placeholder="Category" />
                         </SelectTrigger>
                       </FormControl>
@@ -153,10 +161,10 @@ export function UrlForm({ categories, urlToEdit, onFinished }: UrlFormProps) {
                   </FormItem>
                 )}
               />
-               <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={shortenUrl}>
+               <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={shortenUrl}>
                   <Link2 />
                </Button>
-               <Button type="submit" size="icon" className="h-9 w-9" disabled={isPending}>
+               <Button type="submit" size="icon" className="h-9 w-9 rounded-full" disabled={isPending}>
                  {isPending ? <Loader2 className="animate-spin" /> : <ArrowUp />}
                </Button>
             </div>
