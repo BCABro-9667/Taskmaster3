@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MoreHorizontal, Edit, Trash2, Copy, Globe } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Copy, Globe } from 'lucide-react';
 import { UrlForm } from './UrlForm';
 import { getCurrentUser } from '@/lib/client-auth';
 
@@ -95,7 +95,7 @@ export function UrlList({ urls, categories }: UrlListProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
