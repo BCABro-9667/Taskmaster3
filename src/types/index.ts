@@ -41,3 +41,19 @@ export interface Note {
   updatedAt: string; // ISO date string
   createdBy: string;
 }
+
+// URL Storage System Types
+export interface UrlCategory {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface Url {
+  id: string;
+  title: string;
+  url: string;
+  categoryId: string; // 'all' for uncategorized
+  createdAt: string;
+  updatedAt: string;
+}

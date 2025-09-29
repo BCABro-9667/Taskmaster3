@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { clearCurrentUser, getCurrentUser } from '@/lib/client-auth'; // Use client-auth utilities
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard, StickyNote, MessageSquare } from 'lucide-react';
+import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard, StickyNote, MessageSquare, Link as LinkIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import logo from './logo.png'
@@ -73,6 +73,11 @@ export function Navbar() {
     { href: "/notes", label: "Notes", icon: StickyNote },
   ];
 
+  const profileDropdownLinks = [
+      { href: "/profile", label: "Profile", icon: ProfileIcon },
+      { href: "/url-storage", label: "URL Storage", icon: LinkIcon },
+  ];
+
   return (
     <nav className="bg-card/50 border-b border-border/40 shadow-sm sticky top-0 z-50 navbar-component backdrop-blur-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -136,12 +141,14 @@ export function Navbar() {
                   ))}
                   <DropdownMenuSeparator />
                 </div>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
-                    <ProfileIcon className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
+                {profileDropdownLinks.map((link) => (
+                    <DropdownMenuItem key={link.href} asChild>
+                      <Link href={link.href} className="cursor-pointer">
+                        <link.icon className="mr-2 h-4 w-4" />
+                        <span>{link.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
                   <LogOut className="mr-2 h-4 w-4" />
