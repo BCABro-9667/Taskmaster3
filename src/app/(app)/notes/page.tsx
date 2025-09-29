@@ -37,6 +37,7 @@ import { useNotes, useUpdateNote, useDeleteNote } from '@/hooks/use-notes';
 import { cn } from '@/lib/utils';
 import { UnlockDialog } from '@/components/notes/UnlockDialog';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 
 const noteFormSchema = z.object({
@@ -236,7 +237,7 @@ export default function NotesPage() {
             const isNoteLocked = note.isLocked && !unlockedNoteIds.has(note.id);
             return (
               <Card key={note.id} id={`note-${note.id}`} className="flex flex-col bg-card/60 shadow-md hover:shadow-lg transition-shadow printable-note-card">
-                <CardHeader className="printable-note-header border-b pb-4">
+                <CardHeader className="printable-note-header pb-2">
                   <div className="flex justify-between items-start gap-4">
                      <CardTitle className="text-xl font-headline font-bold break-words flex-1 printable-note-title">
                       {note.title}
@@ -291,6 +292,7 @@ export default function NotesPage() {
                       </DropdownMenu>
                     </div>
                   </div>
+                   <Separator className="mt-2" />
                 </CardHeader>
                 <CardContent className="flex-grow printable-note-content pt-4">
                   {isNoteLocked ? (
@@ -413,3 +415,5 @@ export default function NotesPage() {
     </div>
   );
 }
+
+    
