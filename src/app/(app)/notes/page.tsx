@@ -213,13 +213,6 @@ export default function NotesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <NotesIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold font-headline text-primary">My Notes</h1>
-        </div>
-      </div>
-
       <div className="relative no-print" style={{ position: 'relative', zIndex: '1' }}>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
