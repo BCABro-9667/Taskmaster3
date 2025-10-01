@@ -14,6 +14,24 @@ import {
     deleteUrlCategory 
 } from '@/lib/url-storage';
 
+// --- Local Storage Cache Helpers ---
+function getFromCache<T>(key: string): T | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const cachedData = localStorage.getItem(key);
+  try {
+    return cachedData ? JSON.parse(cachedData) : undefined;
+  } catch (e) {
+    console.error("Failed to parse cache", e);
+    return undefined;
+  }
+}
+
+function setToCache<T>(key: string, data: T) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+
 // --- Query Keys ---
 const urlStorageKeys = {
   all: (userId: string) => ['urlStorage', userId] as const,
@@ -25,10 +43,17 @@ const urlStorageKeys = {
 
 // URLs
 export function useUrls(userId: string | null | undefined) {
+  const queryKey = urlStorageKeys.urls(userId!);
   return useQuery<Url[]>({
-    queryKey: urlStorageKeys.urls(userId!),
-    queryFn: () => getUrls(userId!),
+    queryKey,
+    queryFn: async () => {
+        const data = await getUrls(userId!);
+        setToCache(JSON.stringify(queryKey), data);
+        return data;
+    },
     enabled: !!userId,
+    staleTime: 1000 * 60, // 1 minute
+    placeholderData: () => getFromCache(JSON.stringify(queryKey)),
   });
 }
 
@@ -78,10 +103,17 @@ export function useDeleteUrl(userId: string | null | undefined) {
 
 // Categories
 export function useUrlCategories(userId: string | null | undefined) {
+    const queryKey = urlStorageKeys.categories(userId!);
   return useQuery<UrlCategory[]>({
-    queryKey: urlStorageKeys.categories(userId!),
-    queryFn: () => getUrlCategories(userId!),
+    queryKey,
+    queryFn: async () => {
+        const data = await getUrlCategories(userId!);
+        setToCache(JSON.stringify(queryKey), data);
+        return data;
+    },
     enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes for categories
+    placeholderData: () => getFromCache(JSON.stringify(queryKey)),
   });
 }
 

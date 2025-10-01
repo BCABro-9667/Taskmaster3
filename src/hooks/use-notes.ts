@@ -5,6 +5,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getNotes, createNote, updateNote, deleteNote } from '@/lib/notes';
 import type { Note } from '@/types';
 
+// --- Local Storage Cache Helpers ---
+function getFromCache<T>(key: string): T | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const cachedData = localStorage.getItem(key);
+  try {
+    return cachedData ? JSON.parse(cachedData) : undefined;
+  } catch (e) {
+    console.error("Failed to parse cache", e);
+    return undefined;
+  }
+}
+
+function setToCache<T>(key: string, data: T) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
 // --- Query Keys ---
 const noteKeys = {
   all: (userId: string) => ['notes', userId] as const,
@@ -14,10 +31,17 @@ const noteKeys = {
 // --- Custom Hooks ---
 
 export function useNotes(userId: string | null | undefined) {
+  const queryKey = noteKeys.list(userId!);
   return useQuery({
-    queryKey: noteKeys.list(userId!),
-    queryFn: () => getNotes(userId!),
+    queryKey,
+    queryFn: async () => {
+      const data = await getNotes(userId!);
+      setToCache(JSON.stringify(queryKey), data);
+      return data;
+    },
     enabled: !!userId,
+    staleTime: 1000 * 60, // 1 minute
+    placeholderData: () => getFromCache(JSON.stringify(queryKey)),
   });
 }
 
@@ -41,6 +65,7 @@ export function useCreateNote(userId: string | null | undefined) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: userId!,
+        isLocked: false,
       };
 
       queryClient.setQueryData<Note[]>(noteKeys.list(userId!), (old = []) => [optimisticNote, ...old]);
