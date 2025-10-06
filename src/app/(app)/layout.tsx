@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { LoadingBarProvider } from '@/hooks/use-loading-bar';
 import type { User } from '@/types';
+import { AppLayoutClient } from '@/components/shared/AppLayoutClient';
 
 export default function AppLayout({
   children,
@@ -54,26 +55,11 @@ export default function AppLayout({
     return null; // or a minimal loader, as the redirect is in progress
   }
   
-  const backgroundStyle = currentUser?.backgroundImageUrl
-    ? { backgroundImage: `url(${currentUser.backgroundImageUrl})` }
-    : {};
-
   return (
     <LoadingBarProvider>
-       <div 
-        className="flex flex-col min-h-screen bg-background bg-cover bg-center bg-no-repeat bg-fixed main-bg-container" 
-        style={backgroundStyle}
-      >
-        <div className="flex flex-col min-h-screen bg-background/60 backdrop-blur-sm app-layout-main-container">
-            <Navbar />
-            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              {children}
-            </main>
-            <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border footer-component bg-background/50">
-              © {new Date().getFullYear()} TaskMaster. All rights reserved.
-            </footer>
-        </div>
-      </div>
+       <AppLayoutClient user={currentUser}>
+        {children}
+       </AppLayoutClient>
     </LoadingBarProvider>
   );
 }
