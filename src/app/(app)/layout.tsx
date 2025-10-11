@@ -16,7 +16,8 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<User | null>(() => getCurrentUser()); // Initialize from localStorage
+  // Initialize currentUser to null to ensure server and client initial render match
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
 
   useEffect(() => {
@@ -25,8 +26,9 @@ export default function AppLayout({
       router.replace('/login');
     } else {
       setCurrentUser(user);
-      setIsAuthCheckComplete(true);
     }
+    // Mark auth check as complete after the first client-side run
+    setIsAuthCheckComplete(true);
   }, [router]);
   
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function AppLayout({
     };
   }, [router]);
 
-  if (!isAuthCheckComplete && !currentUser) {
+  if (!isAuthCheckComplete) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
