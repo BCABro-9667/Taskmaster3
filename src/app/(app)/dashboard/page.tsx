@@ -310,28 +310,28 @@ export default function DashboardPage() {
           <section className="no-print">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="completed-tasks" className="border-none">
-                <AccordionTrigger className="hover:no-underline">
-                   <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                          <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
-                          <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
-                      </div>
+                  <div className="flex items-center justify-between w-full pr-4">
+                      <AccordionTrigger className="hover:no-underline flex-1">
+                        <div className="flex items-center">
+                            <CheckCircle2 className="mr-3 h-6 w-6 text-green-500" />
+                            <h2 className="text-2xl font-semibold font-headline">Completed Tasks ({completedTasks.length})</h2>
+                        </div>
+                      </AccordionTrigger>
                       {completedTasks.length > 0 && (
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation(); // prevent accordion from toggling
-                            setIsDeleteAllConfirmOpen(true)
+                            setIsDeleteAllConfirmOpen(true);
                           }}
-                          className="mr-4"
+                          className="ml-4"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete All
                         </Button>
                       )}
                   </div>
-                </AccordionTrigger>
                 <AccordionContent>
                   {currentUser?.id && (
                     <TaskList
