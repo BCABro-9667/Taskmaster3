@@ -15,6 +15,7 @@ import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export default function AssigneeDetailPage() {
@@ -178,6 +179,7 @@ export default function AssigneeDetailPage() {
   const totalTasks = tasks.length;
 
   return (
+    <TooltipProvider>
     <div className="space-y-8">
       <div className="flex items-center gap-2 no-print">
         <Button variant="outline" asChild>
@@ -186,10 +188,17 @@ export default function AssigneeDetailPage() {
             Back to Assignees
           </Link>
         </Button>
-        <Button variant="outline" onClick={() => window.print()} className="mb-0">
-          <Printer className="mr-2 h-4 w-4" />
-          Print
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" onClick={() => window.print()} className="mb-0">
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Print Page</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
       
       <div className="printable-content">
@@ -297,5 +306,6 @@ export default function AssigneeDetailPage() {
         </Accordion>
       </section>
     </div>
+    </TooltipProvider>
   );
 }

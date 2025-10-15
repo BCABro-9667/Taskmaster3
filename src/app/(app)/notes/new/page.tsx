@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
@@ -102,17 +103,25 @@ export default function NewNotePage() {
   }
   
   return (
+    <TooltipProvider>
     <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col h-full">
           <div className="sticky top-[65px] z-10 bg-background/80 backdrop-blur-sm pt-4 pb-2">
               <div className="flex items-start gap-4 mb-4">
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href="/notes">
-                    <ArrowLeft />
-                    <span className="sr-only">Back to Notes</span>
-                  </Link>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link href="/notes">
+                        <ArrowLeft />
+                        <span className="sr-only">Back to Notes</span>
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Back to Notes</p>
+                  </TooltipContent>
+                </Tooltip>
                 <FormField
                   control={form.control}
                   name="title"
@@ -163,5 +172,6 @@ export default function NewNotePage() {
         </form>
       </Form>
     </div>
+    </TooltipProvider>
   );
 }

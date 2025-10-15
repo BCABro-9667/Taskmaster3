@@ -38,6 +38,7 @@ import { EditNoteDialog } from './EditNoteDialog';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TaskItemProps {
   task: Task;
@@ -107,28 +108,37 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
       >
         <CardContent className="p-0">
           <div className="p-3 sm:p-4 flex items-start gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-7 w-7 rounded-full p-0 shrink-0 mt-1",
-                isCompletable ? "text-primary hover:bg-primary/10" : "text-green-500 hover:bg-green-500/10",
-                isMobile ? '' : 'cursor-pointer' // Keep cursor pointer on desktop
-              )}
-              onClick={handleCircleClick}
-              disabled={task.status === 'archived'}
-              aria-label={
-                task.status === 'done' 
-                  ? "Mark task as pending" 
-                  : "Mark task as complete"
-              }
-            >
-              {task.status === 'done' || task.status === 'archived' ? (
-                <CheckCircle2 className={cn("h-5 w-5", task.status === 'done' ? "text-green-500" : "text-muted-foreground")} />
-              ) : (
-                <Circle className="h-5 w-5" />
-              )}
-            </Button>
+            <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                            "h-7 w-7 rounded-full p-0 shrink-0 mt-1",
+                            isCompletable ? "text-primary hover:bg-primary/10" : "text-green-500 hover:bg-green-500/10",
+                            isMobile ? '' : 'cursor-pointer' // Keep cursor pointer on desktop
+                        )}
+                        onClick={handleCircleClick}
+                        disabled={task.status === 'archived'}
+                        aria-label={
+                            task.status === 'done' 
+                            ? "Mark task as pending" 
+                            : "Mark task as complete"
+                        }
+                        >
+                        {task.status === 'done' || task.status === 'archived' ? (
+                            <CheckCircle2 className={cn("h-5 w-5", task.status === 'done' ? "text-green-500" : "text-muted-foreground")} />
+                        ) : (
+                            <Circle className="h-5 w-5" />
+                        )}
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{task.status === 'done' ? 'Mark as pending' : 'Mark as complete'}</p>
+                </TooltipContent>
+            </Tooltip>
+            </TooltipProvider>
 
             <div className="flex-grow min-w-0">
               <p className={cn("font-medium text-card-foreground break-words", task.status === 'done' && 'line-through')} title={task.title}>{task.title}</p>
@@ -175,24 +185,39 @@ export function TaskItem({ task, assignableUsers, onDeleteTask, onUpdateTask, on
 
             {/* --- Desktop Details & Actions --- */}
             <div className="hidden sm:flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground ml-auto shrink-0 mt-0.5 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              {assignedAssignee ? (
-                <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline" title={`View tasks for ${assignedAssignee.name}`}>
-                  <UserCircle className="h-5 w-5" />
-                  <span className={cn("text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
-                </Link>
-              ) : (
-                <div className="flex items-center text-muted-foreground gap-2" title="Unassigned">
-                  <UserCircle className="h-5 w-5" />
-                  <span className="text-xs sm:text-sm">Unassigned</span>
-                </div>
-              )}
-
-              <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')} title={`Deadline: ${format(parseISO(task.deadline), 'MMMM d, yyyy')}`}>
-                <CalendarDays className="mr-1 h-4 w-4" />
-                <span className={cn("text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
-                  {format(parseISO(task.deadline), 'MMM d')}
-                </span>
-              </div>
+             <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                    {assignedAssignee ? (
+                        <Link href={`/assignees/${assignedAssignee.id}`} className="flex items-center gap-2 hover:underline">
+                        <UserCircle className="h-5 w-5" />
+                        <span className={cn("text-foreground text-xs sm:text-sm")}>{assignedAssignee.name}</span>
+                        </Link>
+                    ) : (
+                        <div className="flex items-center text-muted-foreground gap-2">
+                        <UserCircle className="h-5 w-5" />
+                        <span className="text-xs sm:text-sm">Unassigned</span>
+                        </div>
+                    )}
+                </TooltipTrigger>
+                 <TooltipContent>
+                    <p>Assigned to: {assignedAssignee?.name || 'Unassigned'}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className={cn("flex items-center", isOverdue ? 'text-destructive' : '')}>
+                        <CalendarDays className="mr-1 h-4 w-4" />
+                        <span className={cn("text-xs sm:text-sm", isOverdue ? 'font-medium' : '')}>
+                        {format(parseISO(task.deadline), 'MMM d')}
+                        </span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                     <p>Deadline: {format(parseISO(task.deadline), 'MMMM d, yyyy')}</p>
+                </TooltipContent>
+              </Tooltip>
+             </TooltipProvider>
             </div>
 
             {/* --- Mobile & Desktop Actions --- */}
