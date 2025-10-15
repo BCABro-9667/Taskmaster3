@@ -8,6 +8,7 @@ import {
     updateTask as updateTaskInDb, 
     deleteTask as deleteTaskInDb, 
     getAssignees as getAssigneesFromDb,
+    createAssignee as createAssigneeInDb,
     deleteCompletedTasks as deleteCompletedTasksInDb 
 } from '@/lib/tasks';
 import {
@@ -16,6 +17,7 @@ import {
     updateLocalTask,
     deleteLocalTask,
     getLocalAssignees,
+    createLocalAssignee,
     deleteLocalCompletedTasks,
 } from '@/lib/local-storage/tasks';
 
@@ -246,8 +248,6 @@ export function useDeleteCompletedTasks(userId: string | null | undefined) {
 
 
 // --- Hooks for Assignees ---
-// Note: Assignees are not toggled for now as they are tightly coupled with the user account,
-// but the data fetching can still be mode-aware.
 export function useAssignees(userId: string | null | undefined) {
   const { storageMode } = useStorageMode();
   const queryKey = assigneeKeys.list(userId!, storageMode);
@@ -260,4 +260,29 @@ export function useAssignees(userId: string | null | undefined) {
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+}
+
+
+type CreateAssigneePayload = Parameters<typeof createAssigneeInDb>[1];
+
+export function useCreateAssignee(userId: string | null | undefined) {
+    const queryClient = useQueryClient();
+    const { storageMode } = useStorageMode();
+    const queryKey = assigneeKeys.list(userId!, storageMode);
+
+    const mutationFn = storageMode === 'db' ? createAssigneeInDb : createLocalAssignee;
+
+    return useMutation({
+        mutationFn: (newAssigneeData: CreateAssigneePayload) => {
+            if (!userId) throw new Error("User not authenticated");
+            return mutationFn(userId, newAssigneeData);
+        },
+        onSuccess: (newAssignee) => {
+            queryClient.invalidateQueries({ queryKey });
+            return newAssignee;
+        },
+        onError: (error) => {
+            console.error("Error creating assignee:", error);
+        },
+    });
 }

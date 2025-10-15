@@ -39,59 +39,24 @@ import Link from 'next/link';
 import { getCurrentUser as clientAuthGetCurrentUser } from '@/lib/client-auth';
 import { useLoadingBar } from '@/hooks/use-loading-bar';
 import { useRouter } from 'next/navigation';
+import { useAssignees } from '@/hooks/use-tasks';
 
 
 export default function AssigneesPage() {
-  const [assignees, setAssignees] = useState<Assignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true); 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAssignee, setEditingAssignee] = useState<Assignee | null>(null);
   const [deletingAssignee, setDeletingAssignee] = useState<Assignee | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  const currentUser = clientAuthGetCurrentUser();
+  const { data: assignees = [], isLoading } = useAssignees(currentUser?.id);
 
   const { toast } = useToast();
   const { start, complete } = useLoadingBar();
   const router = useRouter();
 
-
-  const fetchData = useCallback(async (userId: string) => {
-    setIsLoading(true);
-    try {
-      const fetchedAssignees = await getAssignees(userId);
-      setAssignees(fetchedAssignees);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error fetching assignees',
-        description: 'Could not load assignees. Please try refreshing.',
-      });
-      setAssignees([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    const user = clientAuthGetCurrentUser();
-    if (user && user.id) {
-      setCurrentUser(user);
-      fetchData(user.id);
-    } else {
-      setCurrentUser(null);
-      setAssignees([]);
-      setIsLoading(false); 
-    }
-  }, [fetchData]);
-
-
-  const handleAssigneeCreated = (newAssignee: Assignee) => {
-    setAssignees(prev => [...prev, newAssignee].sort((a,b) => (a.name || '').localeCompare(b.name || '')));
-    setIsCreateDialogOpen(false);
-  };
-
   const handleAssigneeUpdated = (updatedAssignee: Assignee) => {
-    setAssignees(prev => prev.map(item => item.id === updatedAssignee.id ? updatedAssignee : item).sort((a,b) => (a.name || '').localeCompare(b.name || '')));
+    // React Query will handle the update, just need to close the dialog
     setEditingAssignee(null);
   };
 
@@ -100,7 +65,7 @@ export default function AssigneesPage() {
     start();
     try {
       await deleteAssigneeApi(currentUser.id, deletingAssignee.id);
-      setAssignees(prev => prev.filter(item => item.id !== deletingAssignee.id));
+      // React Query will handle the refetch
       toast({ title: 'Assignee Deleted', description: `${deletingAssignee.name} has been removed.` });
     } catch (error) {
       toast({
@@ -121,7 +86,7 @@ export default function AssigneesPage() {
     );
   }, [assignees, searchTerm]);
 
-  if (!currentUser && isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -129,7 +94,7 @@ export default function AssigneesPage() {
     );
   }
 
-  if (!currentUser && !isLoading) {
+  if (!currentUser) {
      return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <p className="text-lg text-muted-foreground">Please log in to manage assignees.</p>
@@ -137,15 +102,6 @@ export default function AssigneesPage() {
       </div>
     );
   }
-  
-  if (currentUser && isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
 
   return (
     <div className="space-y-8">
@@ -228,7 +184,6 @@ export default function AssigneesPage() {
         <CreateAssigneeDialog
           isOpen={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
-          onAssigneeCreated={handleAssigneeCreated}
           currentUserId={currentUser.id}
         />
       )}

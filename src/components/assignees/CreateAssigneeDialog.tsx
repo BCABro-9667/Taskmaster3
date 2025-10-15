@@ -14,8 +14,8 @@ import type { Assignee } from '@/types';
 interface CreateAssigneeDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAssigneeCreated: (newAssignee: Assignee) => void; 
-  currentUserId: string; // Added currentUserId
+  onAssigneeCreated?: (newAssignee: Assignee) => void; 
+  currentUserId: string;
 }
 
 export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated, currentUserId }: CreateAssigneeDialogProps) {
@@ -31,7 +31,7 @@ export function CreateAssigneeDialog({ isOpen, onOpenChange, onAssigneeCreated, 
         <CreateAssigneeForm 
           onAssigneeCreated={onAssigneeCreated} 
           closeDialog={() => onOpenChange(false)}
-          currentUserId={currentUserId} // Pass currentUserId
+          currentUserId={currentUserId}
         />
       </DialogContent>
     </Dialog>

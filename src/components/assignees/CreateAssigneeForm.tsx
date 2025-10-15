@@ -15,11 +15,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { createAssignee } from '@/lib/tasks'; 
-import type { Assignee } from '@/types'; 
-import { useState } from 'react';
+import { useCreateAssignee } from '@/hooks/use-tasks';
 import { Loader2 } from 'lucide-react';
-import { useLoadingBar } from '@/hooks/use-loading-bar';
 
 const assigneeFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50, 'Name must be 50 characters or less.'),
@@ -30,15 +27,14 @@ const assigneeFormSchema = z.object({
 type AssigneeFormValues = z.infer<typeof assigneeFormSchema>;
 
 interface CreateAssigneeFormProps {
-  onAssigneeCreated: (newAssignee: Assignee) => void; 
+  onAssigneeCreated?: (newAssignee: any) => void; 
   closeDialog: () => void;
   currentUserId: string; 
 }
 
 export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUserId }: CreateAssigneeFormProps) {
   const { toast } = useToast();
-  const { start, complete } = useLoadingBar();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutate: createAssignee, isPending: isSubmitting } = useCreateAssignee(currentUserId);
 
   const form = useForm<AssigneeFormValues>({
     resolver: zodResolver(assigneeFormSchema),
@@ -49,35 +45,29 @@ export function CreateAssigneeForm({ onAssigneeCreated, closeDialog, currentUser
     },
   });
 
-  async function onSubmit(values: AssigneeFormValues) {
+  function onSubmit(values: AssigneeFormValues) {
     if (!currentUserId) {
       toast({ variant: 'destructive', title: 'Error', description: 'User not identified. Cannot create assignee.' });
       return;
     }
-    setIsSubmitting(true);
-    start();
-    try {
-      const newAssignee = await createAssignee(currentUserId, {
-        name: values.name,
-        designation: values.designation,
-        profileImageUrl: values.profileImageUrl,
-      }); 
-      toast({
-        title: 'Assignee Created',
-        description: `${newAssignee.name} has been added.`,
-      });
-      onAssigneeCreated(newAssignee);
-      closeDialog();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to Create Assignee',
-        description: (error as Error).message || 'An unexpected error occurred.',
-      });
-    } finally {
-      setIsSubmitting(false);
-      complete();
-    }
+    
+    createAssignee(values, {
+        onSuccess: (newAssignee) => {
+            toast({
+                title: 'Assignee Created',
+                description: `${newAssignee.name} has been added.`,
+            });
+            onAssigneeCreated?.(newAssignee);
+            closeDialog();
+        },
+        onError: (error) => {
+             toast({
+                variant: 'destructive',
+                title: 'Failed to Create Assignee',
+                description: (error as Error).message || 'An unexpected error occurred.',
+            });
+        }
+    });
   }
 
   return (
