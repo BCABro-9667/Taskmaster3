@@ -2,42 +2,49 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTasks, createTask, updateTask, deleteTask, getAssignees, deleteCompletedTasks } from '@/lib/tasks';
+import { 
+    getTasks as getTasksFromDb, 
+    createTask as createTaskInDb, 
+    updateTask as updateTaskInDb, 
+    deleteTask as deleteTaskInDb, 
+    getAssignees as getAssigneesFromDb,
+    deleteCompletedTasks as deleteCompletedTasksInDb 
+} from '@/lib/tasks';
+import {
+    getLocalTasks,
+    createLocalTask,
+    updateLocalTask,
+    deleteLocalTask,
+    getLocalAssignees,
+    deleteLocalCompletedTasks,
+} from '@/lib/local-storage/tasks';
+
 import type { Task, Assignee, User } from '@/types';
 import { useEffect } from 'react';
 import { io, type Socket } from "socket.io-client";
-
-// --- Local Storage Cache Helpers ---
-function getFromCache<T>(key: string): T | undefined {
-  if (typeof window === 'undefined') return undefined;
-  const cachedData = localStorage.getItem(key);
-  return cachedData ? JSON.parse(cachedData) : undefined;
-}
-
-function setToCache<T>(key: string, data: T) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(key, JSON.stringify(data));
-}
+import { useStorageMode } from './use-storage-mode';
 
 
 // --- Query Keys ---
 const taskKeys = {
-  all: (userId: string) => ['tasks', userId] as const,
-  list: (userId: string) => [...taskKeys.all(userId), 'list'] as const,
+  all: (userId: string, mode: 'db' | 'local') => ['tasks', userId, mode] as const,
+  list: (userId: string, mode: 'db' | 'local') => [...taskKeys.all(userId, mode), 'list'] as const,
 };
 
 const assigneeKeys = {
-  all: (userId: string) => ['assignees', userId] as const,
-  list: (userId: string) => [...assigneeKeys.all(userId), 'list'] as const,
+  all: (userId: string, mode: 'db' | 'local') => ['assignees', userId, mode] as const,
+  list: (userId: string, mode: 'db' | 'local') => [...assigneeKeys.all(userId, mode), 'list'] as const,
 };
 
 
 // --- Realtime Sync Hook ---
 function useRealtimeSync(currentUser: User | null) {
   const queryClient = useQueryClient();
+  const { storageMode } = useStorageMode();
+
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || storageMode === 'local') return;
 
     let socket: Socket;
 
@@ -49,14 +56,12 @@ function useRealtimeSync(currentUser: User | null) {
 
       socket.on("connect", () => {
         console.log("Socket connected");
-        // Optionally join a room specific to the user
         socket.emit("join_room", `user_${currentUser.id}`);
       });
 
-      // Listen for data change events
       socket.on("data_changed", (source) => {
         console.log(`Data changed event received from ${source}, invalidating queries.`);
-        queryClient.invalidateQueries(); // Invalidate all queries
+        queryClient.invalidateQueries();
       });
 
       socket.on("disconnect", () => {
@@ -71,45 +76,46 @@ function useRealtimeSync(currentUser: User | null) {
         socket.disconnect();
       }
     };
-  }, [currentUser, queryClient]);
+  }, [currentUser, queryClient, storageMode]);
 }
 
 
 // --- Hooks for Tasks ---
 
 export function useTasks(userId: string | null | undefined, currentUser: User | null) {
-  const queryKey = taskKeys.list(userId!);
-  useRealtimeSync(currentUser); // Initialize realtime sync
+  const { storageMode } = useStorageMode();
+  const queryKey = taskKeys.list(userId!, storageMode);
+  useRealtimeSync(currentUser);
+
+  const queryFn = storageMode === 'db' ? getTasksFromDb : getLocalTasks;
 
   return useQuery({
     queryKey,
-    queryFn: async () => {
-      const data = await getTasks(userId!);
-      setToCache(JSON.stringify(queryKey), data);
-      return data;
-    },
+    queryFn: () => queryFn(userId!),
     enabled: !!userId,
     staleTime: 1000 * 60, // 1 minute
-    placeholderData: () => getFromCache(JSON.stringify(queryKey)), // Load initial data from cache
   });
 }
 
-type CreateTaskPayload = Parameters<typeof createTask>[1];
+type CreateTaskPayload = Parameters<typeof createTaskInDb>[1];
 
 export function useCreateTask(userId: string | null | undefined) {
     const queryClient = useQueryClient();
+    const { storageMode } = useStorageMode();
+    const queryKey = taskKeys.list(userId!, storageMode);
+
+    const mutationFn = storageMode === 'db' ? createTaskInDb : createLocalTask;
 
     return useMutation({
         mutationFn: (newTaskData: CreateTaskPayload) => {
             if (!userId) throw new Error("User not authenticated");
-            return createTask(userId, newTaskData);
+            return mutationFn(userId, newTaskData);
         },
         onMutate: async (newTaskData) => {
-            await queryClient.cancelQueries({ queryKey: taskKeys.list(userId!) });
-            const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.list(userId!));
+            await queryClient.cancelQueries({ queryKey });
+            const previousTasks = queryClient.getQueryData<Task[]>(queryKey);
 
-            // Optimistically update to the new value
-            queryClient.setQueryData<Task[]>(taskKeys.list(userId!), (old = []) => {
+            queryClient.setQueryData<Task[]>(queryKey, (old = []) => {
                 const optimisticTask: Task = {
                     id: `temp-${Date.now()}`,
                     title: newTaskData.title,
@@ -119,7 +125,7 @@ export function useCreateTask(userId: string | null | undefined) {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     createdBy: userId!,
-                    assignedTo: undefined, // Assignee info isn't available on client yet
+                    assignedTo: undefined,
                 };
                 return [optimisticTask, ...old];
             });
@@ -127,33 +133,34 @@ export function useCreateTask(userId: string | null | undefined) {
             return { previousTasks };
         },
         onError: (_err, _newTask, context) => {
-            // Rollback on error
-            queryClient.setQueryData(taskKeys.list(userId!), context?.previousTasks);
+            queryClient.setQueryData(queryKey, context?.previousTasks);
         },
         onSettled: () => {
-            // Refetch after error or success to get the final server state
-            queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
-            queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
+            queryClient.invalidateQueries({ queryKey });
+            queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
         },
     });
 }
 
-type UpdateTaskPayload = { id: string, updates: Parameters<typeof updateTask>[2] };
+type UpdateTaskPayload = { id: string, updates: Parameters<typeof updateTaskInDb>[2] };
 
 export function useUpdateTask(userId: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { storageMode } = useStorageMode();
+  const queryKey = taskKeys.list(userId!, storageMode);
+  
+  const mutationFn = storageMode === 'db' ? updateTaskInDb : updateLocalTask;
 
   return useMutation({
     mutationFn: ({ id, updates }: UpdateTaskPayload) => {
       if (!userId) throw new Error("User not authenticated");
-      return updateTask(userId, id, updates);
+      return mutationFn(userId, id, updates);
     },
     onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.list(userId!) });
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.list(userId!));
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData<Task[]>(queryKey);
 
-      // Optimistically update the specific task
-      queryClient.setQueryData<Task[]>(taskKeys.list(userId!), (old = []) => 
+      queryClient.setQueryData<Task[]>(queryKey, (old = []) => 
         old.map(task =>
           task.id === id ? { ...task, ...updates } : task
         )
@@ -162,40 +169,43 @@ export function useUpdateTask(userId: string | null | undefined) {
       return { previousTasks };
     },
     onError: (_err, _variables, context) => {
-      queryClient.setQueryData(taskKeys.list(userId!), context?.previousTasks);
+      queryClient.setQueryData(queryKey, context?.previousTasks);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
-      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
     },
   });
 }
 
 export function useDeleteTask(userId: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { storageMode } = useStorageMode();
+  const queryKey = taskKeys.list(userId!, storageMode);
   
+  const mutationFn = storageMode === 'db' ? deleteTaskInDb : deleteLocalTask;
+
   return useMutation({
     mutationFn: (taskId: string) => {
       if (!userId) throw new Error("User not authenticated");
-      return deleteTask(userId, taskId);
+      return mutationFn(userId, taskId);
     },
     onMutate: async (taskId) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.list(userId!) });
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.list(userId!));
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData<Task[]>(queryKey);
       
-      // Optimistically remove the task from the list
-      queryClient.setQueryData<Task[]>(taskKeys.list(userId!), (old = []) => 
+      queryClient.setQueryData<Task[]>(queryKey, (old = []) => 
         old.filter(task => task.id !== taskId)
       );
 
       return { previousTasks };
     },
     onError: (_err, _taskId, context) => {
-      queryClient.setQueryData(taskKeys.list(userId!), context?.previousTasks);
+      queryClient.setQueryData(queryKey, context?.previousTasks);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
-      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
     },
   });
 }
@@ -203,29 +213,32 @@ export function useDeleteTask(userId: string | null | undefined) {
 
 export function useDeleteCompletedTasks(userId: string | null | undefined) {
   const queryClient = useQueryClient();
-  
+  const { storageMode } = useStorageMode();
+  const queryKey = taskKeys.list(userId!, storageMode);
+
+  const mutationFn = storageMode === 'db' ? deleteCompletedTasksInDb : deleteLocalCompletedTasks;
+
   return useMutation({
     mutationFn: () => {
       if (!userId) throw new Error("User not authenticated");
-      return deleteCompletedTasks(userId);
+      return mutationFn(userId);
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.list(userId!) });
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.list(userId!));
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData<Task[]>(queryKey);
       
-      // Optimistically remove all 'done' tasks
-      queryClient.setQueryData<Task[]>(taskKeys.list(userId!), (old = []) => 
+      queryClient.setQueryData<Task[]>(queryKey, (old = []) => 
         old.filter(task => task.status !== 'done')
       );
 
       return { previousTasks };
     },
     onError: (_err, _vars, context) => {
-      queryClient.setQueryData(taskKeys.list(userId!), context?.previousTasks);
+      queryClient.setQueryData(queryKey, context?.previousTasks);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.list(userId!) });
-      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
     },
   });
 }
@@ -233,19 +246,18 @@ export function useDeleteCompletedTasks(userId: string | null | undefined) {
 
 
 // --- Hooks for Assignees ---
-
+// Note: Assignees are not toggled for now as they are tightly coupled with the user account,
+// but the data fetching can still be mode-aware.
 export function useAssignees(userId: string | null | undefined) {
-  const queryKey = assigneeKeys.list(userId!);
-  
+  const { storageMode } = useStorageMode();
+  const queryKey = assigneeKeys.list(userId!, storageMode);
+
+  const queryFn = storageMode === 'db' ? getAssigneesFromDb : getLocalAssignees;
+
   return useQuery({
-    queryKey: assigneeKeys.list(userId!),
-    queryFn: async () => {
-      const data = await getAssignees(userId!);
-      setToCache(JSON.stringify(queryKey), data);
-      return data;
-    },
+    queryKey,
+    queryFn: () => queryFn(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 60, // 1 minute
-    placeholderData: () => getFromCache(JSON.stringify(queryKey)),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

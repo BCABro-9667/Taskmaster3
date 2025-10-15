@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { ReactQueryProvider } from '@/lib/react-query-provider';
 import { useEffect } from 'react';
 import { syncOfflineChanges } from '@/lib/offline-sync';
+import { StorageModeProvider } from "@/hooks/use-storage-mode";
 
 export function AppProviders({
   children,
@@ -59,7 +60,9 @@ export function AppProviders({
           enableSystem
           disableTransitionOnChange
         >
-        {children}
+        <StorageModeProvider>
+          {children}
+        </StorageModeProvider>
       </ThemeProvider>
     </ReactQueryProvider>
   );

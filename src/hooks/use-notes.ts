@@ -2,61 +2,50 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getNotes, createNote, updateNote, deleteNote } from '@/lib/notes';
+import { getNotes as getNotesFromDb, createNote as createNoteInDb, updateNote as updateNoteInDb, deleteNote as deleteNoteInDb } from '@/lib/notes';
+import { getLocalNotes, createLocalNote, updateLocalNote, deleteLocalNote } from '@/lib/local-storage/notes';
 import type { Note } from '@/types';
-
-// --- Local Storage Cache Helpers ---
-function getFromCache<T>(key: string): T | undefined {
-  if (typeof window === 'undefined') return undefined;
-  const cachedData = localStorage.getItem(key);
-  try {
-    return cachedData ? JSON.parse(cachedData) : undefined;
-  } catch (e) {
-    console.error("Failed to parse cache", e);
-    return undefined;
-  }
-}
-
-function setToCache<T>(key: string, data: T) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(key, JSON.stringify(data));
-}
+import { useStorageMode } from './use-storage-mode';
 
 // --- Query Keys ---
 const noteKeys = {
-  all: (userId: string) => ['notes', userId] as const,
-  list: (userId: string) => [...noteKeys.all(userId), 'list'] as const,
+  all: (userId: string, mode: 'db' | 'local') => ['notes', userId, mode] as const,
+  list: (userId: string, mode: 'db' | 'local') => [...noteKeys.all(userId, mode), 'list'] as const,
 };
 
 // --- Custom Hooks ---
 
 export function useNotes(userId: string | null | undefined) {
-  const queryKey = noteKeys.list(userId!);
+  const { storageMode } = useStorageMode();
+  const queryKey = noteKeys.list(userId!, storageMode);
+  
+  const queryFn = storageMode === 'db' ? getNotesFromDb : getLocalNotes;
+
   return useQuery({
     queryKey,
-    queryFn: async () => {
-      const data = await getNotes(userId!);
-      setToCache(JSON.stringify(queryKey), data);
-      return data;
-    },
+    queryFn: () => queryFn(userId!),
     enabled: !!userId,
     staleTime: 1000 * 60, // 1 minute
-    placeholderData: () => getFromCache(JSON.stringify(queryKey)),
   });
 }
 
-type CreateNotePayload = Parameters<typeof createNote>[1];
+type CreateNotePayload = Parameters<typeof createNoteInDb>[1];
 
 export function useCreateNote(userId: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { storageMode } = useStorageMode();
+  const queryKey = noteKeys.list(userId!, storageMode);
+
+  const mutationFn = storageMode === 'db' ? createNoteInDb : createLocalNote;
+
   return useMutation({
     mutationFn: (newNoteData: CreateNotePayload) => {
       if (!userId) throw new Error("User not authenticated");
-      return createNote(userId, newNoteData);
+      return mutationFn(userId, newNoteData);
     },
     onMutate: async (newNoteData) => {
-      await queryClient.cancelQueries({ queryKey: noteKeys.list(userId!) });
-      const previousNotes = queryClient.getQueryData<Note[]>(noteKeys.list(userId!));
+      await queryClient.cancelQueries({ queryKey });
+      const previousNotes = queryClient.getQueryData<Note[]>(queryKey);
       
       const optimisticNote: Note = {
         id: `temp-${Date.now()}`,
@@ -68,31 +57,36 @@ export function useCreateNote(userId: string | null | undefined) {
         isLocked: false,
       };
 
-      queryClient.setQueryData<Note[]>(noteKeys.list(userId!), (old = []) => [optimisticNote, ...old]);
+      queryClient.setQueryData<Note[]>(queryKey, (old = []) => [optimisticNote, ...old]);
       return { previousNotes };
     },
     onError: (_err, _newNote, context) => {
-      queryClient.setQueryData(noteKeys.list(userId!), context?.previousNotes);
+      queryClient.setQueryData(queryKey, context?.previousNotes);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: noteKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }
 
-type UpdateNotePayload = { id: string; updates: Parameters<typeof updateNote>[2] };
+type UpdateNotePayload = { id: string; updates: Parameters<typeof updateNoteInDb>[2] };
 
 export function useUpdateNote(userId: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { storageMode } = useStorageMode();
+  const queryKey = noteKeys.list(userId!, storageMode);
+  
+  const mutationFn = storageMode === 'db' ? updateNoteInDb : updateLocalNote;
+
   return useMutation({
     mutationFn: ({ id, updates }: UpdateNotePayload) => {
       if (!userId) throw new Error("User not authenticated");
-      return updateNote(userId, id, updates);
+      return mutationFn(userId, id, updates);
     },
     onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: noteKeys.list(userId!) });
-      const previousNotes = queryClient.getQueryData<Note[]>(noteKeys.list(userId!));
-      queryClient.setQueryData<Note[]>(noteKeys.list(userId!), (old = []) =>
+      await queryClient.cancelQueries({ queryKey });
+      const previousNotes = queryClient.getQueryData<Note[]>(queryKey);
+      queryClient.setQueryData<Note[]>(queryKey, (old = []) =>
         old.map(note =>
           note.id === id ? { ...note, ...updates, updatedAt: new Date().toISOString() } : note
         )
@@ -100,34 +94,39 @@ export function useUpdateNote(userId: string | null | undefined) {
       return { previousNotes };
     },
     onError: (_err, _variables, context) => {
-      queryClient.setQueryData(noteKeys.list(userId!), context?.previousNotes);
+      queryClient.setQueryData(queryKey, context?.previousNotes);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: noteKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }
 
 export function useDeleteNote(userId: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { storageMode } = useStorageMode();
+  const queryKey = noteKeys.list(userId!, storageMode);
+
+  const mutationFn = storageMode === 'db' ? deleteNoteInDb : deleteLocalNote;
+
   return useMutation({
     mutationFn: (noteId: string) => {
       if (!userId) throw new Error("User not authenticated");
-      return deleteNote(userId, noteId);
+      return mutationFn(userId, noteId);
     },
     onMutate: async (noteId) => {
-      await queryClient.cancelQueries({ queryKey: noteKeys.list(userId!) });
-      const previousNotes = queryClient.getQueryData<Note[]>(noteKeys.list(userId!));
-      queryClient.setQueryData<Note[]>(noteKeys.list(userId!), (old = []) =>
+      await queryClient.cancelQueries({ queryKey });
+      const previousNotes = queryClient.getQueryData<Note[]>(queryKey);
+      queryClient.setQueryData<Note[]>(queryKey, (old = []) =>
         old.filter(note => note.id !== noteId)
       );
       return { previousNotes };
     },
     onError: (_err, _noteId, context) => {
-      queryClient.setQueryData(noteKeys.list(userId!), context?.previousNotes);
+      queryClient.setQueryData(queryKey, context?.previousNotes);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: noteKeys.list(userId!) });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }

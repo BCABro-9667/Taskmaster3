@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { clearCurrentUser, getCurrentUser } from '@/lib/client-auth'; // Use client-auth utilities
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard, StickyNote, MessageSquare, Link as LinkIcon } from 'lucide-react';
+import { LogOut, UserCircle as ProfileIcon, TrendingUp, Users, LayoutDashboard, StickyNote, MessageSquare, Link as LinkIcon, Database, HardDrive } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import logo from './logo.png'
@@ -21,7 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
-import { ThemeToggle } from './ThemeToggle'; // Import the ThemeToggle component
+import { ThemeToggle } from './ThemeToggle';
+import { StorageModeToggle } from './StorageModeToggle';
 
 export function Navbar() {
   const router = useRouter();
@@ -110,7 +111,8 @@ export function Navbar() {
               </div>
             )}
 
-            <ThemeToggle /> {/* Added ThemeToggle component here */}
+            <StorageModeToggle />
+            <ThemeToggle />
 
             {currentUser ? (
              <DropdownMenu>
@@ -162,27 +164,6 @@ export function Navbar() {
           )}
           </div>
         </div>
-        {/* Mobile Nav Links */}
-        {currentUser && (
-          <div className="sm:hidden flex items-center justify-around border-t border-border/40 -mx-4 sm:-mx-6 lg:-mx-8">
-            {navLinks.map((link) => (
-              <Button
-                key={link.href}
-                variant="ghost"
-                asChild
-                className={cn(
-                  "flex-1 rounded-none text-muted-foreground h-12", 
-                  pathname === link.href && "text-primary border-b-2 border-primary"
-                )}
-              >
-                <Link href={link.href} className="flex flex-col items-center justify-center gap-1 h-full">
-                  <link.icon className="mr-0 h-5 w-5" />
-                  <span className="text-xs">{link.label}</span>
-                </Link>
-              </Button>
-            ))}
-          </div>
-        )}
       </div>
     </nav>
   );
