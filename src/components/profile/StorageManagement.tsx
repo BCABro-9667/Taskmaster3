@@ -5,19 +5,9 @@ import { useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Download, Upload, Trash2, HardDrive } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useStorageMode } from '@/hooks/use-storage-mode';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { getCurrentUser } from '@/lib/client-auth';
 
 const LOCAL_STORAGE_KEYS = [
@@ -34,7 +24,6 @@ export function StorageManagement() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const currentUser = getCurrentUser();
-  const [isClearAlertOpen, setIsClearAlertOpen] = useState(false);
 
   const handleExport = () => {
     if (!currentUser) {
@@ -122,22 +111,6 @@ export function StorageManagement() {
     reader.readAsText(file);
   };
 
-  const handleClear = () => {
-    try {
-        LOCAL_STORAGE_KEYS.forEach(key => {
-            localStorage.removeItem(key);
-        });
-        queryClient.invalidateQueries();
-        toast({ variant: 'success', title: 'Local Storage Cleared', description: 'All local application data has been removed.' });
-    } catch (error) {
-        console.error("Clear failed:", error);
-        toast({ variant: 'destructive', title: 'Clear Failed', description: 'Could not clear local storage.' });
-    } finally {
-        setIsClearAlertOpen(false);
-    }
-  };
-
-
   const isLocalStorageMode = storageMode === 'local';
 
   return (
@@ -146,7 +119,7 @@ export function StorageManagement() {
         <CardHeader>
           <CardTitle>Local Storage Management</CardTitle>
           <CardDescription>
-            Export, import, or clear your application data stored on this device. This only affects data in "Local Device" mode.
+            Export or import your application data stored on this device. This only affects data in "Local Device" mode.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -172,33 +145,8 @@ export function StorageManagement() {
                 accept="application/json"
             />
           </div>
-          <div className="pt-4">
-            <Button onClick={() => setIsClearAlertOpen(true)} variant="destructive" className="w-full">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear All Local Data
-            </Button>
-          </div>
         </CardContent>
       </Card>
-      
-      <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete all tasks, assignees, notes, and URLs stored on this device. This action cannot be undone. Cloud data will not be affected.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleClear} className="bg-destructive hover:bg-destructive/90">
-              Yes, delete all local data
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
-
-    
