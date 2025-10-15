@@ -14,12 +14,13 @@ import { useToast } from '@/hooks/use-toast';
 import { updateCurrentUser } from '@/lib/auth'; // Server Action
 import { getCurrentUser, setCurrentUser as setLocalStorageUser } from '@/lib/client-auth'; // Client-side utilities
 import type { User } from '@/types';
-import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper, ShieldCheck, KeyRound, Lock, Palette, Settings, MessageSquare } from 'lucide-react';
+import { Loader2, UserCircle, Image as ImageIcon, Save, Wallpaper, ShieldCheck, KeyRound, Lock, Palette, Settings, MessageSquare, Database } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { FeedbackForm } from '@/components/profile/FeedbackForm';
+import { StorageManagement } from '@/components/profile/StorageManagement';
 
 
 const profileFormSchema = z.object({
@@ -169,6 +170,9 @@ export default function ProfilePage() {
               <TabsTrigger value="privacy" className="flex-1">
                 <ShieldCheck className="mr-2 h-4 w-4" /> Privacy
                 </TabsTrigger>
+              <TabsTrigger value="storage" className="flex-1">
+                <Database className="mr-2 h-4 w-4" /> Storage
+              </TabsTrigger>
               <TabsTrigger value="feedback" className="flex-1">
                 <MessageSquare className="mr-2 h-4 w-4" /> Feedback
               </TabsTrigger>
@@ -374,6 +378,10 @@ export default function ProfilePage() {
                     </div>
                 </form>
             </TabsContent>
+
+            <TabsContent value="storage">
+              <StorageManagement />
+            </TabsContent>
             
             <TabsContent value="feedback">
                  <Card className="mt-6 shadow-lg bg-card/60">
@@ -393,3 +401,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
