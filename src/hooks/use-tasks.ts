@@ -40,7 +40,13 @@ const assigneeKeys = {
 
 
 // --- Realtime Sync Hook ---
+// Disabled: Socket.IO requires a custom server in Next.js
+// For realtime sync, consider using polling or a different approach
 function useRealtimeSync(currentUser: User | null) {
+  // Disabled to prevent 404 errors
+  return;
+  
+  /* Original socket.io implementation disabled
   const queryClient = useQueryClient();
   const { storageMode } = useStorageMode();
 
@@ -79,6 +85,7 @@ function useRealtimeSync(currentUser: User | null) {
       }
     };
   }, [currentUser, queryClient, storageMode]);
+  */
 }
 
 

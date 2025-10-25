@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+*.lcov
+.nyc_output
 
 # next.js
 /.next/
@@ -19,16 +21,25 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# local env files
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # vercel
 .vercel
@@ -37,9 +48,66 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# genkit
 .genkit/*
-.env*
 
 # firebase
 firebase-debug.log
 firestore-debug.log
+ui-debug.log
+
+# IDEs and editors
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+
+# PWA
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
+
+# Lock files (optional - uncomment if needed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Build artifacts
+.turbo
+.cache
+.parcel-cache

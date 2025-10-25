@@ -334,4 +334,69 @@
   }
 }
 
+/* Quill Editor Styles */
+.ql-toolbar.ql-snow {
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+}
+
+.ql-container.ql-snow {
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+}
+
+.ql-editor {
+  color: hsl(var(--foreground));
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+}
+
+.dark .ql-stroke {
+  stroke: hsl(var(--foreground));
+}
+
+.dark .ql-fill {
+  fill: hsl(var(--foreground));
+}
+
+.dark .ql-picker,
+.dark .ql-picker-label {
+  color: hsl(var(--foreground));
+}
+
+.dark .ql-picker-options {
+  background: hsl(var(--popover));
+  border-color: hsl(var(--border));
+}
+
+/* Prose styles for rendered HTML content */
+.prose {
+  @apply text-foreground;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  @apply text-foreground;
+}
+
+.prose a {
+  @apply text-primary;
+}
+
+.prose code {
+  @apply text-foreground bg-muted px-1 rounded;
+}
+
+.prose pre {
+  @apply bg-muted text-foreground;
+}
+
+.dark .prose {
+  @apply text-foreground;
+}
+
     

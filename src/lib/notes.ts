@@ -12,6 +12,9 @@ function processLeanNote(note: any): Note {
   const plainNote = {
     ...note,
     id: note._id.toString(),
+    createdAt: note.createdAt instanceof Date ? note.createdAt.toISOString() : note.createdAt,
+    updatedAt: note.updatedAt instanceof Date ? note.updatedAt.toISOString() : note.updatedAt,
+    createdBy: note.createdBy.toString(),
   };
   delete plainNote._id;
   delete plainNote.__v;

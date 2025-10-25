@@ -5,18 +5,6 @@ import dbConnect from './db';
 import UserModel, { type IUserDocument } from '@/models/User';
 import bcrypt from 'bcryptjs';
 
-// Helper to convert Mongoose document to plain User object
-function toPlainUser(userDoc: IUserDocument | null): User | null {
-  if (!userDoc) return null;
-  const userObject = userDoc.toObject() as User & { pin?: string }; // toObject applies schema transformations
-  
-  // Add hasPin to the user object before returning
-  userObject.hasPin = !!userDoc.pin;
-  delete userObject.pin; // Ensure the pin hash is not sent to the client
-
-  return userObject;
-}
-
 export async function login(email: string, password?: string): Promise<User | null> {
   await dbConnect();
   const userDoc = await UserModel.findOne({ email: email.toLowerCase() });
@@ -24,7 +12,11 @@ export async function login(email: string, password?: string): Promise<User | nu
   if (userDoc && password) {
     const isMatch = await userDoc.comparePassword(password, 'password');
     if (isMatch) {
-      return toPlainUser(userDoc); 
+      // Convert to plain object (toObject transform already handles _id -> id conversion)
+      const plainUser = userDoc.toObject();
+      // Add hasPin field
+      plainUser.hasPin = !!userDoc.pin;
+      return plainUser as User;
     }
   }
   return null;
@@ -48,7 +40,12 @@ export async function register(name: string, email: string, password?: string): 
   });
 
   await newUserDoc.save();
-  return toPlainUser(newUserDoc); 
+  
+  // Convert to plain object (toObject transform already handles _id -> id conversion)
+  const plainUser = newUserDoc.toObject();
+  // Add hasPin field
+  plainUser.hasPin = !!newUserDoc.pin;
+  return plainUser as User;
 }
 
 interface UpdatePayload extends Partial<Omit<User, 'id' | 'email'>> {
@@ -103,7 +100,12 @@ export async function updateCurrentUser(userId: string, updates: UpdatePayload):
   if (updates.backgroundImageUrl !== undefined) userDoc.backgroundImageUrl = updates.backgroundImageUrl;
 
   await userDoc.save();
-  return toPlainUser(userDoc); 
+  
+  // Convert to plain object (toObject transform already handles _id -> id conversion)
+  const plainUser = userDoc.toObject();
+  // Add hasPin field
+  plainUser.hasPin = !!userDoc.pin;
+  return plainUser as User;
 }
 
 

@@ -11,7 +11,20 @@ import mongoose from 'mongoose';
 function processLean<T extends { _id: any }>(doc: T | null): (Omit<T, '_id'> & { id: string }) | null {
   if (!doc) return null;
   const { _id, __v, ...rest } = doc as any;
-  return { id: _id.toString(), ...rest } as Omit<T, '_id'> & { id: string };
+  const result: any = { id: _id.toString(), ...rest };
+  
+  // Convert Date objects to ISO strings
+  if (result.createdAt instanceof Date) {
+    result.createdAt = result.createdAt.toISOString();
+  }
+  if (result.updatedAt instanceof Date) {
+    result.updatedAt = result.updatedAt.toISOString();
+  }
+  if (result.createdBy) {
+    result.createdBy = result.createdBy.toString();
+  }
+  
+  return result as Omit<T, '_id'> & { id: string };
 }
 
 function processLeanArray<T extends { _id: any }>(docs: T[]): (Omit<T, '_id'> & { id: string })[] {

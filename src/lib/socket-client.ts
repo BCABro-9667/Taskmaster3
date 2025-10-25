@@ -2,10 +2,15 @@
 'use server';
 
 // This is a server-side client to communicate with the Socket.IO server.
-// It sends a POST request to our own API route to trigger the broadcast.
+// DISABLED: Socket.IO requires a custom server in Next.js
+// This would cause 404 errors without a custom server setup
 
 export async function broadcastDataChange(room: string) {
-  // Ensure we have a full URL for fetch, especially on the server
+  // Disabled to prevent 404 errors
+  // Socket.IO requires a custom server which is not compatible with Next.js serverless deployment
+  return;
+  
+  /* Original implementation disabled
   const url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   
   try {
@@ -19,4 +24,5 @@ export async function broadcastDataChange(room: string) {
   } catch (error) {
     console.error('Failed to broadcast data change:', error);
   }
+  */
 }

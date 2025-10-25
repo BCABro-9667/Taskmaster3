@@ -24,7 +24,17 @@ function toPlainObject<T>(doc: any): T {
 function leanToPlain<T extends { _id: mongoose.Types.ObjectId }>(doc: T | null): Omit<T, '_id'> & { id: string } | null {
   if (!doc) return null;
   const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest } as Omit<T, '_id'> & { id: string };
+  const plainDoc: any = { id: _id.toString(), ...rest };
+  
+  // Convert Date objects to ISO strings
+  if (plainDoc.createdAt instanceof Date) {
+    plainDoc.createdAt = plainDoc.createdAt.toISOString();
+  }
+  if (plainDoc.updatedAt instanceof Date) {
+    plainDoc.updatedAt = plainDoc.updatedAt.toISOString();
+  }
+  
+  return plainDoc as Omit<T, '_id'> & { id: string };
 }
 
 function leanArrayToPlain<T extends { _id: mongoose.Types.ObjectId }>(docs: T[]): (Omit<T, '_id'> & { id: string })[] {
@@ -37,9 +47,13 @@ function processLeanTask(task: any): Task {
   const plainTask = {
     ...task,
     id: task._id.toString(),
+    createdAt: task.createdAt instanceof Date ? task.createdAt.toISOString() : task.createdAt,
+    updatedAt: task.updatedAt instanceof Date ? task.updatedAt.toISOString() : task.updatedAt,
     assignedTo: task.assignedTo ? {
       ...task.assignedTo,
       id: task.assignedTo._id.toString(),
+      createdAt: task.assignedTo.createdAt instanceof Date ? task.assignedTo.createdAt.toISOString() : task.assignedTo.createdAt,
+      updatedAt: task.assignedTo.updatedAt instanceof Date ? task.assignedTo.updatedAt.toISOString() : task.assignedTo.updatedAt,
       _id: undefined, // remove mongoose properties
       __v: undefined,
     } : undefined,

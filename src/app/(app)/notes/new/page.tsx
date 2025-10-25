@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { QuillEditor } from '@/components/notes/QuillEditor';
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { Separator } from '@/components/ui/separator';
@@ -21,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const noteFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
-  description: z.string().max(5000, 'Description is too long').optional(),
+  description: z.string().optional(),
 });
 
 type NoteFormValues = z.infer<typeof noteFormSchema>;
@@ -132,7 +133,7 @@ export default function NewNotePage() {
                         <Input
                           placeholder="Title"
                           {...field}
-                          className="text-4xl font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-auto"
+                          className="text-4xl font-bold border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-auto outline-none focus:outline-none"
                         />
                       </FormControl>
                       <FormMessage className="px-2" />
@@ -143,7 +144,7 @@ export default function NewNotePage() {
               <Separator />
           </div>
           
-          <div className="flex-grow flex flex-col">
+          <div className="flex-grow flex flex-col min-h-[400px] mb-4">
             <FormField
               control={form.control}
               name="description"
@@ -151,10 +152,11 @@ export default function NewNotePage() {
                 <FormItem className="flex-grow flex flex-col">
                   <FormLabel className="sr-only">Note Content</FormLabel>
                   <FormControl>
-                    <Textarea
+                    <QuillEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
                       placeholder="Type your note here..."
-                      className="w-full h-full text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-2 bg-transparent shadow-none"
-                      {...field}
+                      className="flex-grow"
                     />
                   </FormControl>
                   <FormMessage className="px-2" />

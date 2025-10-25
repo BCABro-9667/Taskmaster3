@@ -105,26 +105,21 @@ export default function AssigneesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <UsersIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold font-headline text-primary">Manage Assignees</h1>
+      <div className="relative flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search assignees by name or designation..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-full"
+          />
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} disabled={!currentUser?.id}>
+        <Button onClick={() => setIsCreateDialogOpen(true)} disabled={!currentUser?.id} className="flex-shrink-0">
           <PlusCircle className="mr-2 h-4 w-4" />
           Create Assignee
         </Button>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search assignees by name or designation..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 w-full"
-        />
       </div>
       {filteredAssignees.length > 0 ? (
         <div className="border rounded-lg shadow-sm bg-card/60 overflow-hidden">
