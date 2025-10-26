@@ -1,4 +1,3 @@
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -9,6 +8,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Enable image optimization
   images: {
     remotePatterns: [
       {
@@ -25,6 +25,41 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Enable compression
+  compress: true,
+  // Optimize fonts
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: [
+      'lucide-react',
+      'react-hook-form',
+      '@hookform/resolvers',
+      'zod',
+      '@tanstack/react-query',
+      '@tanstack/react-query-devtools'
+    ]
+  },
+  // Enable webpack optimizations
+  webpack: (config, { dev, isServer }) => {
+    // Enable tree shaking
+    config.optimization.usedExports = true;
+    
+    // Split chunks for better caching
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      };
+    }
+    
+    return config;
+  }
 };
 
 export default nextConfig;

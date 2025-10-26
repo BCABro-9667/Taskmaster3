@@ -465,37 +465,39 @@ export default function NotesPage() {
                   Last updated: {format(new Date(viewingNote.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
                 </DialogDescription>
               </div>
-              <div className="absolute top-4 right-6 flex items-center gap-2">
+            </div>
+            
+            {/* Content Area */}
+            <div className="overflow-y-auto h-[calc(100vh-80px)] px-8 md:px-16 lg:px-32 py-8 relative">
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-p:leading-relaxed prose-p:mb-4 prose-headings:mb-3 prose-headings:mt-6"
+                dangerouslySetInnerHTML={{ __html: viewingNote.description || '<p class="text-muted-foreground italic">No content</p>' }}
+              />
+              
+              {/* Fixed Action Buttons */}
+              <div className="fixed bottom-6 right-6 flex flex-col gap-2">
                 <Button 
-                  variant="ghost" 
+                  variant="default" 
                   size="icon"
                   onClick={() => {
                     setViewingNote(null);
                     openEditDialog(viewingNote);
                   }}
-                  className="h-9 w-9"
+                  className="h-12 w-12 rounded-full shadow-lg"
                 >
-                  <Edit className="h-5 w-5" />
+                  <Edit className="h-6 w-6" />
                   <span className="sr-only">Edit</span>
                 </Button>
                 <Button 
-                  variant="ghost" 
+                  variant="secondary" 
                   size="icon"
                   onClick={() => setViewingNote(null)}
-                  className="h-9 w-9"
+                  className="h-12 w-12 rounded-full shadow-lg"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                   <span className="sr-only">Close</span>
                 </Button>
               </div>
-            </div>
-            
-            {/* Content Area */}
-            <div className="overflow-y-auto h-[calc(100vh-80px)] px-8 md:px-16 lg:px-32 py-8">
-              <div 
-                className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-p:leading-relaxed prose-p:mb-4 prose-headings:mb-3 prose-headings:mt-6"
-                dangerouslySetInnerHTML={{ __html: viewingNote.description || '<p class="text-muted-foreground italic">No content</p>' }}
-              />
             </div>
           </DialogContent>
         </Dialog>

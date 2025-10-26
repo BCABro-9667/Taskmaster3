@@ -16,6 +16,21 @@ export function AppProviders({
     // Initialize EmailJS
     emailjs.init('_cWbp6XU7bcCojDbF'); // Public Key
 
+    // Performance optimizations
+    // Remove loading attributes from images for better performance
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+      img.setAttribute('loading', 'lazy');
+    });
+
+    // Add performance monitoring
+    if ('performance' in window) {
+      window.addEventListener('load', () => {
+        const perfData = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        console.log(`Page load time: ${perfData.loadEventEnd - perfData.fetchStart}ms`);
+      });
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {
