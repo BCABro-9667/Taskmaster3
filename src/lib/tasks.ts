@@ -146,10 +146,12 @@ export async function updateTask(userId: string, id: string, updates: Partial<Om
     
     // Prepare the update payload
     const updatePayload: any = { ...updates };
-    if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
-        updatePayload.assignedTo = undefined;
-    } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
-        updatePayload.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
+    if ('assignedTo' in updates) {
+        if (updates.assignedTo === null || updates.assignedTo === 'unassigned' || updates.assignedTo === '') {
+            updatePayload.assignedTo = undefined;
+        } else if (updates.assignedTo && mongoose.Types.ObjectId.isValid(updates.assignedTo)) {
+            updatePayload.assignedTo = new mongoose.Types.ObjectId(updates.assignedTo);
+        }
     }
 
     const updatedTaskDoc = await TaskModel.findOneAndUpdate(

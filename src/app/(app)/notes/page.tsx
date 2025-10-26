@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -77,14 +76,16 @@ export default function NotesPage() {
   const handlePinSuccess = (noteId: string) => {
     if (unlockAction === 'view') {
         setUnlockedNoteIds(prev => new Set(prev).add(noteId));
-        toast({ title: "Note Unlocked", description: "You can now view the note content." });
+        // Removed toast notification
     } else if (unlockAction === 'remove_lock') {
         updateNote({ id: noteId, updates: { isLocked: false } }, {
             onSuccess: () => {
                 setUnlockedNoteIds(prev => new Set(prev).add(noteId));
-                toast({ title: "Lock Removed", description: "The note is now permanently unlocked." });
+                // Removed toast notification
             },
-            onError: (error) => toast({ variant: 'destructive', title: 'Error', description: error.message }),
+            onError: (error) => {
+                // Removed toast notification
+            },
         });
     }
     setUnlockingNote(null);
@@ -114,14 +115,10 @@ export default function NotesPage() {
     updateNote({ id: editingNote.id, updates: data }, {
       onSuccess: () => {
         setIsFormDialogOpen(false);
-        toast({ title: `Note updated successfully` });
+        // Removed toast notification
       },
       onError: (error: Error) => {
-        toast({
-          variant: 'destructive',
-          title: `Error updating note`,
-          description: error.message,
-        });
+        // Removed toast notification
       },
     });
   };
@@ -130,15 +127,11 @@ export default function NotesPage() {
     if (!deletingNote) return;
     deleteNote(deletingNote.id, {
       onSuccess: () => {
-        toast({ title: 'Note Deleted', description: `"${deletingNote.title}" has been removed.` });
+        // Removed toast notification
         setDeletingNote(null);
       },
       onError: (error) => {
-        toast({
-          variant: 'destructive',
-          title: 'Error Deleting Note',
-          description: error.message,
-        });
+        // Removed toast notification
         setDeletingNote(null);
       }
     });
@@ -159,9 +152,11 @@ export default function NotesPage() {
             return newSet;
           });
         }
-        toast({ title: newLockState ? "Note Locked" : "Note Unlocked Permanently" });
+        // Removed toast notification
       },
-      onError: (error) => toast({ variant: 'destructive', title: 'Error', description: error.message }),
+      onError: (error) => {
+        // Removed toast notification
+      },
     });
   };
 
@@ -508,5 +503,3 @@ export default function NotesPage() {
     </div>
   );
 }
-
-    

@@ -154,9 +154,18 @@ export function useUpdateTask(userId: string | null | undefined) {
   const mutationFn = updateTaskInDb;
 
   return useMutation({
-    mutationFn: ({ id, updates }: UpdateTaskPayload) => {
+    mutationFn: async ({ id, updates }: UpdateTaskPayload) => {
       if (!userId) throw new Error("User not authenticated");
-      return mutationFn(userId, id, updates);
+      try {
+        const result = await mutationFn(userId, id, updates);
+        if (result === null) {
+          throw new Error("Failed to update task. Task not found or you don't have permission to update it.");
+        }
+        return result;
+      } catch (error) {
+        console.error("Error updating task:", error);
+        throw error;
+      }
     },
     onMutate: async ({ id, updates }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -188,8 +197,9 @@ export function useUpdateTask(userId: string | null | undefined) {
 
       return { previousTasks };
     },
-    onError: (_err, _variables, context) => {
+    onError: (error, _variables, context) => {
       queryClient.setQueryData(queryKey, context?.previousTasks);
+      console.error("Error in useUpdateTask:", error);
     },
     onSuccess: (updatedTask) => {
       // Update cache with updated task

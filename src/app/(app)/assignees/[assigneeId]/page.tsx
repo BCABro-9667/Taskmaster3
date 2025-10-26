@@ -103,37 +103,39 @@ export default function AssigneeDetailPage() {
   };
   
   const handleMarkTaskAsComplete = async (taskId: string) => {
-    if (!currentUser?.id) return;
-    start();
-    try {
-      await updateTask(currentUser.id, taskId, { status: 'done' });
-      handleDataRefresh();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error Updating Task',
-        description: 'Could not mark the task as complete. Please try again.',
-      });
-    } finally {
-      complete();
-    }
+    updateTask({ id: taskId, updates: { status: 'done' } }, {
+      onSuccess: () => {
+        toast({
+          title: "Task Updated",
+          description: "Task marked as complete.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Error Updating Task',
+          description: `Could not mark the task as complete. ${error.message || 'Please try again.'}`,
+        });
+      },
+    });
   };
 
   const handleMarkTaskAsPending = async (taskId: string) => {
-    if (!currentUser?.id) return;
-    start();
-    try {
-      await updateTask(currentUser.id, taskId, { status: 'todo' });
-      handleDataRefresh();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error Updating Task',
-        description: 'Could not move the task to pending. Please try again.',
-      });
-    } finally {
-      complete();
-    }
+    updateTask({ id: taskId, updates: { status: 'todo' } }, {
+      onSuccess: () => {
+        toast({
+          title: "Task Updated",
+          description: "Task marked as pending.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Error Updating Task',
+          description: `Could not move the task to pending. ${error.message || 'Please try again.'}`,
+        });
+      },
+    });
   };
   
   const getAssigneeInitials = (name: string | undefined) => {

@@ -46,25 +46,42 @@ export const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
 
         if (!editorRef.current || quillRef.current) return;
 
+        // Define the list of fonts
+        const fontList = [
+          'Helvetica', 
+          'Arial', 
+          'Times New Roman', 
+          'Roboto', 
+          'Open Sans',
+          'Poppins',
+          'Montserrat',
+          'Lato', 
+          'Calibri', 
+          'Source Sans Pro'
+        ];
+
+        // Add font options to the toolbar
+        const toolbarOptions = [
+          [{ header: [1, 2, 3, false] }],
+          [{ font: fontList }], // Font family dropdown with custom fonts
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          ['blockquote', 'code-block'],
+          ['link'],
+          ['image', 'video'], // Image and video insertion
+          ['undo', 'redo'], // Undo/redo buttons
+          ['clean'],
+        ];
+
         const quill = new Quill(editorRef.current, {
           theme: 'snow',
           readOnly,
           placeholder,
           modules: {
             toolbar: readOnly ? false : {
-              container: [
-                [{ header: [1, 2, 3, false] }],
-                [{ font: ['sans-serif', 'serif', 'monospace'] }], // Font family dropdown
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ list: 'ordered' }, { list: 'bullet' }],
-                [{ color: [] }, { background: [] }],
-                [{ align: [] }],
-                ['blockquote', 'code-block'],
-                ['link'],
-                ['image', 'video'], // Image and video insertion
-                ['undo', 'redo'], // Undo/redo buttons
-                ['clean'],
-              ],
+              container: toolbarOptions,
               handlers: {
                 undo: function() {
                   quill.history.undo();
@@ -170,16 +187,44 @@ export const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
           }
           
           /* Font family styles */
-          .ql-font-sans-serif {
+          .ql-font-helvetica {
+            font-family: Helvetica, Arial, sans-serif;
+          }
+          
+          .ql-font-arial {
             font-family: Arial, Helvetica, sans-serif;
           }
           
-          .ql-font-serif {
-            font-family: Georgia, Times New Roman, serif;
+          .ql-font-times-new-roman {
+            font-family: "Times New Roman", Times, serif;
           }
           
-          .ql-font-monospace {
-            font-family: Courier New, Courier, monospace;
+          .ql-font-roboto {
+            font-family: Roboto, Arial, sans-serif;
+          }
+          
+          .ql-font-open-sans {
+            font-family: "Open Sans", Arial, sans-serif;
+          }
+          
+          .ql-font-poppins {
+            font-family: Poppins, Arial, sans-serif;
+          }
+          
+          .ql-font-montserrat {
+            font-family: Montserrat, Arial, sans-serif;
+          }
+          
+          .ql-font-lato {
+            font-family: Lato, Arial, sans-serif;
+          }
+          
+          .ql-font-calibri {
+            font-family: Calibri, Arial, sans-serif;
+          }
+          
+          .ql-font-source-sans-pro {
+            font-family: "Source Sans Pro", Arial, sans-serif;
           }
           
           /* Custom icons for undo and redo */

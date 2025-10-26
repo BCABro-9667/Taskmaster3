@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -12,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-
+import emailjs from '@emailjs/browser';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -37,10 +36,23 @@ export function ContactForm() {
 
   const onSubmit = (data: ContactFormValues) => {
     setIsSubmitting(true);
-    console.log('Contact form submitted:', data);
+    
+    // EmailJS integration using environment variables
+    const templateParams = {
+      from_name: data.name,
+      from_email: data.email,
+      message: data.message,
+      to_name: 'TaskMaster Team',
+    };
 
-    // Simulate API call
-    setTimeout(() => {
+    emailjs.send(
+      process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+      process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+      templateParams,
+      process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+    )
+    .then((response) => {
+      console.log('Email sent successfully!', response.status, response.text);
       toast({
         variant: 'success',
         title: 'Message Sent!',
@@ -48,7 +60,16 @@ export function ContactForm() {
       });
       form.reset();
       setIsSubmitting(false);
-    }, 1500);
+    })
+    .catch((error) => {
+      console.error('Failed to send email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send your message. Please try again later.',
+      });
+      setIsSubmitting(false);
+    });
   };
 
   return (
@@ -119,4 +140,3 @@ export function ContactForm() {
     </Card>
   );
 }
-

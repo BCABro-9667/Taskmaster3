@@ -5,6 +5,7 @@ import { ReactQueryProvider } from '@/lib/react-query-provider';
 import { useEffect } from 'react';
 import { syncOfflineChanges } from '@/lib/offline-sync';
 import { OfflineProvider } from '@/contexts/OfflineContext';
+import emailjs from '@emailjs/browser';
 
 export function AppProviders({
   children,
@@ -12,6 +13,9 @@ export function AppProviders({
   children: React.ReactNode;
 }>) {
   useEffect(() => {
+    // Initialize EmailJS
+    emailjs.init('_cWbp6XU7bcCojDbF'); // Public Key
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {

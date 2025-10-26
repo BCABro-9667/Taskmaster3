@@ -110,13 +110,21 @@ export default function DashboardPage() {
   
   const handleMarkTaskAsComplete = (taskId: string) => {
     updateTask({ id: taskId, updates: { status: 'done' } }, {
-      onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not mark the task as complete.' }),
+      onError: (error) => toast({ 
+        variant: 'destructive', 
+        title: 'Error Updating Task', 
+        description: `Could not mark the task as complete. ${error.message || 'Please try again.'}` 
+      }),
     });
   };
 
   const handleMarkTaskAsPending = (taskId: string) => {
     updateTask({ id: taskId, updates: { status: 'todo' } }, {
-      onError: (error) => toast({ variant: 'destructive', title: 'Error Updating Task', description: 'Could not move the task to pending.' }),
+      onError: (error) => toast({ 
+        variant: 'destructive', 
+        title: 'Error Updating Task', 
+        description: `Could not move the task to pending. ${error.message || 'Please try again.'}` 
+      }),
     });
   };
   
