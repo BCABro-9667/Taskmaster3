@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'taskmaster-cache-v1';
+const CACHE_NAME = 'taskmaster-cache-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',
@@ -14,6 +13,11 @@ const PRECACHE_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Passion+One:wght@400;700;900&display=swap',
   'https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7W0Q5nw.woff2',
   'https://fonts.gstatic.com/s/passionone/v15/Q-gJrXjG53Xj1jKwxZ3iUi9a_MekG00.woff2',
+];
+
+// URLs that should use Network First strategy (for API calls)
+const NETWORK_FIRST_URLS = [
+  '/api/',
 ];
 
 self.addEventListener('install', (event) => {
@@ -51,8 +55,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const url = new URL(event.request.url);
+  
   // Strategy: Stale-While-Revalidate for navigations and specified assets
-  if (PRECACHE_ASSETS.includes(new URL(event.request.url).pathname) || event.request.mode === 'navigate') {
+  if (PRECACHE_ASSETS.includes(url.pathname) || event.request.mode === 'navigate') {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
         return cache.match(event.request).then((cachedResponse) => {
@@ -67,6 +73,23 @@ self.addEventListener('fetch', (event) => {
           });
           return cachedResponse || fetchedResponsePromise;
         });
+      })
+    );
+    return;
+  }
+  
+  // Strategy: Network First for API requests (to get fresh data)
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse.ok) {
+          const cacheableResponse = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, cacheableResponse));
+        }
+        return networkResponse;
+      }).catch(() => {
+        // If network fails, try cache
+        return caches.match(event.request);
       })
     );
     return;

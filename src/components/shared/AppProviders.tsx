@@ -1,11 +1,10 @@
-
 'use client';
 
 import { ThemeProvider } from "next-themes";
 import { ReactQueryProvider } from '@/lib/react-query-provider';
 import { useEffect } from 'react';
 import { syncOfflineChanges } from '@/lib/offline-sync';
-import { StorageModeProvider } from "@/hooks/use-storage-mode";
+import { OfflineProvider } from '@/contexts/OfflineContext';
 
 export function AppProviders({
   children,
@@ -60,9 +59,9 @@ export function AppProviders({
           enableSystem
           disableTransitionOnChange
         >
-        <StorageModeProvider>
+        <OfflineProvider>
           {children}
-        </StorageModeProvider>
+        </OfflineProvider>
       </ThemeProvider>
     </ReactQueryProvider>
   );

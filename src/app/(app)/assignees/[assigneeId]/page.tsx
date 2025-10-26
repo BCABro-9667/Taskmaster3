@@ -276,10 +276,6 @@ export default function AssigneeDetailPage() {
         </section>
       </div>
 
-      <div className="print-only-extra-page">
-        <PrintOnlyBlankTasks count={40} />
-      </div>
-
       <section className="no-print">
         <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="completed-tasks" className="border-none">

@@ -380,7 +380,11 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="storage">
-              <StorageManagement />
+              <div className="mt-6 p-4 bg-muted rounded-lg text-center">
+                <p className="text-muted-foreground">
+                  All data is now stored securely in the cloud database. Local storage functionality has been removed.
+                </p>
+              </div>
             </TabsContent>
             
             <TabsContent value="feedback">

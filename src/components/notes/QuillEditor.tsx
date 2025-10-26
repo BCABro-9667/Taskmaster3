@@ -37,7 +37,12 @@ export const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
 
       // Dynamically import Quill to avoid SSR issues
       const initQuill = async () => {
-        const Quill = (await import('quill')).default;
+        const QuillModule = await import('quill');
+        const Quill = QuillModule.default;
+        
+        // Import and register font format
+        const Font = await import('quill/formats/font');
+        Quill.register(Font, true);
 
         if (!editorRef.current || quillRef.current) return;
 
@@ -46,16 +51,29 @@ export const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
           readOnly,
           placeholder,
           modules: {
-            toolbar: readOnly ? false : [
-              [{ header: [1, 2, 3, false] }],
-              ['bold', 'italic', 'underline', 'strike'],
-              [{ list: 'ordered' }, { list: 'bullet' }],
-              [{ color: [] }, { background: [] }],
-              [{ align: [] }],
-              ['blockquote', 'code-block'],
-              ['link'],
-              ['clean'],
-            ],
+            toolbar: readOnly ? false : {
+              container: [
+                [{ header: [1, 2, 3, false] }],
+                [{ font: ['sans-serif', 'serif', 'monospace'] }], // Font family dropdown
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                [{ color: [] }, { background: [] }],
+                [{ align: [] }],
+                ['blockquote', 'code-block'],
+                ['link'],
+                ['image', 'video'], // Image and video insertion
+                ['undo', 'redo'], // Undo/redo buttons
+                ['clean'],
+              ],
+              handlers: {
+                undo: function() {
+                  quill.history.undo();
+                },
+                redo: function() {
+                  quill.history.redo();
+                }
+              }
+            },
           },
         });
 
@@ -149,6 +167,37 @@ export const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
             padding: 0;
             border: none;
             outline: none;
+          }
+          
+          /* Font family styles */
+          .ql-font-sans-serif {
+            font-family: Arial, Helvetica, sans-serif;
+          }
+          
+          .ql-font-serif {
+            font-family: Georgia, Times New Roman, serif;
+          }
+          
+          .ql-font-monospace {
+            font-family: Courier New, Courier, monospace;
+          }
+          
+          /* Custom icons for undo and redo */
+          .ql-snow .ql-toolbar button.ql-undo,
+          .ql-snow .ql-toolbar button.ql-redo {
+            width: 28px;
+          }
+
+          .ql-snow .ql-toolbar button.ql-undo::before {
+            content: "↺";
+            font-size: 18px;
+            font-weight: bold;
+          }
+
+          .ql-snow .ql-toolbar button.ql-redo::before {
+            content: "↻";
+            font-size: 18px;
+            font-weight: bold;
           }
           
           /* Dark mode support */

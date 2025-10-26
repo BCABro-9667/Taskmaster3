@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,48 +10,37 @@ import {
     createAssignee as createAssigneeInDb,
     deleteCompletedTasks as deleteCompletedTasksInDb 
 } from '@/lib/tasks';
-import {
-    getLocalTasks,
-    createLocalTask,
-    updateLocalTask,
-    deleteLocalTask,
-    getLocalAssignees,
-    createLocalAssignee,
-    deleteLocalCompletedTasks,
-} from '@/lib/local-storage/tasks';
+import { getCache, setCache } from '@/lib/cache-utils';
 
 import type { Task, Assignee, User } from '@/types';
 import { useEffect } from 'react';
 import { io, type Socket } from "socket.io-client";
-import { useStorageMode } from './use-storage-mode';
 
 
 // --- Query Keys ---
 const taskKeys = {
-  all: (userId: string, mode: 'db' | 'local') => ['tasks', userId, mode] as const,
-  list: (userId: string, mode: 'db' | 'local') => [...taskKeys.all(userId, mode), 'list'] as const,
+  all: (userId: string) => ['tasks', userId] as const,
+  list: (userId: string) => [...taskKeys.all(userId), 'list'] as const,
 };
 
 const assigneeKeys = {
-  all: (userId: string, mode: 'db' | 'local') => ['assignees', userId, mode] as const,
-  list: (userId: string, mode: 'db' | 'local') => [...assigneeKeys.all(userId, mode), 'list'] as const,
+  all: (userId: string) => ['assignees', userId] as const,
+  list: (userId: string) => [...assigneeKeys.all(userId), 'list'] as const,
 };
 
 
 // --- Realtime Sync Hook ---
 // Disabled: Socket.IO requires a custom server in Next.js
-// For realtime sync, consider using polling or a different approach
 function useRealtimeSync(currentUser: User | null) {
   // Disabled to prevent 404 errors
   return;
   
   /* Original socket.io implementation disabled
   const queryClient = useQueryClient();
-  const { storageMode } = useStorageMode();
 
 
   useEffect(() => {
-    if (!currentUser || storageMode === 'local') return;
+    if (!currentUser) return;
 
     let socket: Socket;
 
@@ -84,7 +72,7 @@ function useRealtimeSync(currentUser: User | null) {
         socket.disconnect();
       }
     };
-  }, [currentUser, queryClient, storageMode]);
+  }, [currentUser, queryClient]);
   */
 }
 
@@ -92,15 +80,29 @@ function useRealtimeSync(currentUser: User | null) {
 // --- Hooks for Tasks ---
 
 export function useTasks(userId: string | null | undefined, currentUser: User | null) {
-  const { storageMode } = useStorageMode();
-  const queryKey = taskKeys.list(userId!, storageMode);
+  const queryKey = taskKeys.list(userId!);
   useRealtimeSync(currentUser);
 
-  const queryFn = storageMode === 'db' ? getTasksFromDb : getLocalTasks;
+  const queryFn = async () => {
+    // Try to get from cache first
+    const cachedData = getCache<Task[]>(`tasks_${userId}`);
+    if (cachedData) {
+      console.log('Tasks loaded from cache');
+      return cachedData;
+    }
+    
+    // Fetch from database if not in cache
+    const data = await getTasksFromDb(userId!);
+    
+    // Cache the result
+    setCache(`tasks_${userId}`, data);
+    
+    return data;
+  };
 
   return useQuery({
     queryKey,
-    queryFn: () => queryFn(userId!),
+    queryFn,
     enabled: !!userId,
     staleTime: 1000 * 60, // 1 minute
   });
@@ -110,10 +112,9 @@ type CreateTaskPayload = Parameters<typeof createTaskInDb>[1];
 
 export function useCreateTask(userId: string | null | undefined) {
     const queryClient = useQueryClient();
-    const { storageMode } = useStorageMode();
-    const queryKey = taskKeys.list(userId!, storageMode);
+    const queryKey = taskKeys.list(userId!);
 
-    const mutationFn = storageMode === 'db' ? createTaskInDb : createLocalTask;
+    const mutationFn = createTaskInDb;
 
     return useMutation({
         mutationFn: (newTaskData: CreateTaskPayload) => {
@@ -124,41 +125,33 @@ export function useCreateTask(userId: string | null | undefined) {
             await queryClient.cancelQueries({ queryKey });
             const previousTasks = queryClient.getQueryData<Task[]>(queryKey);
 
-            queryClient.setQueryData<Task[]>(queryKey, (old = []) => {
-                const optimisticTask: Task = {
-                    id: `temp-${Date.now()}`,
-                    title: newTaskData.title,
-                    description: newTaskData.description || '',
-                    deadline: newTaskData.deadline,
-                    status: 'todo',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    createdBy: userId!,
-                    assignedTo: undefined,
-                };
-                return [optimisticTask, ...old];
-            });
-
+            // Note: We're not creating an optimistic task here because of the complex type structure
+            // The actual task will be fetched after creation
             return { previousTasks };
         },
         onError: (_err, _newTask, context) => {
             queryClient.setQueryData(queryKey, context?.previousTasks);
         },
+        onSuccess: (newTask) => {
+            // Update cache with new task
+            const cachedTasks = getCache<Task[]>(`tasks_${userId}`);
+            if (cachedTasks) {
+              setCache(`tasks_${userId}`, [newTask, ...cachedTasks]);
+            }
+        },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });
-            queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
         },
     });
 }
 
-type UpdateTaskPayload = { id: string, updates: Parameters<typeof updateTaskInDb>[2] };
+type UpdateTaskPayload = { id: string; updates: Parameters<typeof updateTaskInDb>[2] };
 
 export function useUpdateTask(userId: string | null | undefined) {
   const queryClient = useQueryClient();
-  const { storageMode } = useStorageMode();
-  const queryKey = taskKeys.list(userId!, storageMode);
+  const queryKey = taskKeys.list(userId!);
   
-  const mutationFn = storageMode === 'db' ? updateTaskInDb : updateLocalTask;
+  const mutationFn = updateTaskInDb;
 
   return useMutation({
     mutationFn: ({ id, updates }: UpdateTaskPayload) => {
@@ -169,10 +162,28 @@ export function useUpdateTask(userId: string | null | undefined) {
       await queryClient.cancelQueries({ queryKey });
       const previousTasks = queryClient.getQueryData<Task[]>(queryKey);
 
+      // For optimistic updates, we need to handle the type conversion properly
       queryClient.setQueryData<Task[]>(queryKey, (old = []) => 
-        old.map(task =>
-          task.id === id ? { ...task, ...updates } : task
-        )
+        old.map(task => {
+          if (task.id === id) {
+            // Create a new task object with the updates
+            const updatedTask = { ...task };
+            
+            // Apply updates, handling special cases
+            Object.keys(updates).forEach(key => {
+              const typedKey = key as keyof Task;
+              if (typedKey === 'assignedTo') {
+                // Skip assigning assignedTo in optimistic update to avoid type issues
+                // The actual update will happen on the server
+                return;
+              }
+              (updatedTask as any)[typedKey] = (updates as any)[typedKey];
+            });
+            
+            return updatedTask;
+          }
+          return task;
+        })
       );
 
       return { previousTasks };
@@ -180,19 +191,28 @@ export function useUpdateTask(userId: string | null | undefined) {
     onError: (_err, _variables, context) => {
       queryClient.setQueryData(queryKey, context?.previousTasks);
     },
+    onSuccess: (updatedTask) => {
+      // Update cache with updated task
+      const cachedTasks = getCache<Task[]>(`tasks_${userId}`);
+      if (cachedTasks) {
+        const updatedTasks = cachedTasks.map(task => 
+          task.id === updatedTask?.id ? updatedTask : task
+        );
+        setCache(`tasks_${userId}`, updatedTasks);
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
     },
   });
 }
 
 export function useDeleteTask(userId: string | null | undefined) {
   const queryClient = useQueryClient();
-  const { storageMode } = useStorageMode();
-  const queryKey = taskKeys.list(userId!, storageMode);
+  const queryKey = taskKeys.list(userId!);
   
-  const mutationFn = storageMode === 'db' ? deleteTaskInDb : deleteLocalTask;
+  const mutationFn = deleteTaskInDb;
 
   return useMutation({
     mutationFn: (taskId: string) => {
@@ -212,9 +232,17 @@ export function useDeleteTask(userId: string | null | undefined) {
     onError: (_err, _taskId, context) => {
       queryClient.setQueryData(queryKey, context?.previousTasks);
     },
+    onSuccess: (_, taskId) => {
+      // Update cache by removing deleted task
+      const cachedTasks = getCache<Task[]>(`tasks_${userId}`);
+      if (cachedTasks) {
+        const updatedTasks = cachedTasks.filter(task => task.id !== taskId);
+        setCache(`tasks_${userId}`, updatedTasks);
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
     },
   });
 }
@@ -222,10 +250,9 @@ export function useDeleteTask(userId: string | null | undefined) {
 
 export function useDeleteCompletedTasks(userId: string | null | undefined) {
   const queryClient = useQueryClient();
-  const { storageMode } = useStorageMode();
-  const queryKey = taskKeys.list(userId!, storageMode);
+  const queryKey = taskKeys.list(userId!);
 
-  const mutationFn = storageMode === 'db' ? deleteCompletedTasksInDb : deleteLocalCompletedTasks;
+  const mutationFn = deleteCompletedTasksInDb;
 
   return useMutation({
     mutationFn: () => {
@@ -242,28 +269,50 @@ export function useDeleteCompletedTasks(userId: string | null | undefined) {
 
       return { previousTasks };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err, _variables, context) => {
       queryClient.setQueryData(queryKey, context?.previousTasks);
+    },
+    onSuccess: () => {
+      // Update cache by removing completed tasks
+      const cachedTasks = getCache<Task[]>(`tasks_${userId}`);
+      if (cachedTasks) {
+        const updatedTasks = cachedTasks.filter(task => task.status !== 'done');
+        setCache(`tasks_${userId}`, updatedTasks);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!, storageMode) });
+      queryClient.invalidateQueries({ queryKey: assigneeKeys.list(userId!) });
     },
   });
 }
 
 
-
 // --- Hooks for Assignees ---
-export function useAssignees(userId: string | null | undefined) {
-  const { storageMode } = useStorageMode();
-  const queryKey = assigneeKeys.list(userId!, storageMode);
 
-  const queryFn = storageMode === 'db' ? getAssigneesFromDb : getLocalAssignees;
+export function useAssignees(userId: string | null | undefined) {
+  const queryKey = assigneeKeys.list(userId!);
+
+  const queryFn = async () => {
+    // Try to get from cache first
+    const cachedData = getCache<Assignee[]>(`assignees_${userId}`);
+    if (cachedData) {
+      console.log('Assignees loaded from cache');
+      return cachedData;
+    }
+    
+    // Fetch from database if not in cache
+    const data = await getAssigneesFromDb(userId!);
+    
+    // Cache the result
+    setCache(`assignees_${userId}`, data);
+    
+    return data;
+  };
 
   return useQuery({
     queryKey,
-    queryFn: () => queryFn(userId!),
+    queryFn,
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -274,10 +323,9 @@ type CreateAssigneePayload = Parameters<typeof createAssigneeInDb>[1];
 
 export function useCreateAssignee(userId: string | null | undefined) {
     const queryClient = useQueryClient();
-    const { storageMode } = useStorageMode();
-    const queryKey = assigneeKeys.list(userId!, storageMode);
+    const queryKey = assigneeKeys.list(userId!);
 
-    const mutationFn = storageMode === 'db' ? createAssigneeInDb : createLocalAssignee;
+    const mutationFn = createAssigneeInDb;
 
     return useMutation({
         mutationFn: (newAssigneeData: CreateAssigneePayload) => {
@@ -286,6 +334,13 @@ export function useCreateAssignee(userId: string | null | undefined) {
         },
         onSuccess: (newAssignee) => {
             queryClient.invalidateQueries({ queryKey });
+            
+            // Update cache with new assignee
+            const cachedAssignees = getCache<Assignee[]>(`assignees_${userId}`);
+            if (cachedAssignees) {
+              setCache(`assignees_${userId}`, [...cachedAssignees, newAssignee]);
+            }
+            
             return newAssignee;
         },
         onError: (error) => {

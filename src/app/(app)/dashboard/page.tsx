@@ -353,10 +353,6 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="print-only-extra-page">
-        <PrintOnlyBlankTasks count={40} />
-      </div>
-
       <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

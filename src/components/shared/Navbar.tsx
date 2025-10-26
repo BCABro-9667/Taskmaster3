@@ -111,7 +111,6 @@ export function Navbar() {
               </div>
             )}
 
-            <StorageModeToggle />
             <ThemeToggle />
 
             {currentUser ? (
